@@ -29,8 +29,12 @@ with rollback protection. It does not download Minecraft or replace its launcher
   stale-preview protection and downgrade rejection.
 - Worlds, maps, screenshots, accounts, launcher metadata and personal settings
   are protected. Changed local configuration defaults are retained.
-- A separate Star Dash entry is visible but **not connected yet**. No Star Dash
-  files or SRB2 installation are managed by this version.
+- StarDash links to the existing **Godot desktop app**, discovered under Documents
+  or chosen in Settings. Play validates the exported `StarDash.exe`/`StarDash.pck`
+  pair and opens it directly. Its packaged update channel is not published yet;
+  no StarDash, SRB2, saved settings or custom music files are updated by this build.
+- v0.1.1 fixes release-note focus/selection during update checks and preserves
+  paragraph breaks from signed notes that use Unix line endings.
 
 The public channel address is configured in `channel-settings.json`. The app
 verifies notices with the included public key even when the address is changed
@@ -69,8 +73,8 @@ PowerShell 7.2+ and the Windows .NET Framework compiler.
 .\scripts\Build-Astera.ps1 -FeedUrl 'https://raw.githubusercontent.com/OWNER/REPO/main/channels/minecraft-squared.json'
 
 # Use new, isolated directories for each test.
-& 'D:\vale\StarsAllies-Storage\builds\Astera\0.1.0\Astera.exe' --self-test 'D:\vale\StarsAllies-Storage\audits\astera-network-new'
-& 'D:\vale\StarsAllies-Storage\builds\Astera\0.1.0\Astera.exe' --engine-self-test 'D:\vale\StarsAllies-Storage\audits\astera-engine-new'
+& 'D:\vale\StarsAllies-Storage\builds\Astera\0.1.1\Astera.exe' --self-test 'D:\vale\StarsAllies-Storage\audits\astera-network-new'
+& 'D:\vale\StarsAllies-Storage\builds\Astera\0.1.1\Astera.exe' --engine-self-test 'D:\vale\StarsAllies-Storage\audits\astera-engine-new'
 ```
 
 `channel.public.xml` is intentionally public. It is already initialised for the

@@ -11,7 +11,7 @@ using MC2Pack;
 
 namespace Astera {
 public sealed class Channel { public string FeedUrl="",PublicKeyXml=""; }
-public sealed class Preferences { public string Profile="",FeedUrl="";public bool CheckOnStart=true,KeepInTray=true,ConfigurePacks=true;public long HighestSequence; }
+public sealed class Preferences { public string Profile="",FeedUrl="",StarDashExecutable="";public bool CheckOnStart=true,KeepInTray=true,ConfigurePacks=true;public long HighestSequence; }
 public sealed class Envelope {public string Payload,Signature;}
 public sealed class PayloadSource {public string Path,Url;}
 public sealed class RequiredMod {public string Id,Version;}

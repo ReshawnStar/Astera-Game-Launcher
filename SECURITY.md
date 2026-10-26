@@ -32,8 +32,8 @@ No game/app is force-closed to install an update. The current Java guard is
 conservative and may also require closing unrelated Java tools. Installation and
 restore cannot be cancelled midway; downloads/checks can be cancelled.
 
-Known v0.1 limits: no authenticated private feeds, no app self-update, no Star Dash
-adapter yet, no automatic CurseForge profile registration, no binary delta patching,
+Known v0.1 limits: no authenticated private feeds, no app self-update, no StarDash
+update adapter yet (local Godot launch is linked), no automatic CurseForge profile registration, no binary delta patching,
 no resumable partial transfers, no signing-key export/rotation wizard, and no
 automatic cache-pruning UI. Cached files can be removed while Astera is closed;
 profile rollback folders are separate and should be retained deliberately.
