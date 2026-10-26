@@ -3,7 +3,7 @@ param(
     [string]$FeedUrl='',
     [string]$PublicKeyFile=(Join-Path (Split-Path $PSScriptRoot -Parent) 'channel.public.xml'),
     [string]$IconFile='',
-    [string]$OutputDirectory='D:/vale/StarsAllies-Storage/builds/Astera/0.1.8'
+    [string]$OutputDirectory='D:/vale/StarsAllies-Storage/builds/Astera/0.1.9'
 )
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
@@ -48,7 +48,10 @@ foreach($icon in Get-ChildItem -LiteralPath $icons -Filter '*.png' -File){
     try{if($image.Width -ne 128 -or $image.Height -ne 128){throw ('UI icons must be 128x128: '+$icon.Name)}}finally{$image.Dispose()}
     $art+=('/resource:'+$icon.FullName+',Astera.Icons.'+$icon.BaseName)
 }
+$background=Join-Path $root 'assets/backgrounds/minecraft-squared.png'
+if(!(Test-Path -LiteralPath $background) -or (Get-Item -LiteralPath $background).Length -gt 25MB){throw 'Minecraft background is missing or too large'}
+$art+=('/resource:'+$background+',Astera.Backgrounds.MinecraftSquared')
 & $compiler /nologo /codepage:65001 /target:winexe /platform:x64 /optimize+ /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Web.Extensions.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll "/out:$exe" "/resource:$channel,Astera.Channel" @art @sources
 if($LASTEXITCODE -ne 0){throw 'Astera compilation failed'}
-@{Version='0.1.8';Executable='Astera.exe';Sha256=(Get-FileHash -LiteralPath $exe).Hash;FeedConfigured=[bool]$FeedUrl;BuiltUtc=[DateTime]::UtcNow.ToString('o')}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $out 'build-receipt.json')
+@{Version='0.1.9';Executable='Astera.exe';Sha256=(Get-FileHash -LiteralPath $exe).Hash;FeedConfigured=[bool]$FeedUrl;BuiltUtc=[DateTime]::UtcNow.ToString('o')}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $out 'build-receipt.json')
 Write-Output ('Built '+$exe)

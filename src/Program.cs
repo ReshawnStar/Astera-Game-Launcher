@@ -11,6 +11,8 @@ using MC2Pack;
 namespace Astera {
 static class Program {
     [STAThread] static int Main(string[] args){
+        if(args.Length==2&&args[0]=="--skin-preview")return MinecraftSkin.Preview(args[1]);
+        if(args.Length==3&&args[0]=="--visual-check")return LibraryForm.AuditVisibleUi(args[1],args[2]);
         if(args.Length==2&&args[0]=="--visual-check")return LibraryForm.AuditVisibleUi(args[1]);
         if(args.Length==2&&args[0]=="--layout-audit")return LibraryForm.AuditLayout(args[1]);
         if(args.Length==2&&args[0]=="--self-test")return NetworkSelfTest.Run(args[1]);
@@ -35,6 +37,7 @@ sealed partial class LibraryForm:Form {
         ButtonAtlas.SetAccent(store.Settings.ButtonAccent);BuildLibraryLayout();games.SelectedIndex=0;
         if(previewMode){RefreshView();return;}
         StartDiagnostics();
+        Shown+=delegate{RefreshMinecraftSkin();};
         tray.Icon=Icon;tray.Text="Astera Game Launcher";var menu=new ContextMenuStrip(menuComponents);menu.Items.Add("Open Astera",null,delegate{ShowWindow();});menu.Items.Add("Exit",null,delegate{quitting=true;Close();});tray.ContextMenuStrip=menu;tray.DoubleClick+=delegate{ShowWindow();};tray.BalloonTipClicked+=delegate{ShowWindow();};tray.Visible=true;
         timer.Interval=30*60*1000;timer.Tick+=async delegate{if(store.Settings.CheckOnStart&&!busy&&!String.IsNullOrWhiteSpace(store.Settings.FeedUrl))await Check(true);};timer.Start();
         Shown+=async delegate{if(store.Settings.CheckOnStart&&!String.IsNullOrWhiteSpace(store.Settings.FeedUrl))await Check(true);};FormClosing+=delegate(object sender,FormClosingEventArgs e){if(busy){e.Cancel=true;MessageBox.Show(this,"Let the current operation finish, or cancel the download first.","Astera");return;}if(!quitting&&store.Settings.KeepInTray){e.Cancel=true;Hide();tray.ShowBalloonTip(2500,"Astera is still here","Update checks continue while Astera is in the tray.",ToolTipIcon.Info);}else{timer.Stop();tray.Dispose();ClearPrepared();}};RefreshView();
@@ -90,7 +93,7 @@ sealed class SettingsForm:Form {
             if(!String.IsNullOrWhiteSpace(profile.Text))Profiles.Read(profile.Text.Trim());
             if(!String.IsNullOrWhiteSpace(stardash.Text))LocalStarDash.Validate(stardash.Text.Trim());
             if(!String.IsNullOrWhiteSpace(url.Text))new Transport().Address(url.Text.Trim());
-            Result=new Preferences{Profile=profile.Text.Trim(),FeedUrl=url.Text.Trim(),StarDashExecutable=stardash.Text.Trim(),CheckOnStart=auto.Checked,KeepInTray=tray.Checked,ConfigurePacks=packs.Checked,HighestSequence=original.HighestSequence,BackgroundMinecraft=original.BackgroundMinecraft,BackgroundStarDash=original.BackgroundStarDash,CharacterMinecraft=original.CharacterMinecraft,CharacterStarDash=original.CharacterStarDash,ButtonAccent=original.ButtonAccent};
+            Result=new Preferences{Profile=profile.Text.Trim(),FeedUrl=url.Text.Trim(),StarDashExecutable=stardash.Text.Trim(),CheckOnStart=auto.Checked,KeepInTray=tray.Checked,ConfigurePacks=packs.Checked,HighestSequence=original.HighestSequence,BackgroundMinecraft=original.BackgroundMinecraft,BackgroundStarDash=original.BackgroundStarDash,CharacterMinecraft=original.CharacterMinecraft,CharacterStarDash=original.CharacterStarDash,ButtonAccent=original.ButtonAccent,UseMinecraftSkin=original.UseMinecraftSkin};
             DialogResult=DialogResult.OK;Close();
         }catch(Exception error){MessageBox.Show(this,error.Message,"Astera settings");}};
         grid.Controls.Add(save,1,8);

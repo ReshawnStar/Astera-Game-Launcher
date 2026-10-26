@@ -42,6 +42,15 @@ with rollback protection. It does not download Minecraft or replace its launcher
   control bounds locally. `--visual-check <new-folder>` opens an isolated test
   window, cycles tabs/compact/maximized/restored states, saves actual displayed
   pixels, and closes. It requires an unobscured window; it performs no updates.
+- v0.1.9 embeds the supplied Minecraft² sunrise as its default background and
+  adds a waving Minecraft-skin preview. When no custom character image is set,
+  Astera reads the active public profile ID from the official Minecraft Launcher's
+  local account file and retrieves public skin data from Mojang's HTTPS services.
+  Authentication tokens are not used, transmitted or persisted by this feature.
+  Posed images stay in the local Astera skin cache and refresh after a day.
+  Backgrounds → Use my Minecraft Launcher skin disables/enables it. Custom character
+  art takes priority. Missing accounts, unavailable skin services or disabled
+  previews leave the character layer hidden. No Minecraft skin is bundled.
 - Minecraft Squared profiles discovered by their CurseForge display name, even
   after folder renames. `But Again` is recognised as a **legacy folder name**.
   Multiple matching profiles require a choice; Astera never guesses between them.

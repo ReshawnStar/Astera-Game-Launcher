@@ -30,10 +30,11 @@ sealed partial class LibraryForm {
     internal void CaptureUiFromMenu(){
         var captureTimer=new System.Windows.Forms.Timer{Interval=300};captureTimer.Tick+=delegate{captureTimer.Stop();captureTimer.Dispose();if(IsDisposed||!Visible||WindowState==FormWindowState.Minimized)return;try{string directory=Path.Combine(DiagnosticsRoot,"ui",DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff"));Refresh();CaptureVisibleUi(directory,"window");Log("Saved visible UI pixels and control bounds: "+directory);SelectLibraryTab(1);}catch(Exception error){AsteraDiagnostics.Report("Capture UI snapshot",error);}};captureTimer.Start();
     }
-    public static int AuditVisibleUi(string directory){
+    public static int AuditVisibleUi(string directory,string characterFile=null){
         directory=Path.GetFullPath(directory);if(Directory.Exists(directory))return 2;Directory.CreateDirectory(directory);
         Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);
         var store=new Store(Path.Combine(directory,"preferences"));store.Settings.CheckOnStart=false;store.Settings.KeepInTray=false;
+        if(characterFile!=null){using(var proof=Banner.ReadArtwork(characterFile)){}store.Settings.CharacterMinecraft=Path.GetFullPath(characterFile);}
         using(var form=new LibraryForm(store,new Channel(),true))using(var sequence=new System.Windows.Forms.Timer{Interval=700}){
             int step=0;Exception failure=null;form.TopMost=true;form.StartPosition=FormStartPosition.CenterScreen;form.notes.Text=String.Join(Environment.NewLine,Enumerable.Range(1,60).Select(i=>"Update-note scroll fixture line "+i));form.log.Text=String.Join(Environment.NewLine,Enumerable.Range(1,60).Select(i=>"Activity scroll fixture line "+i));
             sequence.Tick+=delegate{try{

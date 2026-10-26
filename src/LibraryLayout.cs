@@ -9,8 +9,9 @@ namespace Astera {
 // above the background, so hair/hats can extend beyond the hero's upper edge.
 sealed class Banner:Panel {
     public string Game="Minecraft²";
-    Image scene,character;string scenePath="",characterPath="";
-    public Banner(){DoubleBuffered=true;BackColor=Color.FromArgb(12,17,33);}
+    Image scene,character,defaultScene;string scenePath="",characterPath="";
+    public Banner(){DoubleBuffered=true;BackColor=Color.FromArgb(12,17,33);using(var stream=System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Astera.Backgrounds.MinecraftSquared"))if(stream!=null)using(var image=Image.FromStream(stream))defaultScene=new Bitmap(image);}
+    internal Image CopyDefaultArtwork(){return Game=="Minecraft²"&&defaultScene!=null?new Bitmap(defaultScene):null;}
     public void Artwork(string background,string foreground){
         Replace(ref scene,ref scenePath,background);Replace(ref character,ref characterPath,foreground);Invalidate();
     }
@@ -30,7 +31,8 @@ sealed class Banner:Panel {
         base.OnPaint(e);if(Width<2||Height<35)return;var g=e.Graphics;
         g.SmoothingMode=SmoothingMode.AntiAlias;g.InterpolationMode=InterpolationMode.HighQualityBicubic;
         var area=new Rectangle(0,30,Width,Height-30);
-        if(scene!=null){var clip=g.Save();g.SetClip(area);Cover(g,scene,area);g.Restore(clip);}
+        var backdrop=scene??(Game=="Minecraft²"?defaultScene:null);
+        if(backdrop!=null){var clip=g.Save();g.SetClip(area);Cover(g,backdrop,area);g.Restore(clip);}
         else {
             using(var fill=new LinearGradientBrush(area,Color.FromArgb(22,31,65),Color.FromArgb(54,38,88),25F))g.FillRectangle(fill,area);
             var random=new Random(17);for(int i=0;i<110;i++){int x=random.Next(Width),y=30+random.Next(Height-30);using(var star=new SolidBrush(Color.FromArgb(70+i%150,155,168,241)))g.FillEllipse(star,x,y,i%7==0?3:1.5F,i%7==0?3:1.5F);}
@@ -42,7 +44,7 @@ sealed class Banner:Panel {
         using(var edge=new Pen(Color.FromArgb(58,76,116)))g.DrawLine(edge,0,Height-1,Width,Height-1);
     }
     internal static void Cover(Graphics g,Image image,Rectangle target){float ratio=Math.Max(target.Width/(float)image.Width,target.Height/(float)image.Height);float w=image.Width*ratio,h=image.Height*ratio;g.DrawImage(image,target.X+(target.Width-w)/2,target.Y+(target.Height-h)/2,w,h);}
-    protected override void Dispose(bool disposing){if(disposing){if(scene!=null)scene.Dispose();if(character!=null)character.Dispose();}base.Dispose(disposing);}
+    protected override void Dispose(bool disposing){if(disposing){if(scene!=null)scene.Dispose();if(character!=null)character.Dispose();if(defaultScene!=null)defaultScene.Dispose();}base.Dispose(disposing);}
 }
 
 sealed class Card:Panel {
@@ -87,7 +89,7 @@ sealed partial class LibraryForm {
         var sidebar=new Panel{Dock=DockStyle.Left,Width=220,BackColor=Color.FromArgb(14,19,36),Padding=new Padding(14,26,12,16)};
         sidebar.Controls.Add(new Label{Text="YOUR LIBRARY",ForeColor=Muted,Height=36,Dock=DockStyle.Top,Font=UiTheme.Text(12)});
         games.Dock=DockStyle.Fill;games.BorderStyle=BorderStyle.None;games.BackColor=sidebar.BackColor;games.ForeColor=Color.White;games.Font=UiTheme.Text(15);games.ItemHeight=76;games.DrawMode=DrawMode.OwnerDrawFixed;games.Items.AddRange(new object[]{"Minecraft²","Star Dash"});games.DrawItem+=DrawGame;games.SelectedIndexChanged+=delegate{RefreshView();};sidebar.Controls.Add(games);games.BringToFront();
-        sidebar.Controls.Add(new Label{Text="ASTERA\nby Star  ·  v0.1.8\n\nSame worlds.\nBrighter tomorrows.",ForeColor=Color.FromArgb(144,155,205),Dock=DockStyle.Bottom,Height=110,Font=UiTheme.Text(12)});
+        sidebar.Controls.Add(new Label{Text="ASTERA\nby Star  ·  v0.1.9\n\nSame worlds.\nBrighter tomorrows.",ForeColor=Color.FromArgb(144,155,205),Dock=DockStyle.Bottom,Height=110,Font=UiTheme.Text(12)});
 
         var viewport=new Panel{Dock=DockStyle.Fill};
         var body=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=1,RowCount=4,Padding=new Padding(24,0,24,12)};
@@ -150,10 +152,10 @@ sealed partial class LibraryForm {
     }
     void UpdateLayoutView(){
         bool mc=games.SelectedIndex==0;heroTitle.Text=mc?"Minecraft²":"Star Dash";heroSubtitle.Text=mc?"Your worlds. A little more alive.":"Ready for your next race.";
-        string background=mc?store.Settings.BackgroundMinecraft:store.Settings.BackgroundStarDash,character=mc?store.Settings.CharacterMinecraft:store.Settings.CharacterStarDash;
+        string background=mc?store.Settings.BackgroundMinecraft:store.Settings.BackgroundStarDash,character=mc?store.Settings.CharacterMinecraft:store.Settings.CharacterStarDash;if(mc&&String.IsNullOrEmpty(character)&&store.Settings.UseMinecraftSkin)character=minecraftSkinArt;
         banner.Artwork(background,character);installationPath.Text=String.IsNullOrWhiteSpace(GameFolder())?"No installation linked":GameFolder();openFolder.Enabled=!busy&&Directory.Exists(GameFolder());
-        chooseBackground.Enabled=chooseCharacter.Enabled=!busy;artLabel.Text=(String.IsNullOrEmpty(background)?"Default starfield":Path.GetFileName(background))+(String.IsNullOrEmpty(character)?"":"\n"+Path.GetFileName(character));
-        if(previewArtwork!=(background??"")){previewArtwork=background??"";var old=artPreview.Image;previewScene.Artwork=null;artPreview.Image=null;try{if(previewArtwork.Length>0)artPreview.Image=Banner.ReadArtwork(previewArtwork);}catch{}previewScene.Artwork=artPreview.Image;previewScene.Invalidate();if(old!=null)old.Dispose();}
+        chooseBackground.Enabled=chooseCharacter.Enabled=!busy;artLabel.Text=(String.IsNullOrEmpty(background)?(mc?"Minecraft² sunrise":"Default starfield"):Path.GetFileName(background))+(String.IsNullOrEmpty(character)?"":"\n"+(character==minecraftSkinArt?"Your Minecraft skin":Path.GetFileName(character)));
+        string previewKey=(mc?"minecraft:":"stardash:")+(background??"");if(previewArtwork!=previewKey){previewArtwork=previewKey;var old=artPreview.Image;previewScene.Artwork=null;artPreview.Image=null;try{artPreview.Image=String.IsNullOrEmpty(background)?banner.CopyDefaultArtwork():Banner.ReadArtwork(background);}catch{}previewScene.Artwork=artPreview.Image;previewScene.Invalidate();if(old!=null)old.Dispose();}
     }
     string GameFolder(){return games.SelectedIndex==0?store.Settings.Profile:String.IsNullOrWhiteSpace(store.Settings.StarDashExecutable)?null:Path.GetDirectoryName(store.Settings.StarDashExecutable);}
     void OpenGameFolder(){string folder=GameFolder();if(!Directory.Exists(folder)){Configure();return;}try{System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder){UseShellExecute=true});}catch(Exception error){MessageBox.Show(this,error.Message,"Open game folder");}}
@@ -162,8 +164,9 @@ sealed partial class LibraryForm {
         var row=new FlowLayoutPanel{Dock=DockStyle.Bottom,Height=100,WrapContents=true,Padding=new Padding(0,8,0,0)};
         chooseBackground.Text="Choose background…";Style(chooseBackground);((AsteraButton)chooseBackground).Symbol=ButtonSymbol.Backgrounds;chooseBackground.Click+=delegate{ChooseArtwork(false);};
         chooseCharacter.Text="Choose character…";Style(chooseCharacter);((AsteraButton)chooseCharacter).Symbol=ButtonSymbol.AddArtwork;chooseCharacter.Click+=delegate{ChooseArtwork(true);};
-        var reset=Button("Reset artwork",delegate{if(busy)return;if(games.SelectedIndex==0){store.Settings.BackgroundMinecraft="";store.Settings.CharacterMinecraft="";}else{store.Settings.BackgroundStarDash="";store.Settings.CharacterStarDash="";}store.Save();UpdateLayoutView();});
+        var reset=Button("Reset artwork",delegate{if(busy)return;if(games.SelectedIndex==0){store.Settings.BackgroundMinecraft="";store.Settings.CharacterMinecraft="";}else{store.Settings.BackgroundStarDash="";store.Settings.CharacterStarDash="";}store.Save();UpdateLayoutView();RefreshMinecraftSkin();});
         foreach(var button in new[]{chooseBackground,chooseCharacter,reset})button.Margin=new Padding(0,0,8,6);row.Controls.AddRange(new Control[]{chooseBackground,chooseCharacter,reset});
+        var useSkin=new CheckBox{Text="Use my Minecraft Launcher skin when no custom character is set",AutoSize=true,Checked=store.Settings.UseMinecraftSkin,Margin=new Padding(0,6,0,0)};useSkin.CheckedChanged+=delegate{if(busy){useSkin.Checked=store.Settings.UseMinecraftSkin;return;}store.Settings.UseMinecraftSkin=useSkin.Checked;store.Save();UpdateLayoutView();if(useSkin.Checked)RefreshMinecraftSkin();};row.Controls.Add(useSkin);
         artPreview.Dock=DockStyle.Fill;artPreview.SizeMode=PictureBoxSizeMode.Zoom;artPreview.BackColor=Color.FromArgb(15,21,39);card.Controls.Add(artPreview);card.Controls.Add(row);card.Controls.Add(new Label{Text="Game artwork  ·  Background fills the scene. Transparent PNG character sits in front and can extend above it.",Dock=DockStyle.Top,Height=45,ForeColor=Muted});
     }
     void ChooseArtwork(bool character){if(busy)return;using(var dialog=new OpenFileDialog{Title=character?"Choose a transparent character PNG":"Choose a game background",Filter=character?"PNG artwork|*.png":"Artwork|*.png;*.jpg;*.jpeg"}){if(dialog.ShowDialog(this)!=DialogResult.OK)return;try{using(var proof=Banner.ReadArtwork(dialog.FileName)){}
