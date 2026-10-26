@@ -399,3 +399,24 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Astera: generated payloads, local state and private publishing material
+/bin/
+/obj/
+/artifacts/
+/local-data/
+/test-results/
+/channel.local.json
+*.key
+*.pfx
+*.p12
+*.snk
+*private*.xml
+*.exe
+*.dll
+*.bin
+*.zip
+*.jar
+*.partial
+.env
+publish-settings.local.json
