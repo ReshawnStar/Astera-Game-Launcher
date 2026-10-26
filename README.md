@@ -2,6 +2,9 @@
 
 **Your worlds. One place.** A small Windows game library and update companion by Star.
 
+Development build: the first packaged Astera app download is still being prepared.
+The Minecraft² content channel is live; content releases are separate from the app.
+
 Minecraft² stays in CurseForge. Astera finds its profile, checks Star's signed
 update channel, downloads changed managed files and installs a previewed update
 with rollback protection. It does not download Minecraft or replace its launcher.
@@ -31,7 +34,9 @@ with rollback protection. It does not download Minecraft or replace its launcher
 
 The public channel address is configured in `channel-settings.json`. The app
 verifies notices with the included public key even when the address is changed
-in Settings. First hosted delivery is being validated before friend distribution.
+in Settings. First hosted delivery passed on October 26, 2026: three actual
+HTTPS payload downloads, protected-file checks, install, no-op repeat and restore
+in a disposable profile. No mod code was launched and no live pack was changed.
 
 ## Minecraft² ownership
 
@@ -80,7 +85,8 @@ See [PUBLISHING.md](PUBLISHING.md) for the release workflow and
 For a complete local developer pass, run `scripts/Test-Astera.ps1`. It builds
 the app, runs download/installation fixtures and mocks GitHub publication. Results
 are saved under the new D: audit directory; no live game or real GitHub request
-is involved. Actual hosted delivery still needs a public-channel smoke test.
+is involved. Actual hosted delivery is checked separately rather than inferred
+from those local fixtures.
 `scripts/Test-HostedChannel.ps1` performs that separate smoke test using a new
 synthetic profile and the real signed HTTPS channel; it never launches mod code.
 

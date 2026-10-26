@@ -78,9 +78,10 @@ version does not provide an export or key-rotation wizard.
 Changing the public key requires a deliberate new application/trust release.
 GitHub CLI authentication is separate from update-signing keys.
 
-The upload branch is prepared and can be exercised with a mock CLI locally. It
-has not yet been certified against this user's live GitHub repository. Public
-rollout needs the repository URL, public channel and a real hosted smoke test.
+The first live publication is `mc2-205-astera-1`. The app then downloaded all
+three signed payloads over public HTTPS and installed/restored them successfully
+in a disposable profile. Future publications still require testing the pack first;
+an updater smoke test does not certify Minecraft gameplay compatibility.
 
 Run the mock publisher test with an isolated fixture profile, never the live pack:
 
