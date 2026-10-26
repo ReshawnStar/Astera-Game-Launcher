@@ -12,6 +12,11 @@ with rollback protection. It does not download Minecraft or replace its launcher
 ## Current build
 
 - Steam-inspired library: games on the left, Play and update status on the right.
+- v0.1.3 layout: large hero with a separate transparent character layer that can
+  extend above the background; Overview, Updates, Backgrounds and Settings pages;
+  update notes/activity and installation cards. Backgrounds and character PNGs
+  are selected per game and remembered locally. Buttons use drawn placeholders
+  until Star supplies final artwork; no crops from the concept image are used.
 - Minecraft Squared profiles discovered by their CurseForge display name, even
   after folder renames. `But Again` is recognised as a **legacy folder name**.
   Multiple matching profiles require a choice; Astera never guesses between them.

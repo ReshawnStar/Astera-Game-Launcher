@@ -1,7 +1,7 @@
 #Requires -Version 7.2
 param(
     [string]$TestRoot=('D:/vale/StarsAllies-Storage/audits/astera-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss')),
-    [string]$BuildDirectory='D:/vale/StarsAllies-Storage/builds/Astera/0.1.2',
+    [string]$BuildDirectory='D:/vale/StarsAllies-Storage/builds/Astera/0.1.3',
     [string]$PrivateKeyFile='D:/vale/StarsAllies-Storage/keys/Astera/publisher.key'
 )
 $ErrorActionPreference='Stop'
@@ -10,7 +10,7 @@ New-Item -ItemType Directory -Path $TestRoot|Out-Null
 & (Join-Path $PSScriptRoot 'Build-Astera.ps1') -OutputDirectory $BuildDirectory
 $exe=Join-Path $BuildDirectory 'Astera.exe'
 $reports=@()
-foreach($item in @(@{Name='network';Flag='--self-test'},@{Name='engine';Flag='--engine-self-test'})){
+foreach($item in @(@{Name='network';Flag='--self-test'},@{Name='engine';Flag='--engine-self-test'},@{Name='layout';Flag='--layout-audit'})){
     $folder=Join-Path $TestRoot $item.Name
     $process=Start-Process -FilePath $exe -ArgumentList @($item.Flag,('"'+$folder+'"')) -WindowStyle Hidden -PassThru
     if(!$process.WaitForExit(60000)){$process.Kill();throw ($item.Name+' test timed out')}
