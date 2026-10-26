@@ -3,7 +3,7 @@ param(
     [string]$FeedUrl='https://raw.githubusercontent.com/ReshawnStar/Astera-Game-Launcher/main/channels/minecraft-squared.json',
     [Parameter(Mandatory=$true)][string]$SourceProfile,
     [string]$TestRoot=('D:/vale/StarsAllies-Storage/audits/astera-hosted-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss')),
-    [string]$Executable='D:/vale/StarsAllies-Storage/builds/Astera/0.1.1/Astera.exe',
+    [string]$Executable='D:/vale/StarsAllies-Storage/builds/Astera/0.1.2/Astera.exe',
     [string]$ArchivePool='D:/vale/StarsAllies-Storage/immutable-test-archives'
 )
 $ErrorActionPreference='Stop'

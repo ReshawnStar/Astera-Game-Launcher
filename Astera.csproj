@@ -3,6 +3,7 @@
   <ItemGroup><Reference Include="System"/><Reference Include="System.Core"/><Reference Include="System.Drawing"/><Reference Include="System.Windows.Forms"/><Reference Include="System.Web.Extensions"/><Reference Include="System.IO.Compression"/><Reference Include="System.IO.Compression.FileSystem"/></ItemGroup>
   <ItemGroup><Compile Include="src\*.cs"/></ItemGroup>
   <ItemGroup><EmbeddedResource Include="channel.local.json"><LogicalName>Astera.Channel</LogicalName></EmbeddedResource></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="assets\buttons\*.png"><LogicalName>Astera.Buttons.%(Filename)</LogicalName></EmbeddedResource></ItemGroup>
   <Target Name="CreateLocalChannel" BeforeTargets="PrepareForBuild"><Error Condition="!Exists('channel.local.json')" Text="Run scripts/Build-Astera.ps1 first and copy its generated channel.json to channel.local.json (public information only)."/></Target>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>
