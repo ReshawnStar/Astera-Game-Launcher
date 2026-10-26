@@ -420,3 +420,6 @@ FodyWeavers.xsd
 *.partial
 .env
 publish-settings.local.json
+
+skin-cache/
+launcher_accounts*.json
