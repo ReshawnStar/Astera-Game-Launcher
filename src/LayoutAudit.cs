@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 using MC2Pack;
 namespace Astera {
@@ -16,7 +17,8 @@ sealed partial class LibraryForm {
         var store=new Store(Path.Combine(directory,"preferences"));store.Settings.CheckOnStart=false;store.Settings.KeepInTray=false;
         using(var form=new LibraryForm(store,new Channel(),true)){
             form.ShowInTaskbar=false;form.StartPosition=FormStartPosition.Manual;form.Location=new Point(-30000,-30000);form.Show();
-            foreach(var size in new[]{new Size(1400,900),new Size(1100,760)}){form.Size=size;form.PerformLayout();Application.DoEvents();AuditButtons(form);Snapshot(form,Path.Combine(directory,"overview-"+size.Width+".png"));}checks.Add("Overview buttons fit default and minimum window widths");
+            var edgePoint=form.PointToScreen(new Point(1,1));long hit=(long)(ushort)edgePoint.X|((long)(ushort)edgePoint.Y<<16);AuditAssert(form.FormBorderStyle==FormBorderStyle.None&&SendMessage(form.Handle,0x84,IntPtr.Zero,new IntPtr(hit)).ToInt32()==13,"Borderless corner resizing did not expose its native hit target");checks.Add("Borderless frame exposes native corner-resize hit testing");
+            foreach(var size in new[]{new Size(1400,900),new Size(1100,760)}){form.Size=size;form.PerformLayout();Application.DoEvents();AuditButtons(form);AuditAssert(!form.banner.Controls.OfType<TableLayoutPanel>().First().Bounds.IntersectsWith(form.banner.Controls.OfType<FlowLayoutPanel>().First().Bounds),"Hero text panel overlaps and natively clips the action buttons");Snapshot(form,Path.Combine(directory,"overview-"+size.Width+".png"));}checks.Add("Overview buttons fit default and minimum window widths");checks.Add("Hero text never overlaps the native action-button windows");
             form.Size=new Size(1400,900);form.SelectLibraryTab(1);Application.DoEvents();AuditAssert(form.activityCard.Visible&&!form.overviewRight.Visible,"Updates tab did not show activity");AuditButtons(form);Snapshot(form,Path.Combine(directory,"updates.png"));checks.Add("Updates tab shows live update activity");
             for(int cycle=0;cycle<12;cycle++){form.moreMenu.Show(form,new Point(10,10));form.moreMenu.Close();AuditAssert(!form.moreMenu.IsDisposed,"Overflow menu was disposed on close");}
             form.moreMenu.Items[2].PerformClick();AuditAssert(form.selectedTab==1,"Overflow action stopped working after reopen");checks.Add("Overflow menu survives twelve close/reopen cycles and action selection");
@@ -32,6 +34,7 @@ sealed partial class LibraryForm {
             Snapshot(form,Path.Combine(directory,"layer-fixture.png"));var reloaded=new Store(store.Root);AuditAssert(reloaded.Settings.CharacterMinecraft==character&&reloaded.Settings.BackgroundMinecraft==background&&String.IsNullOrEmpty(reloaded.Settings.CharacterStarDash),"Per-game artwork preferences did not persist");checks.Add("Per-game artwork choices survive reload independently");
             form.games.SelectedIndex=1;AuditAssert(form.artLabel.Text.Contains("Default starfield"),"Minecraft artwork leaked into StarDash");form.games.SelectedIndex=0;
             form.notes.Text=new string('X',5000);AuditAssert(form.notes.Multiline&&form.notes.ScrollBars==ScrollBars.Vertical,"Long update notes are not scrollable");checks.Add("Long update notes retain a scrolling text area");
+            form.notes.Text=String.Join(Environment.NewLine,Enumerable.Range(0,80).Select(i=>"Scrollable line "+i));Application.DoEvents();AuditAssert(form.notes.Maximum>0,"Textured scrollbar has no scroll range");form.notes.MoveTo(form.notes.Maximum);AuditAssert(form.notes.FirstLine>0,"Textured scrollbar failed to move text");form.notes.MoveTo(0);AuditAssert(form.notes.FirstLine==0,"Textured scrollbar failed to return to top");checks.Add("Textured scrollbar moves the native text viewport and returns to the top");
             form.Close();
         }
         AsteraDiagnostics.Initialize(Path.Combine(directory,"diagnostics"));AsteraDiagnostics.Write("Diagnostic fixture",new InvalidOperationException("outer fixture",new ArgumentException("inner fixture")));string diagnostic=File.ReadAllText(AsteraDiagnostics.SessionLog);AuditAssert(diagnostic.Contains("outer fixture")&&diagnostic.Contains("inner fixture")&&diagnostic.Contains("Astera "),"Exception details or build version were lost");checks.Add("Astera session log retains exception details, inner cause and build version");

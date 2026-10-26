@@ -34,6 +34,14 @@ with rollback protection. It does not download Minecraft or replace its launcher
   the typography guide with installed-font fallbacks, and preserves the full
   design handoff in `assets/ui-v1`. Icons scale by visible bounds, keeping their
   aspect ratios. Both default and compact layouts are visually checked.
+- v0.1.8 fixes live alpha repaint trails and compact hero-panel overlap, adds a
+  borderless draggable/resizable frame with window controls, and replaces the
+  notes/activity scrollbars with button-textured thumbs on dark tracks. The four
+  Cipher v1.2 icon fixes are included. Empty character placeholders are hidden.
+  The overflow menu's Capture UI snapshot saves visible client pixels plus
+  control bounds locally. `--visual-check <new-folder>` opens an isolated test
+  window, cycles tabs/compact/maximized/restored states, saves actual displayed
+  pixels, and closes. It requires an unobscured window; it performs no updates.
 - Minecraft Squared profiles discovered by their CurseForge display name, even
   after folder renames. `But Again` is recognised as a **legacy folder name**.
   Multiple matching profiles require a choice; Astera never guesses between them.

@@ -9,7 +9,7 @@ using System.Windows.Forms;
 
 namespace Astera {
 public enum ButtonRole { Primary, Secondary, Quiet }
-public enum ButtonSymbol { None, Play, Refresh, Settings, Exit, Download, Install, Restore, Cancel, More, Overview, Updates, Backgrounds, Folder, AddArtwork, Drive, Verified, Warning, Previous, Next, Pause, Retry }
+public enum ButtonSymbol { None, Play, Refresh, Settings, Exit, Download, Install, Restore, Cancel, More, Overview, Updates, Backgrounds, Folder, AddArtwork, Drive, Verified, Warning, Previous, Next, Pause, Retry, WindowMinimize, WindowMaximize, WindowRestore }
 
 // Standard Button input/accessibility; only its drawing is customised.
 public sealed class AsteraButton:Button {
@@ -23,7 +23,7 @@ public sealed class AsteraButton:Button {
     public ButtonRole Role {get{return role;}set{role=value;Invalidate();}}
     public ButtonSymbol Symbol {get{return symbol;}set{symbol=value;Invalidate();PerformLayout();}}
     public AsteraButton(){
-        SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw|ControlStyles.SupportsTransparentBackColor,true);
+        SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw|ControlStyles.SupportsTransparentBackColor|ControlStyles.Opaque,true);
         FlatStyle=FlatStyle.Flat;FlatAppearance.BorderSize=0;UseVisualStyleBackColor=false;
         BackColor=Color.Transparent;ForeColor=Color.FromArgb(237,241,255);Font=UiTheme.Button();
         Padding=new Padding(15,8,15,8);Margin=new Padding(0,0,10,0);MinimumSize=new Size(80,40);AutoSize=true;Cursor=Cursors.Hand;
@@ -51,8 +51,19 @@ public sealed class AsteraButton:Button {
     void UpdateGlowTimer(){if(glowTimer==null||releasingGlow)return;glowTimer.Enabled=orbitGlow&&Enabled&&Visible&&IsHandleCreated&&!IsDisposed&&(glowOwner==null||glowOwner.Visible&&glowOwner.WindowState!=FormWindowState.Minimized);}
     void DetachGlowOwner(){if(glowOwner!=null){glowOwner.Resize-=GlowOwnerChanged;glowOwner.VisibleChanged-=GlowOwnerChanged;glowOwner=null;}}
     protected override void Dispose(bool disposing){if(disposing&&!releasingGlow){releasingGlow=true;DetachGlowOwner();glowTimer.Dispose();}base.Dispose(disposing);}
+    protected override void OnPaintBackground(PaintEventArgs e){}
+    void PaintBackdrop(PaintEventArgs e){
+        // Alpha artwork must start on a fresh parent scene on EVERY repaint.
+        // Avoid ButtonBase's native/transparent background snapshot, which can
+        // reuse stale owner-draw pixels during animation and resizing.
+        Control ancestor=Parent,child=this;int x=0,y=0;
+        while(ancestor!=null){x+=child.Left;y+=child.Top;if(ancestor.BackColor.A==255)break;child=ancestor;ancestor=ancestor.Parent;}
+        if(ancestor==null){e.Graphics.Clear(Color.FromArgb(12,17,33));return;}
+        var saved=e.Graphics.Save();try{e.Graphics.SetClip(ClientRectangle,CombineMode.Intersect);e.Graphics.TranslateTransform(-x,-y);var parentPaint=new PaintEventArgs(e.Graphics,new Rectangle(x,y,Width,Height));InvokePaintBackground(ancestor,parentPaint);InvokePaint(ancestor,parentPaint);}finally{e.Graphics.Restore(saved);}
+    }
     protected override void OnPaint(PaintEventArgs e){
         if(Width<4||Height<4)return;
+        PaintBackdrop(e);
         var g=e.Graphics;g.SmoothingMode=SmoothingMode.AntiAlias;
         Rectangle bounds=new Rectangle(1,1,Width-3,Height-3);
         string state=!Enabled?"disabled":pressed?"pressed":hover?"hover":"normal";
@@ -110,6 +121,9 @@ public sealed class AsteraButton:Button {
                 case ButtonSymbol.Restore:g.DrawArc(pen,4,3,13,14,190,300);g.DrawLines(pen,new[]{new PointF(2,3),new PointF(2,9),new PointF(8,9)});break;
                 case ButtonSymbol.Cancel:g.DrawLine(pen,5,5,15,15);g.DrawLine(pen,15,5,5,15);break;
                 case ButtonSymbol.More:for(int x=3;x<20;x+=7)g.FillEllipse(fill,x-1,8,3,3);break;
+                case ButtonSymbol.WindowMinimize:g.DrawLine(pen,4,11,16,11);break;
+                case ButtonSymbol.WindowMaximize:g.DrawRectangle(pen,4,4,12,12);break;
+                case ButtonSymbol.WindowRestore:g.DrawRectangle(pen,7,3,10,10);g.DrawRectangle(pen,3,7,10,10);break;
             }
         }g.Restore(saved);
     }

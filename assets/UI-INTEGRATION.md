@@ -21,3 +21,8 @@ and explicitly approved publishing these originals in the public Astera repo.
   specimen images, CSS and SVGs are not rasterized into live button captions.
 
 The supplied icon map and typography guide remain under `ui-v1/guides/`.
+
+v0.1.8 overrides four SVG/128px pairs with Cipher's Icon Fixes v1.2:
+folder-open, package-check, refresh-cw and scroll-text. The full patch handoff,
+including its 16/24/32/64px variants, is retained in `icon-fixes-v1.2/`.
+The v1 import manifest records the original import, before those replacements.

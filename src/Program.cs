@@ -11,6 +11,7 @@ using MC2Pack;
 namespace Astera {
 static class Program {
     [STAThread] static int Main(string[] args){
+        if(args.Length==2&&args[0]=="--visual-check")return LibraryForm.AuditVisibleUi(args[1]);
         if(args.Length==2&&args[0]=="--layout-audit")return LibraryForm.AuditLayout(args[1]);
         if(args.Length==2&&args[0]=="--self-test")return NetworkSelfTest.Run(args[1]);
         if(args.Length==2&&args[0]=="--engine-self-test")return SelfTest.Run(args[1]);
@@ -24,7 +25,7 @@ static class Program {
     }
 }
 sealed partial class LibraryForm:Form {
-    readonly Store store;readonly Channel channel;readonly ListBox games=new ListBox();readonly Banner banner=new Banner();readonly Label status=new Label(),profileLabel=new Label(),releaseLabel=new Label();readonly Button play=new AsteraButton(),check=new AsteraButton(),download=new AsteraButton(),install=new AsteraButton(),cancel=new AsteraButton(),settings=new AsteraButton(),restore=new AsteraButton();readonly TextBox notes=new TextBox(),log=new TextBox();readonly NotifyIcon tray=new NotifyIcon();readonly System.Windows.Forms.Timer timer=new System.Windows.Forms.Timer();UpdateFeed feed;Plan plan;string prepared;bool busy,quitting,updateReady,transaction;CancellationTokenSource cancellation;
+    readonly Store store;readonly Channel channel;readonly ListBox games=new ListBox();readonly Banner banner=new Banner();readonly Label status=new Label(),profileLabel=new Label(),releaseLabel=new Label();readonly Button play=new AsteraButton(),check=new AsteraButton(),download=new AsteraButton(),install=new AsteraButton(),cancel=new AsteraButton(),settings=new AsteraButton(),restore=new AsteraButton();readonly ScrollText notes=new ScrollText(),log=new ScrollText();readonly NotifyIcon tray=new NotifyIcon();readonly System.Windows.Forms.Timer timer=new System.Windows.Forms.Timer();UpdateFeed feed;Plan plan;string prepared;bool busy,quitting,updateReady,transaction;CancellationTokenSource cancellation;
     static readonly Color Base=Color.FromArgb(24,28,36),Panel=Color.FromArgb(33,39,49),Muted=Color.FromArgb(167,179,197);
     readonly bool previewMode;
     public LibraryForm(Store state,Channel source,bool preview=false){previewMode=preview;store=state;channel=source;Text="Astera Game Launcher";Icon=System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath)??SystemIcons.Application;Size=new Size(1400,900);MinimumSize=new Size(1100,760);StartPosition=FormStartPosition.CenterScreen;BackColor=Base;ForeColor=Color.White;Font=UiTheme.Text(14);AutoScaleMode=AutoScaleMode.Dpi;

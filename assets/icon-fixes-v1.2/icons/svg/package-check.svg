@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" color="#EDF1FF" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Verified package">
+<title>Verified package</title>
+<!-- True aligned cube; corners and joins hand-drawn -->
+<path d="M9 4.45 15.5 8.05 9 11.65 2.5 8.05Z"/>
+<path d="M2.5 8.05v6.85L9 18.5l6.5-3.6V8.05"/>
+<path d="M9 11.65v6.85"/>
+<!-- Visually separate check, never crosses the box -->
+<path d="m16.5 18.25 1.9 1.9 3.65-4.65" stroke-width="2.2"/>
+</svg>
