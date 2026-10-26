@@ -88,7 +88,7 @@ sealed partial class LibraryForm {
         var sidebar=new Panel{Dock=DockStyle.Left,Width=220,BackColor=Color.FromArgb(14,19,36),Padding=new Padding(14,26,12,16)};
         sidebar.Controls.Add(new Label{Text="YOUR LIBRARY",ForeColor=Muted,Height=36,Dock=DockStyle.Top,Font=new Font("Segoe UI",9)});
         games.Dock=DockStyle.Fill;games.BorderStyle=BorderStyle.None;games.BackColor=sidebar.BackColor;games.ForeColor=Color.White;games.Font=new Font("Segoe UI",12);games.ItemHeight=76;games.DrawMode=DrawMode.OwnerDrawFixed;games.Items.AddRange(new object[]{"Minecraft²","Star Dash"});games.DrawItem+=DrawGame;games.SelectedIndexChanged+=delegate{RefreshView();};sidebar.Controls.Add(games);games.BringToFront();
-        sidebar.Controls.Add(new Label{Text="ASTERA\nby Star  ·  v0.1.4\n\nSame worlds.\nBrighter tomorrows.",ForeColor=Color.FromArgb(144,155,205),Dock=DockStyle.Bottom,Height=110,Font=new Font("Segoe UI",9)});
+        sidebar.Controls.Add(new Label{Text="ASTERA\nby Star  ·  v0.1.5\n\nSame worlds.\nBrighter tomorrows.",ForeColor=Color.FromArgb(144,155,205),Dock=DockStyle.Bottom,Height=110,Font=new Font("Segoe UI",9)});
 
         var viewport=new Panel{Dock=DockStyle.Fill,AutoScroll=true};
         var body=new TableLayoutPanel{Dock=DockStyle.Top,Height=740,ColumnCount=1,RowCount=4,Padding=new Padding(24,0,24,12)};
@@ -104,7 +104,7 @@ sealed partial class LibraryForm {
         profileLabel.Dock=DockStyle.Fill;profileLabel.ForeColor=Muted;profileLabel.AutoEllipsis=true;profileLabel.Font=new Font("Segoe UI",9);
         heroText.Controls.Add(heroTitle,0,0);heroText.Controls.Add(heroSubtitle,0,1);heroText.Controls.Add(status,0,2);heroText.Controls.Add(profileLabel,0,3);banner.Controls.Add(heroText);
         var action=new FlowLayoutPanel{BackColor=Color.Transparent,Location=new Point(24,258),Height=58,WrapContents=false};
-        play.Text="PLAY";Style(play);((AsteraButton)play).Role=ButtonRole.Primary;((AsteraButton)play).Symbol=ButtonSymbol.Play;play.Font=new Font("Segoe UI",11,FontStyle.Bold);play.MinimumSize=new Size(170,48);play.Click+=delegate{if(games.SelectedIndex==0)OpenCurseForge();else OpenStarDash();};
+        play.Text="PLAY";Style(play);((AsteraButton)play).Role=ButtonRole.Primary;((AsteraButton)play).Symbol=ButtonSymbol.Play;((AsteraButton)play).OrbitGlow=true;play.Font=new Font("Segoe UI",11,FontStyle.Bold);play.MinimumSize=new Size(170,48);play.Click+=delegate{if(games.SelectedIndex==0)OpenCurseForge();else OpenStarDash();};
         check.Text="Check for updates";Style(check);((AsteraButton)check).Symbol=ButtonSymbol.Refresh;check.MinimumSize=new Size(195,48);check.Click+=async delegate{await Check(false);};
         moreMenu=new ContextMenuStrip(menuComponents);moreMenu.Items.Add("Open game folder",null,delegate{OpenGameFolder();});moreMenu.Items.Add("Game settings",null,delegate{Configure();});moreMenu.Items.Add("Update activity",null,delegate{SelectLibraryTab(1);});moreMenu.Items.Add("Open Astera logs",null,delegate{OpenDiagnostics();});moreMenu.Items.Add("Collect game logs",null,delegate{CollectGameLogs();});
         var more=Button("…",delegate(object sender,EventArgs e){var button=(Control)sender;moreMenu.Show(button,new Point(0,button.Height));});more.MinimumSize=new Size(48,48);

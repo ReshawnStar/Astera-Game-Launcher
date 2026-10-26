@@ -24,6 +24,8 @@ with rollback protection. It does not download Minecraft or replace its launcher
   logs also snapshots Minecraft's latest.log or StarDash's Godot logs. Originals
   stay untouched; copies are hash-deduplicated with source receipts. Large files
   retain their last 4 MiB, marked `-tail`. Logs stay local and are never uploaded.
+- v0.1.5 adds a soft travelling border glow to Play. It loops in four seconds,
+  leaves the caption clear, and pauses when disabled, hidden or minimized.
 - Minecraft Squared profiles discovered by their CurseForge display name, even
   after folder renames. `But Again` is recognised as a **legacy folder name**.
   Multiple matching profiles require a choice; Astera never guesses between them.

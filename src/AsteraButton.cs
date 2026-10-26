@@ -16,6 +16,10 @@ public sealed class AsteraButton:Button {
     bool hover,pressed;
     ButtonRole role=ButtonRole.Secondary;
     ButtonSymbol symbol;
+    readonly Timer glowTimer=new Timer();
+    static readonly System.Diagnostics.Stopwatch GlowClock=System.Diagnostics.Stopwatch.StartNew();
+    bool orbitGlow,releasingGlow;Form glowOwner;PointF[] glowPoints;
+    public bool OrbitGlow {get{return orbitGlow;}set{orbitGlow=value;UpdateGlowTimer();Invalidate();}}
     public ButtonRole Role {get{return role;}set{role=value;Invalidate();}}
     public ButtonSymbol Symbol {get{return symbol;}set{symbol=value;Invalidate();PerformLayout();}}
     public AsteraButton(){
@@ -23,6 +27,7 @@ public sealed class AsteraButton:Button {
         FlatStyle=FlatStyle.Flat;FlatAppearance.BorderSize=0;UseVisualStyleBackColor=false;
         BackColor=Color.Transparent;ForeColor=Color.FromArgb(239,242,255);Font=new Font("Segoe UI",10,FontStyle.Regular);
         Padding=new Padding(15,8,15,8);Margin=new Padding(0,0,10,0);MinimumSize=new Size(80,40);AutoSize=true;Cursor=Cursors.Hand;
+        glowTimer.Interval=33;glowTimer.Tick+=delegate{Invalidate();};
     }
     public override Size GetPreferredSize(Size proposedSize){
         Size text=TextRenderer.MeasureText(Text??"",Font,new Size(Int32.MaxValue,Int32.MaxValue),TextFormatFlags.SingleLine|TextFormatFlags.NoPadding);
@@ -37,7 +42,15 @@ public sealed class AsteraButton:Button {
     protected override void OnKeyUp(KeyEventArgs e){pressed=false;base.OnKeyUp(e);Invalidate();}
     protected override void OnGotFocus(EventArgs e){base.OnGotFocus(e);Invalidate();}
     protected override void OnLostFocus(EventArgs e){pressed=false;base.OnLostFocus(e);Invalidate();}
-    protected override void OnEnabledChanged(EventArgs e){pressed=false;hover=false;Cursor=Enabled?Cursors.Hand:Cursors.Default;base.OnEnabledChanged(e);Invalidate();}
+    protected override void OnEnabledChanged(EventArgs e){pressed=false;hover=false;Cursor=Enabled?Cursors.Hand:Cursors.Default;base.OnEnabledChanged(e);UpdateGlowTimer();Invalidate();}
+    protected override void OnVisibleChanged(EventArgs e){base.OnVisibleChanged(e);UpdateGlowTimer();}
+    protected override void OnSizeChanged(EventArgs e){glowPoints=null;base.OnSizeChanged(e);}
+    protected override void OnHandleCreated(EventArgs e){base.OnHandleCreated(e);glowOwner=FindForm();if(glowOwner!=null){glowOwner.Resize+=GlowOwnerChanged;glowOwner.VisibleChanged+=GlowOwnerChanged;}UpdateGlowTimer();}
+    protected override void OnHandleDestroyed(EventArgs e){DetachGlowOwner();if(!releasingGlow)glowTimer.Stop();base.OnHandleDestroyed(e);}
+    void GlowOwnerChanged(object sender,EventArgs e){UpdateGlowTimer();}
+    void UpdateGlowTimer(){if(glowTimer==null||releasingGlow)return;glowTimer.Enabled=orbitGlow&&Enabled&&Visible&&IsHandleCreated&&!IsDisposed&&(glowOwner==null||glowOwner.Visible&&glowOwner.WindowState!=FormWindowState.Minimized);}
+    void DetachGlowOwner(){if(glowOwner!=null){glowOwner.Resize-=GlowOwnerChanged;glowOwner.VisibleChanged-=GlowOwnerChanged;glowOwner=null;}}
+    protected override void Dispose(bool disposing){if(disposing&&!releasingGlow){releasingGlow=true;DetachGlowOwner();glowTimer.Dispose();}base.Dispose(disposing);}
     protected override void OnPaint(PaintEventArgs e){
         if(Width<4||Height<4)return;
         var g=e.Graphics;g.SmoothingMode=SmoothingMode.AntiAlias;
@@ -53,6 +66,7 @@ public sealed class AsteraButton:Button {
         string state=!Enabled?"disabled":pressed?"pressed":hover?"hover":"normal";
         bool exact;Image art=ButtonArt.Get(Role,state,out exact);
         if(art!=null)ButtonArt.Draw(g,art,bounds,(!Enabled&&!exact) ? .42F : 1F);
+        if(OrbitGlow&&Enabled)DrawOrbitGlow(g);
         Color caption=Enabled?ForeColor:Color.FromArgb(151,162,188);
         Size text=TextRenderer.MeasureText(Text??"",Font,new Size(Int32.MaxValue,Int32.MaxValue),TextFormatFlags.SingleLine|TextFormatFlags.NoPadding);
         int iconWidth=Symbol==ButtonSymbol.None?0:28,total=text.Width+iconWidth;
@@ -60,6 +74,23 @@ public sealed class AsteraButton:Button {
         if(Symbol!=ButtonSymbol.None)DrawSymbol(g,Symbol,new Rectangle(x,y+(text.Height-19)/2,19,19),caption);
         TextRenderer.DrawText(g,Text,Font,new Point(x+iconWidth,y),caption,TextFormatFlags.SingleLine|TextFormatFlags.NoPadding|(ShowKeyboardCues?0:TextFormatFlags.HidePrefix));
         if(Focused&&ShowFocusCues){var focus=new Rectangle(5,5,Width-11,Height-11);using(var p=Round(focus,6))using(var pen=new Pen(Color.FromArgb(230,233,255),1)){pen.DashStyle=DashStyle.Dot;g.DrawPath(pen,p);}}
+    }
+    void DrawOrbitGlow(Graphics g){
+        if(Width<16||Height<16)return;
+        if(glowPoints==null){
+            using(var path=Round(new Rectangle(3,3,Width-7,Height-7),8)){
+                path.Flatten(null,.3F);var points=path.PathPoints;var distances=new double[points.Length+1];
+                for(int i=0;i<points.Length;i++){var a=points[i];var b=points[(i+1)%points.Length];distances[i+1]=distances[i]+Math.Sqrt((b.X-a.X)*(b.X-a.X)+(b.Y-a.Y)*(b.Y-a.Y));}
+                glowPoints=new PointF[192];int edge=0;
+                for(int i=0;i<glowPoints.Length;i++){double d=distances[points.Length]*i/glowPoints.Length;while(edge<points.Length-1&&distances[edge+1]<=d)edge++;double length=distances[edge+1]-distances[edge],t=length==0?0:(d-distances[edge])/length;var a=points[edge];var b=points[(edge+1)%points.Length];glowPoints[i]=new PointF(a.X+(float)t*(b.X-a.X),a.Y+(float)t*(b.Y-a.Y));}
+            }
+        }
+        int head=(int)(GlowClock.Elapsed.TotalSeconds*glowPoints.Length/4)%glowPoints.Length;
+        float[] widths={8F,4F,1.6F};int[] opacity={22,80,250};
+        for(int pass=0;pass<3;pass++)using(var pen=new Pen(Color.White,widths[pass])){
+            pen.StartCap=pen.EndCap=LineCap.Round;
+            for(int step=0;step<64;step++){float strength=(step+1)/64F;int at=(head-64+step+glowPoints.Length)%glowPoints.Length;pen.Color=Color.FromArgb((int)(opacity[pass]*strength*strength),pass==2?225:156,pass==2?235:146,255);g.DrawLine(pen,glowPoints[at],glowPoints[(at+1)%glowPoints.Length]);}
+        }
     }
     internal static GraphicsPath Round(Rectangle rect,int radius){var path=new GraphicsPath();int d=Math.Min(radius*2,Math.Min(rect.Width,rect.Height));path.AddArc(rect.Left,rect.Top,d,d,180,90);path.AddArc(rect.Right-d,rect.Top,d,d,270,90);path.AddArc(rect.Right-d,rect.Bottom-d,d,d,0,90);path.AddArc(rect.Left,rect.Bottom-d,d,d,90,90);path.CloseFigure();return path;}
     static void DrawSymbol(Graphics g,ButtonSymbol type,Rectangle r,Color color){
