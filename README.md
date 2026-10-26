@@ -26,6 +26,14 @@ with rollback protection. It does not download Minecraft or replace its launcher
   retain their last 4 MiB, marked `-tail`. Logs stay local and are never uploaded.
 - v0.1.5 adds a soft travelling border glow to Play. It loops in four seconds,
   leaves the caption clear, and pauses when disabled, hidden or minimized.
+- v0.1.6 embeds Star's original button and grayscale sheets. Rounded corners and
+  glow padding survive resizing; Settings → Button color selects the original
+  Violet/blue or mask-derived Teal, Rose and Gold. Secondary controls use quieter
+  shades. Source PNGs remain unchanged; labels and the moving glow stay live.
+- v0.1.7 uses the revised flat button sheets and supplied 21-icon set, applies
+  the typography guide with installed-font fallbacks, and preserves the full
+  design handoff in `assets/ui-v1`. Icons scale by visible bounds, keeping their
+  aspect ratios. Both default and compact layouts are visually checked.
 - Minecraft Squared profiles discovered by their CurseForge display name, even
   after folder renames. `But Again` is recognised as a **legacy folder name**.
   Multiple matching profiles require a choice; Astera never guesses between them.

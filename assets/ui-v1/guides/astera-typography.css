@@ -1,0 +1,24 @@
+/* Astera UI Typography v1 — no font files bundled */
+:root {
+  --astera-font: "Segoe UI Variable", "Segoe UI", Inter, Arial, sans-serif;
+  --astera-white: #EDF1FF;
+  --astera-muted: #A9B8DC;
+  --astera-subtle: #8495B8;
+  --astera-accent: #5844F4;
+  --astera-border: #485B88;
+  --astera-panel: #17213B;
+}
+.astera-root { font-family: var(--astera-font); color: var(--astera-white); }
+.astera-brand { font-size: 30px; font-weight: 700; letter-spacing: .4px; }
+.astera-hero-title { font-size: 40px; font-weight: 700; letter-spacing: -.6px; }
+.astera-section-heading { font-size: 17px; font-weight: 650; }
+.astera-sidebar-game { font-size: 15px; font-weight: 600; }
+.astera-button-label { font-size: 15px; font-weight: 600; letter-spacing: .3px; }
+.astera-navigation { font-size: 14px; font-weight: 500; }
+.astera-body { font-size: 14px; font-weight: 400; }
+.astera-status { font-size: 12px; font-weight: 600; letter-spacing: .3px; }
+.astera-secondary { font-size: 12px; font-weight: 400; color: var(--astera-muted); }
+.astera-eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 1.7px; text-transform: uppercase; }
+/* SVG icons use currentColor; set width/height and color on the host element.
+   Keep icon/text separate from button background. Vale manages the animated border. */
+.astera-icon { width: 20px; height: 20px; color: var(--astera-white); flex-shrink: 0; }

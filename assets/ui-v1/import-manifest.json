@@ -1,0 +1,602 @@
+[
+  {
+    "Path": "README.md",
+    "Bytes": 2550,
+    "Sha256": "F43432316637C7C71E7DEFC1FF3F269BAE871DC652BCED8666440607F4D14AE8"
+  },
+  {
+    "Path": "guides/astera-typography.css",
+    "Bytes": 1377,
+    "Sha256": "E1C37F4308D9A80D13377BF2C5B0DAD9FDA17E54D96ABC7D5ED6386BF37CDC3C"
+  },
+  {
+    "Path": "guides/icon-usage-map.csv",
+    "Bytes": 834,
+    "Sha256": "5277FC8A4C678BFF7842EDBAE155EBD879C8891403AAE305ED3F2F7077B3462C"
+  },
+  {
+    "Path": "guides/ui-text-labels.txt",
+    "Bytes": 419,
+    "Sha256": "F898728F2BA0458EAB003DDA369EF3DCFBE687464E1B285DB3857F58CEC2921F"
+  },
+  {
+    "Path": "icons/png_128/alert-triangle.png",
+    "Bytes": 2623,
+    "Sha256": "A265B01A4228183957876DED912CBFECEEA14FE3466CD169BB100BDD3489E39E"
+  },
+  {
+    "Path": "icons/png_128/check-circle.png",
+    "Bytes": 4208,
+    "Sha256": "8E579579C03E30C2D69475653A8478ACC0C8863582E84F59112A3DFD79C9A5DC"
+  },
+  {
+    "Path": "icons/png_128/chevron-left.png",
+    "Bytes": 1026,
+    "Sha256": "F2003560D824D916CC0E0B0AB11ACD1D42FFBAB3DB23528564B16B58396D895F"
+  },
+  {
+    "Path": "icons/png_128/chevron-right.png",
+    "Bytes": 971,
+    "Sha256": "33EA02872782FD9539B7E9A32B6C719787334DB139C7C7A150A5D5EAB0B9D442"
+  },
+  {
+    "Path": "icons/png_128/download.png",
+    "Bytes": 1527,
+    "Sha256": "BF0D03F7A08F41668CED0486AD269C6D022AD375CEF8E1B278453C9BC21D4BD3"
+  },
+  {
+    "Path": "icons/png_128/ellipsis.png",
+    "Bytes": 1074,
+    "Sha256": "3B8D364188300E18C6FAD3CDD6051981EBB7B15AEB7537D5FCA0ECF540619848"
+  },
+  {
+    "Path": "icons/png_128/folder-open.png",
+    "Bytes": 2691,
+    "Sha256": "5E4FF03DE97A6BF41B9AC7EE13FC1517827DDB5447E14F28774E4D0528EFB54F"
+  },
+  {
+    "Path": "icons/png_128/hard-drive.png",
+    "Bytes": 1827,
+    "Sha256": "12E58C07318668AEB223ECD114A9F844441ACF08214C2B62BEAD3412BDF6C85A"
+  },
+  {
+    "Path": "icons/png_128/history.png",
+    "Bytes": 3679,
+    "Sha256": "23839CB611AAA05A8017081E75726DADA2F4399CB64AD0D2F26F8EC4C4A8A353"
+  },
+  {
+    "Path": "icons/png_128/image-plus.png",
+    "Bytes": 3330,
+    "Sha256": "7813DE6461CF24C1D67E53BC215C88AB2001AC38D046521AB94C252D98079326"
+  },
+  {
+    "Path": "icons/png_128/image.png",
+    "Bytes": 3296,
+    "Sha256": "BAA9C69FA5990ABE992DF90F3A0C3C126F90B3978EF29C71386672CDD1DD6EE3"
+  },
+  {
+    "Path": "icons/png_128/layout-dashboard.png",
+    "Bytes": 2510,
+    "Sha256": "B700B005026BD5A62BE7C5135E9DAF5FE5383AC478CA3FFBECE5C5F023A7C757"
+  },
+  {
+    "Path": "icons/png_128/log-out.png",
+    "Bytes": 1671,
+    "Sha256": "4E78828AD64420293AE8F3F38561B1BA0A77F4C50D11EF96F184736C21658FF7"
+  },
+  {
+    "Path": "icons/png_128/package-check.png",
+    "Bytes": 3122,
+    "Sha256": "7BF321F7E0042D608A61DC1B5B8FDF2A1734FFFDD210F39B9E98B28CB3428D01"
+  },
+  {
+    "Path": "icons/png_128/pause.png",
+    "Bytes": 861,
+    "Sha256": "C662FD6F87AA909742B4E20A853490B0FFD21DF477457952E9D76C8697F9F351"
+  },
+  {
+    "Path": "icons/png_128/play.png",
+    "Bytes": 796,
+    "Sha256": "04E71B42268DF0E2B443626175876FA51E06927387BE303439753A368C855708"
+  },
+  {
+    "Path": "icons/png_128/refresh-cw.png",
+    "Bytes": 3913,
+    "Sha256": "705B85EDA934F48B9A61C5303FD5B101FC4E94E1664AF93FEBECCE5FA6ED43C3"
+  },
+  {
+    "Path": "icons/png_128/rotate-ccw.png",
+    "Bytes": 3413,
+    "Sha256": "0BA3EBE1F70BF154E8D3CCFD3C47761ACA1607F8A27830E30959B294CF1D0329"
+  },
+  {
+    "Path": "icons/png_128/scroll-text.png",
+    "Bytes": 2266,
+    "Sha256": "297CDF19F1287899332939663A20512BDE58D2FF944D8C42B69C176F4BFBB599"
+  },
+  {
+    "Path": "icons/png_128/settings.png",
+    "Bytes": 5782,
+    "Sha256": "459729994F912BC0764318B3BAB6DB7631DDFAEBD1BE35932A5EAF7D0B0C29CA"
+  },
+  {
+    "Path": "icons/png_128/x.png",
+    "Bytes": 1441,
+    "Sha256": "F9FBA35B85021BCE2BCC74D8ED8B142B75094C902075117107CC337AF8F19967"
+  },
+  {
+    "Path": "icons/svg/alert-triangle.svg",
+    "Bytes": 411,
+    "Sha256": "2307103B58CFE93A23F37A94B4A24074FEC9773D331062898CED29A07269E0E8"
+  },
+  {
+    "Path": "icons/svg/check-circle.svg",
+    "Bytes": 300,
+    "Sha256": "85D3B3B9E175B2A2F28D71F55FC8B1A7887610926381CE7E880707680EEFE16B"
+  },
+  {
+    "Path": "icons/svg/chevron-left.svg",
+    "Bytes": 267,
+    "Sha256": "466A84AD4EAB48CB839439805C804C4C6EA336DECFB3DE0AF661DEFEC054263C"
+  },
+  {
+    "Path": "icons/svg/chevron-right.svg",
+    "Bytes": 267,
+    "Sha256": "2A7F58CDD6F4F17BE8ECB9E93B74C67A05427663C9C1526B8AB4AD9B29B3E89C"
+  },
+  {
+    "Path": "icons/svg/download.svg",
+    "Bytes": 308,
+    "Sha256": "CD5E405BE60538FACEAFA8D786959770C8FBF7267AA02A503D1E03B0A93CB85C"
+  },
+  {
+    "Path": "icons/svg/ellipsis.svg",
+    "Bytes": 438,
+    "Sha256": "AAD0A6A02D7F891D2CC325AEA2547A07AEDC73826930578AFF3C9A7BA9A4DE4F"
+  },
+  {
+    "Path": "icons/svg/folder-open.svg",
+    "Bytes": 404,
+    "Sha256": "CD542648A1D92A32F800F374C72F2C4513CBADFDC2CB19C2CCA8D58175ED9306"
+  },
+  {
+    "Path": "icons/svg/hard-drive.svg",
+    "Bytes": 399,
+    "Sha256": "AD8B71B582EC3C2255AF8470F3DEE863F76ECDB73A193FBDADF528312B40CF2D"
+  },
+  {
+    "Path": "icons/svg/history.svg",
+    "Bytes": 319,
+    "Sha256": "98396848E471E9A07293D2D4FA9B5D9334E1D7B6266FB809186E0181CEC0A3A6"
+  },
+  {
+    "Path": "icons/svg/image-plus.svg",
+    "Bytes": 399,
+    "Sha256": "0FBCD09B3C44914AE0C05F4A9C991038EB26828B276EC676BA5260EBFDBCD0C8"
+  },
+  {
+    "Path": "icons/svg/image.svg",
+    "Bytes": 352,
+    "Sha256": "2D66B2AB0E947EE39FE879674D4990573A0A1D501A39F51CA8B19DFFF2274797"
+  },
+  {
+    "Path": "icons/svg/layout-dashboard.svg",
+    "Bytes": 439,
+    "Sha256": "2E3B3BE2AF10F9BB44BA788E62E348CC7877AC7757E001C282328F9FEE3B1776"
+  },
+  {
+    "Path": "icons/svg/log-out.svg",
+    "Bytes": 334,
+    "Sha256": "A798B4E656C098C6BAA5DBC25AEEF5B07A62326CF862C55CAB994961581B95A5"
+  },
+  {
+    "Path": "icons/svg/package-check.svg",
+    "Bytes": 349,
+    "Sha256": "494352C6A48DA454BAEE5FE72D904D47042B095EAE040C15CAF58B1E95159711"
+  },
+  {
+    "Path": "icons/svg/pause.svg",
+    "Bytes": 400,
+    "Sha256": "0E63FFB57FA1CE9D396FCF89068E5612E0B810EBA2D8A32D9CE6C629F8AD18EF"
+  },
+  {
+    "Path": "icons/svg/play.svg",
+    "Bytes": 306,
+    "Sha256": "269E3E58E6587A1245CA5AD845784251E59BE4655E9A95A8D709CD9CE76FC774"
+  },
+  {
+    "Path": "icons/svg/refresh-cw.svg",
+    "Bytes": 363,
+    "Sha256": "6886FF0554C79A8BE75DEA8F78711DB8AB18F6CF20DF29834ED9C5889D63DF4F"
+  },
+  {
+    "Path": "icons/svg/rotate-ccw.svg",
+    "Bytes": 295,
+    "Sha256": "EF8F122E1BABB00C97D957E4798EC98CD9437569FCAC075FE6AC704A61C92FD0"
+  },
+  {
+    "Path": "icons/svg/scroll-text.svg",
+    "Bytes": 375,
+    "Sha256": "CD49D1D0FA250123F275BABA3FA871B7804F61EB8A1F5CC8C4F7856A53850208"
+  },
+  {
+    "Path": "icons/svg/settings.svg",
+    "Bytes": 535,
+    "Sha256": "BEECE83CB2596CF7F24A6CB93499E895CAF9D71267F628E328A9BC2214912A2A"
+  },
+  {
+    "Path": "icons/svg/x.svg",
+    "Bytes": 263,
+    "Sha256": "65306796B2BF0596982F826F1BAC3EA6F438F08E19D425DB88A5FAAC4684849E"
+  },
+  {
+    "Path": "previews/astera_icon_preview.png",
+    "Bytes": 72554,
+    "Sha256": "0C177E90661FD90D06D813597F474C4367A4B624F859FF4BB7CA90D0E235820E"
+  },
+  {
+    "Path": "previews/astera_typography_layout.png",
+    "Bytes": 133766,
+    "Sha256": "C4D8D6129F4759A29456BFCCF29425F7EC7DA8E435C9D28250B3F9D53AE87304"
+  },
+  {
+    "Path": "text_labels/png/add-artwork.png",
+    "Bytes": 3060,
+    "Sha256": "C224CABB79657060C286ECC7B47B04E1F44068A7AF1BE787C5E61FF6E962B2AC"
+  },
+  {
+    "Path": "text_labels/png/astera.png",
+    "Bytes": 1837,
+    "Sha256": "308E24AA435B18431C8426378378BF97011CC9E131FEEE1A4D4B5BA3CB0749AD"
+  },
+  {
+    "Path": "text_labels/png/backgrounds.png",
+    "Bytes": 4184,
+    "Sha256": "B7DBE672D4FCBDAA9BC11C08192C358112D53BDC997D7A74ED53EB5E26D841DE"
+  },
+  {
+    "Path": "text_labels/png/cancel.png",
+    "Bytes": 1760,
+    "Sha256": "F6CC4EA6584CFE2CDCD91433D2A0150E01F5DC8EBE362B11C99D167A74725ABC"
+  },
+  {
+    "Path": "text_labels/png/check-for-updates.png",
+    "Bytes": 3577,
+    "Sha256": "034EF8D33A35739397031B107F94092F0F104371994B2FE394B2C5DA8642C9B4"
+  },
+  {
+    "Path": "text_labels/png/crystal-heroes.png",
+    "Bytes": 3186,
+    "Sha256": "66E846271CE675C404B764C71406BEC430C4A23FFD37B95F9FFEB92705BBAD4E"
+  },
+  {
+    "Path": "text_labels/png/details.png",
+    "Bytes": 1806,
+    "Sha256": "0430F7261B07698BE30716974900A6124BD6BFF178AF9EF6DCCB95103FACB17E"
+  },
+  {
+    "Path": "text_labels/png/download.png",
+    "Bytes": 2633,
+    "Sha256": "2F87546CC58F98B6E601F1246246ED3AB78EF171B34F6C9473EF63805EA381C7"
+  },
+  {
+    "Path": "text_labels/png/downloading.png",
+    "Bytes": 3203,
+    "Sha256": "B20132D7A2B00CFD1523C56670F4CC6ED4F5D4040B9AA3485878791BD134FCD0"
+  },
+  {
+    "Path": "text_labels/png/exit.png",
+    "Bytes": 1025,
+    "Sha256": "FF70EFDEC535CB2DAEBF663AB486E8E3C6C7DF895FDB275D8FBCE687D9FB1041"
+  },
+  {
+    "Path": "text_labels/png/gacha-nova.png",
+    "Bytes": 2723,
+    "Sha256": "0F5EB1C42FB09CA6A7F3015E7E2ED1227D90D4D21549E1E68F9804E1579936AC"
+  },
+  {
+    "Path": "text_labels/png/game-artwork.png",
+    "Bytes": 3664,
+    "Sha256": "E86CBD471FAE8B851A6B423DB0D717706EF5EBB0993E15A12F05A26B5B02525F"
+  },
+  {
+    "Path": "text_labels/png/install-update.png",
+    "Bytes": 2606,
+    "Sha256": "89BCD91BDE18A9219823B72B5C6C3B9B16E2CB0908FA27F744F492D122D79F95"
+  },
+  {
+    "Path": "text_labels/png/install.png",
+    "Bytes": 1693,
+    "Sha256": "4EC3511AC3E4DFEDC6B9D8DC599CA93DA8C4FAE0C1A03C60193AFCA543B63884"
+  },
+  {
+    "Path": "text_labels/png/installing.png",
+    "Bytes": 2263,
+    "Sha256": "E8D66859C09E7BFE7DC07F54A08E59E1847F4489BC19B0488836E8201D8389C8"
+  },
+  {
+    "Path": "text_labels/png/latest-update.png",
+    "Bytes": 2349,
+    "Sha256": "025DF96935520496E7871380F2CE2C0C4972C4FA52655534EFF29BCA27EBCCF1"
+  },
+  {
+    "Path": "text_labels/png/launch.png",
+    "Bytes": 1828,
+    "Sha256": "480D3FB3C7F65DD571BC3E44C871A1827321670188D4E19226B30B5B14DD0A62"
+  },
+  {
+    "Path": "text_labels/png/library.png",
+    "Bytes": 1799,
+    "Sha256": "28753BF9667B358550B604C1AADFA085ECAAE85BFB3DA165B4BAC1FB38719F4B"
+  },
+  {
+    "Path": "text_labels/png/manage.png",
+    "Bytes": 2062,
+    "Sha256": "3010896528E067BF1CE06BE55EDF17A1399DB580A35789C04C33AEBC410B6563"
+  },
+  {
+    "Path": "text_labels/png/minecraft.png",
+    "Bytes": 2635,
+    "Sha256": "BC185E0BD6B3C829911D3B76FB400E3C728E29383225F61406FBF234CC200BB0"
+  },
+  {
+    "Path": "text_labels/png/more.png",
+    "Bytes": 1691,
+    "Sha256": "5A7AF32BAE586ED0247C8EC15417FAD3C13398696D8A6DC008EB39A86AD925F7"
+  },
+  {
+    "Path": "text_labels/png/open-folder.png",
+    "Bytes": 2276,
+    "Sha256": "D4EEC25E90F3DADDAB9B1C14085F0DB3BEB754CD2F223D062536696E4B1B5EF9"
+  },
+  {
+    "Path": "text_labels/png/overview.png",
+    "Bytes": 2383,
+    "Sha256": "FBFB99CE480EC5B69C886E4A8DA0CFA34CF6AE49B89A44F33A0DA258CEAF3203"
+  },
+  {
+    "Path": "text_labels/png/pause.png",
+    "Bytes": 1809,
+    "Sha256": "42B0094C8F43AAAF03D1C464E8AA82066F197CE42CA6B735BAA05CC9488EA093"
+  },
+  {
+    "Path": "text_labels/png/play.png",
+    "Bytes": 1317,
+    "Sha256": "28F91434767F4DEA0759748B53738484142DF6EE19F6F69B488FFBCD6D3851DF"
+  },
+  {
+    "Path": "text_labels/png/restore-backup.png",
+    "Bytes": 3865,
+    "Sha256": "492BB960AEAAC5612C9BADFA550A0B96230DA2A011E14F45EDDB54247CD2C075"
+  },
+  {
+    "Path": "text_labels/png/resume.png",
+    "Bytes": 1930,
+    "Sha256": "B941962A26B46644348C028E4BA42527C6CFF8C6E750FD5853DE5770976AA544"
+  },
+  {
+    "Path": "text_labels/png/retry.png",
+    "Bytes": 1194,
+    "Sha256": "83C53F2F666B7F0449275CB8087883D4D7CB815D0D3FBEF6E69A73B56F3BDE40"
+  },
+  {
+    "Path": "text_labels/png/settings.png",
+    "Bytes": 1914,
+    "Sha256": "8B7F5E97D99026DD734DBC8308D7514E54683C9E1870D84EC109524D48ECFBAD"
+  },
+  {
+    "Path": "text_labels/png/star-dash.png",
+    "Bytes": 2452,
+    "Sha256": "C5AB06BC0B2BC74E2B261F6D02F17ED05D42D620F67E4ED3E2B1C851973AF2A5"
+  },
+  {
+    "Path": "text_labels/png/up-to-date.png",
+    "Bytes": 2143,
+    "Sha256": "3B9ABC81117EF715300901C3C36B57DAC673CEFF1E582B9B1A11DACA848E9EBB"
+  },
+  {
+    "Path": "text_labels/png/update-available.png",
+    "Bytes": 2398,
+    "Sha256": "9FCFD784C7DFB1CE79FE9C5C63A0721C3ED02CDABCDE619EC9AD4EA57DBD3B3E"
+  },
+  {
+    "Path": "text_labels/png/update.png",
+    "Bytes": 1618,
+    "Sha256": "902C72B89F2A06CB1B95C618C30623955074F04B2B026B3CC257AF95798E144D"
+  },
+  {
+    "Path": "text_labels/png/updates.png",
+    "Bytes": 2148,
+    "Sha256": "58D70DEFE61A0E48E9601A67C8464E41C04CB7E7B420DAF3DE95642DBEC2C65D"
+  },
+  {
+    "Path": "text_labels/png/verifying.png",
+    "Bytes": 2338,
+    "Sha256": "2BF79D0709A8E34C8031CA312781D67075CDDE0A827765374A1506366F411938"
+  },
+  {
+    "Path": "text_labels/png/your-library.png",
+    "Bytes": 2682,
+    "Sha256": "32759341019C5BC22672697ECE33E2FA423390C5C470A20B2DAA8CABF5085BBB"
+  },
+  {
+    "Path": "text_labels/svg/add-artwork.svg",
+    "Bytes": 295,
+    "Sha256": "E0A41391B863E87FA205E0F3412039CA0412B02ADBF4BAC49EDA290585872CA6"
+  },
+  {
+    "Path": "text_labels/svg/astera.svg",
+    "Bytes": 290,
+    "Sha256": "A0FB0CB7BACD532DB1379FE6F03B7FD25D8655852114EFCE2D5ECEACC6309C4D"
+  },
+  {
+    "Path": "text_labels/svg/backgrounds.svg",
+    "Bytes": 295,
+    "Sha256": "17CF68C9B9C263A5EF4B70C6AF081FB3F7CB05B627648344E308C71860749A3E"
+  },
+  {
+    "Path": "text_labels/svg/cancel.svg",
+    "Bytes": 290,
+    "Sha256": "C57BAC8EC7D950401D7D1A04095EA0234FAD92F589B875962F6559A5868876C6"
+  },
+  {
+    "Path": "text_labels/svg/check-for-updates.svg",
+    "Bytes": 301,
+    "Sha256": "0E38A592500A4FBA271009E513CEA49E24A1C980915631556F4B9BF740F0A9FC"
+  },
+  {
+    "Path": "text_labels/svg/crystal-heroes.svg",
+    "Bytes": 298,
+    "Sha256": "6B5912A1E98B827899F0F7EEAD4C6BD4F7A6BAC4731BF200E183F127C168FF0F"
+  },
+  {
+    "Path": "text_labels/svg/details.svg",
+    "Bytes": 291,
+    "Sha256": "A94EC3F5072A6BF9C9B2E5D0E19893A73313FE2A15DC206B0A4B883E449C4B83"
+  },
+  {
+    "Path": "text_labels/svg/download.svg",
+    "Bytes": 292,
+    "Sha256": "555671CEF8306DC95C379EC4E1F569E06C96BFA56248E9185D93707299438029"
+  },
+  {
+    "Path": "text_labels/svg/downloading.svg",
+    "Bytes": 295,
+    "Sha256": "2856D8530BEE5EB8BAC1CE7D7EE6977304DD40534FB6B9BADD03160EE4B5C0F3"
+  },
+  {
+    "Path": "text_labels/svg/exit.svg",
+    "Bytes": 288,
+    "Sha256": "1D022E7642080218789CA64C99D6BD4AF3A38EFA58E418E5812E5536D824AA07"
+  },
+  {
+    "Path": "text_labels/svg/gacha-nova.svg",
+    "Bytes": 294,
+    "Sha256": "90552EAA9133DF3730834B3CD5A2485FE2679B25BC42435130895F4273230326"
+  },
+  {
+    "Path": "text_labels/svg/game-artwork.svg",
+    "Bytes": 296,
+    "Sha256": "D4B10EC9BAB1640FC7DA5ED9A95351239D8F8963FF91439BCEE4F6D20E7DFA32"
+  },
+  {
+    "Path": "text_labels/svg/install-update.svg",
+    "Bytes": 298,
+    "Sha256": "0CD116100145A1CE39FF1B3B1A0D9F2142E7DF0004F0AECFE6ED67854FE214A3"
+  },
+  {
+    "Path": "text_labels/svg/install.svg",
+    "Bytes": 291,
+    "Sha256": "5F0B4922D99868C2016ACA87AD890D3201A4042C6217EB6B56AF984824759A6D"
+  },
+  {
+    "Path": "text_labels/svg/installing.svg",
+    "Bytes": 294,
+    "Sha256": "1FD8D2BE3B6255637F79E73F241521F5E764E7F7C8BC21F9B330C30C3206DCFF"
+  },
+  {
+    "Path": "text_labels/svg/latest-update.svg",
+    "Bytes": 297,
+    "Sha256": "42F81986C955BA584B6D5781B129F27839ECD9835AE1308CF41929061D0DB799"
+  },
+  {
+    "Path": "text_labels/svg/launch.svg",
+    "Bytes": 290,
+    "Sha256": "7FDA218F88F986EE5AFEBA994AAF257030BF842ABB387708A73922509F89CAE8"
+  },
+  {
+    "Path": "text_labels/svg/library.svg",
+    "Bytes": 291,
+    "Sha256": "635F2936B853F2FDBA48D41A034605B5BD2967CFB1D5FD29D1BA20D5FCC1F8C5"
+  },
+  {
+    "Path": "text_labels/svg/manage.svg",
+    "Bytes": 290,
+    "Sha256": "D4761FAD6E6754C10CAD21F654C4E06B03057FFFB4B10201B720508D5AB87B09"
+  },
+  {
+    "Path": "text_labels/svg/minecraft.svg",
+    "Bytes": 295,
+    "Sha256": "C39BB68C787A1C99F52978D99DE688728080F180A5D65F0F615B2460DC379B02"
+  },
+  {
+    "Path": "text_labels/svg/more.svg",
+    "Bytes": 288,
+    "Sha256": "8A01C0BDD443874DBB4B39927842FB84261AF89D08D1D99C049C26EC0828D4CA"
+  },
+  {
+    "Path": "text_labels/svg/open-folder.svg",
+    "Bytes": 295,
+    "Sha256": "FE9F4289F89139EEC59C443303C061D3D6E808134DAF0BB02C33A205AA44775D"
+  },
+  {
+    "Path": "text_labels/svg/overview.svg",
+    "Bytes": 292,
+    "Sha256": "9E4D617B9782F5A13EE2245470A7059AA4C40A916FFE4DDBC5883BF0A7E07FE9"
+  },
+  {
+    "Path": "text_labels/svg/pause.svg",
+    "Bytes": 289,
+    "Sha256": "B3765914C68CAE4C731D6848581A82EEC5EED8659CFD48BF2E5EB61025AEAF93"
+  },
+  {
+    "Path": "text_labels/svg/play.svg",
+    "Bytes": 288,
+    "Sha256": "BC1553DAD7A3E063800985B3EE375F31D861A83FF97DE9D00E8662A7AA87C771"
+  },
+  {
+    "Path": "text_labels/svg/restore-backup.svg",
+    "Bytes": 298,
+    "Sha256": "B04731C23CCE19B135418863B2294448EF8A94C88F658C7E11A76BE8A66A45D6"
+  },
+  {
+    "Path": "text_labels/svg/resume.svg",
+    "Bytes": 290,
+    "Sha256": "3C832DD081A187DB55095540016C0B9F24F051894EE5374BC160B6D0E7611AFD"
+  },
+  {
+    "Path": "text_labels/svg/retry.svg",
+    "Bytes": 289,
+    "Sha256": "2639CCB63F2B04FDAA161ED95EB73E2D963574BAF897A48B866F08C419CB4184"
+  },
+  {
+    "Path": "text_labels/svg/settings.svg",
+    "Bytes": 292,
+    "Sha256": "4AA680371B189F9063E6ED289BD8377CC80C2EA2836F85A2E2B5E64AE31944ED"
+  },
+  {
+    "Path": "text_labels/svg/star-dash.svg",
+    "Bytes": 293,
+    "Sha256": "FBB93A0E665EB41AD8F4B559F0EB9EE30874BCE49EF46D5D098842D624789F6C"
+  },
+  {
+    "Path": "text_labels/svg/up-to-date.svg",
+    "Bytes": 294,
+    "Sha256": "AEABCB552315947794BD4BD6A1975E352A738D69380386C095877608FA68A379"
+  },
+  {
+    "Path": "text_labels/svg/update-available.svg",
+    "Bytes": 300,
+    "Sha256": "46D22A5453BE95575B36AB95C6F7A21A12012CE6B85FA19F53BFFABBEEC518BB"
+  },
+  {
+    "Path": "text_labels/svg/update.svg",
+    "Bytes": 290,
+    "Sha256": "C9A24051CFDDEA37F6F9479B7E3C825DF7DB423915DCE66CAE2146BC8A0A006C"
+  },
+  {
+    "Path": "text_labels/svg/updates.svg",
+    "Bytes": 291,
+    "Sha256": "6DA8E36220C7E583EEDB4669F7B4FA25EFDBCFA29823BAE483AC71E77017074C"
+  },
+  {
+    "Path": "text_labels/svg/verifying.svg",
+    "Bytes": 293,
+    "Sha256": "2D568346118B9C57B7FCC215E465CBE347921EADCC830DD38214E5BC4703C4E0"
+  },
+  {
+    "Path": "text_labels/svg/your-library.svg",
+    "Bytes": 296,
+    "Sha256": "3C4734B8170D91AC1A5DE8BDF4815E807380BCEB43B026F344EA4B481FCE1C83"
+  }
+]

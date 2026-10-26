@@ -1,0 +1,22 @@
+icon_file,purpose,recommended_text
+play.svg,Launch game,PLAY
+refresh-cw.svg,Check updates,CHECK FOR UPDATES
+download.svg,Download,DOWNLOAD
+package-check.svg,Install verified download,INSTALL UPDATE
+pause.svg,Pause download,PAUSE
+rotate-ccw.svg,Retry operation,RETRY
+x.svg,Cancel/close,CANCEL
+history.svg,Restore backup,RESTORE BACKUP
+folder-open.svg,Open directory,OPEN FOLDER
+settings.svg,Settings,SETTINGS
+log-out.svg,Exit,EXIT
+ellipsis.svg,More,MORE
+layout-dashboard.svg,Overview tab,OVERVIEW
+scroll-text.svg,Patch notes,UPDATES
+image.svg,Backgrounds,BACKGROUNDS
+image-plus.svg,Import artwork,ADD ARTWORK
+check-circle.svg,Verified/up to date,UP TO DATE
+alert-triangle.svg,Warning/issue,WARNING
+chevron-left.svg,Previous background,
+chevron-right.svg,Next background,
+hard-drive.svg,Local game library,LIBRARY

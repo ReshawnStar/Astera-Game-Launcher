@@ -1,5 +1,9 @@
 # Button artwork
 
+The current build uses Star's complete sheets in `../button-art/`. See that
+folder's README for the original files, frame mapping, masks and color options.
+The format below is retained as a fallback for earlier individual frames.
+
 Optional transparent PNG frames; the app works without them. Keep captions and
 icons out of the image: Astera draws these so Play, Set up and Install remain
 correct and accessible.

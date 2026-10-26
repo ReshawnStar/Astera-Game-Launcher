@@ -3,7 +3,7 @@ param(
     [string]$FeedUrl='',
     [string]$PublicKeyFile=(Join-Path (Split-Path $PSScriptRoot -Parent) 'channel.public.xml'),
     [string]$IconFile='',
-    [string]$OutputDirectory='D:/vale/StarsAllies-Storage/builds/Astera/0.1.5'
+    [string]$OutputDirectory='D:/vale/StarsAllies-Storage/builds/Astera/0.1.7'
 )
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
@@ -31,7 +31,24 @@ if(Test-Path -LiteralPath $buttons){
         $art+=('/resource:'+$file.FullName+',Astera.Buttons.'+$file.BaseName)
     }
 }
+$sheets=Join-Path $root 'assets/button-art'
+foreach($item in @(@{File='button-atlas.png';Resource='Buttons'},@{File='button-mask.png';Resource='Mask'})){
+    $sheet=Join-Path $sheets $item.File
+    if(!(Test-Path -LiteralPath $sheet)){throw ('Missing artist button sheet: '+$sheet)}
+    if((Get-Item -LiteralPath $sheet).Length -gt 8MB){throw 'Button sheet exceeds 8 MB'}
+    Add-Type -AssemblyName System.Drawing
+    $image=[Drawing.Image]::FromFile($sheet)
+    try{if($image.Width -ne 2164 -or $image.Height -ne 727 -or $image.RawFormat.Guid -ne [Drawing.Imaging.ImageFormat]::Png.Guid){throw 'Button sheets must be 2164x727 PNGs; update the source map if replacing their layout'}}finally{$image.Dispose()}
+    $art+=('/resource:'+$sheet+',Astera.Art.'+$item.Resource)
+}
+$icons=Join-Path $root 'assets/ui-v1/icons/png_128'
+foreach($icon in Get-ChildItem -LiteralPath $icons -Filter '*.png' -File){
+    if($icon.BaseName -cnotmatch '^[a-z][a-z-]*$' -or $icon.Length -gt 1MB){throw 'Unsupported UI icon asset'}
+    $image=[Drawing.Image]::FromFile($icon.FullName)
+    try{if($image.Width -ne 128 -or $image.Height -ne 128){throw ('UI icons must be 128x128: '+$icon.Name)}}finally{$image.Dispose()}
+    $art+=('/resource:'+$icon.FullName+',Astera.Icons.'+$icon.BaseName)
+}
 & $compiler /nologo /codepage:65001 /target:winexe /platform:x64 /optimize+ /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Web.Extensions.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll "/out:$exe" "/resource:$channel,Astera.Channel" @art @sources
 if($LASTEXITCODE -ne 0){throw 'Astera compilation failed'}
-@{Version='0.1.5';Executable='Astera.exe';Sha256=(Get-FileHash -LiteralPath $exe).Hash;FeedConfigured=[bool]$FeedUrl;BuiltUtc=[DateTime]::UtcNow.ToString('o')}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $out 'build-receipt.json')
+@{Version='0.1.7';Executable='Astera.exe';Sha256=(Get-FileHash -LiteralPath $exe).Hash;FeedConfigured=[bool]$FeedUrl;BuiltUtc=[DateTime]::UtcNow.ToString('o')}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $out 'build-receipt.json')
 Write-Output ('Built '+$exe)

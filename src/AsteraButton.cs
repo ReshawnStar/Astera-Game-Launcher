@@ -9,7 +9,7 @@ using System.Windows.Forms;
 
 namespace Astera {
 public enum ButtonRole { Primary, Secondary, Quiet }
-public enum ButtonSymbol { None, Play, Refresh, Settings, Exit, Download, Install, Restore, Cancel, More }
+public enum ButtonSymbol { None, Play, Refresh, Settings, Exit, Download, Install, Restore, Cancel, More, Overview, Updates, Backgrounds, Folder, AddArtwork, Drive, Verified, Warning, Previous, Next, Pause, Retry }
 
 // Standard Button input/accessibility; only its drawing is customised.
 public sealed class AsteraButton:Button {
@@ -25,13 +25,13 @@ public sealed class AsteraButton:Button {
     public AsteraButton(){
         SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw|ControlStyles.SupportsTransparentBackColor,true);
         FlatStyle=FlatStyle.Flat;FlatAppearance.BorderSize=0;UseVisualStyleBackColor=false;
-        BackColor=Color.Transparent;ForeColor=Color.FromArgb(239,242,255);Font=new Font("Segoe UI",10,FontStyle.Regular);
+        BackColor=Color.Transparent;ForeColor=Color.FromArgb(237,241,255);Font=UiTheme.Button();
         Padding=new Padding(15,8,15,8);Margin=new Padding(0,0,10,0);MinimumSize=new Size(80,40);AutoSize=true;Cursor=Cursors.Hand;
         glowTimer.Interval=33;glowTimer.Tick+=delegate{Invalidate();};
     }
     public override Size GetPreferredSize(Size proposedSize){
-        Size text=TextRenderer.MeasureText(Text??"",Font,new Size(Int32.MaxValue,Int32.MaxValue),TextFormatFlags.SingleLine|TextFormatFlags.NoPadding);
-        return new Size(Math.Max(MinimumSize.Width,text.Width+Padding.Horizontal+(Symbol==ButtonSymbol.None?0:28)+4),Math.Max(MinimumSize.Height,text.Height+Padding.Vertical+2));
+        Size text=String.IsNullOrEmpty(Text)?Size.Empty:TextRenderer.MeasureText(Text,Font,new Size(Int32.MaxValue,Int32.MaxValue),TextFormatFlags.SingleLine|TextFormatFlags.NoPadding);
+        return new Size(Math.Max(MinimumSize.Width,text.Width+Padding.Horizontal+(Symbol==ButtonSymbol.None?0:SymbolSize+(text.Width==0?0:8))+4),Math.Max(MinimumSize.Height,Math.Max(text.Height,Symbol==ButtonSymbol.None?0:SymbolSize)+Padding.Vertical+2));
     }
     protected override void OnMouseEnter(EventArgs e){hover=true;base.OnMouseEnter(e);Invalidate();}
     protected override void OnMouseLeave(EventArgs e){hover=false;base.OnMouseLeave(e);Invalidate();}
@@ -55,6 +55,8 @@ public sealed class AsteraButton:Button {
         if(Width<4||Height<4)return;
         var g=e.Graphics;g.SmoothingMode=SmoothingMode.AntiAlias;
         Rectangle bounds=new Rectangle(1,1,Width-3,Height-3);
+        string state=!Enabled?"disabled":pressed?"pressed":hover?"hover":"normal";
+        if(!ButtonAtlas.Draw(g,bounds,Role,state)){
         Color top,bottom,border;
         if(!Enabled){top=Color.FromArgb(43,48,64);bottom=Color.FromArgb(31,36,50);border=Color.FromArgb(64,73,96);}
         else if(Role==ButtonRole.Primary){top=pressed?Color.FromArgb(77,48,200):hover?Color.FromArgb(136,98,255):Color.FromArgb(113,77,255);bottom=pressed?Color.FromArgb(39,45,171):hover?Color.FromArgb(67,87,255):Color.FromArgb(49,58,239);border=hover?Color.FromArgb(194,182,255):Color.FromArgb(150,143,255);}
@@ -63,15 +65,15 @@ public sealed class AsteraButton:Button {
             using(var fill=new LinearGradientBrush(bounds,top,bottom,90F))g.FillPath(fill,path);
             using(var edge=new Pen(border,Role==ButtonRole.Primary&&Enabled?1.6F:1F))g.DrawPath(edge,path);
         }
-        string state=!Enabled?"disabled":pressed?"pressed":hover?"hover":"normal";
         bool exact;Image art=ButtonArt.Get(Role,state,out exact);
         if(art!=null)ButtonArt.Draw(g,art,bounds,(!Enabled&&!exact) ? .42F : 1F);
+        }
         if(OrbitGlow&&Enabled)DrawOrbitGlow(g);
         Color caption=Enabled?ForeColor:Color.FromArgb(151,162,188);
-        Size text=TextRenderer.MeasureText(Text??"",Font,new Size(Int32.MaxValue,Int32.MaxValue),TextFormatFlags.SingleLine|TextFormatFlags.NoPadding);
-        int iconWidth=Symbol==ButtonSymbol.None?0:28,total=text.Width+iconWidth;
+        Size text=String.IsNullOrEmpty(Text)?Size.Empty:TextRenderer.MeasureText(Text,Font,new Size(Int32.MaxValue,Int32.MaxValue),TextFormatFlags.SingleLine|TextFormatFlags.NoPadding);
+        int iconWidth=Symbol==ButtonSymbol.None?0:SymbolSize+(text.Width==0?0:8),total=text.Width+iconWidth;
         int x=(Width-total)/2,y=(Height-text.Height)/2+(pressed&&Enabled?1:0);
-        if(Symbol!=ButtonSymbol.None)DrawSymbol(g,Symbol,new Rectangle(x,y+(text.Height-19)/2,19,19),caption);
+        if(Symbol!=ButtonSymbol.None)DrawSymbol(g,Symbol,new Rectangle(x,y+(text.Height-SymbolSize)/2,SymbolSize,SymbolSize),caption);
         TextRenderer.DrawText(g,Text,Font,new Point(x+iconWidth,y),caption,TextFormatFlags.SingleLine|TextFormatFlags.NoPadding|(ShowKeyboardCues?0:TextFormatFlags.HidePrefix));
         if(Focused&&ShowFocusCues){var focus=new Rectangle(5,5,Width-11,Height-11);using(var p=Round(focus,6))using(var pen=new Pen(Color.FromArgb(230,233,255),1)){pen.DashStyle=DashStyle.Dot;g.DrawPath(pen,p);}}
     }
@@ -89,11 +91,13 @@ public sealed class AsteraButton:Button {
         float[] widths={8F,4F,1.6F};int[] opacity={22,80,250};
         for(int pass=0;pass<3;pass++)using(var pen=new Pen(Color.White,widths[pass])){
             pen.StartCap=pen.EndCap=LineCap.Round;
-            for(int step=0;step<64;step++){float strength=(step+1)/64F;int at=(head-64+step+glowPoints.Length)%glowPoints.Length;pen.Color=Color.FromArgb((int)(opacity[pass]*strength*strength),pass==2?225:156,pass==2?235:146,255);g.DrawLine(pen,glowPoints[at],glowPoints[(at+1)%glowPoints.Length]);}
+            for(int step=0;step<64;step++){float strength=(step+1)/64F;int at=(head-64+step+glowPoints.Length)%glowPoints.Length;Color accent=ButtonAtlas.AccentColor;float white=pass==2?.75F:.15F;pen.Color=Color.FromArgb((int)(opacity[pass]*strength*strength),(int)(accent.R+(255-accent.R)*white),(int)(accent.G+(255-accent.G)*white),(int)(accent.B+(255-accent.B)*white));g.DrawLine(pen,glowPoints[at],glowPoints[(at+1)%glowPoints.Length]);}
         }
     }
     internal static GraphicsPath Round(Rectangle rect,int radius){var path=new GraphicsPath();int d=Math.Min(radius*2,Math.Min(rect.Width,rect.Height));path.AddArc(rect.Left,rect.Top,d,d,180,90);path.AddArc(rect.Right-d,rect.Top,d,d,270,90);path.AddArc(rect.Right-d,rect.Bottom-d,d,d,0,90);path.AddArc(rect.Left,rect.Bottom-d,d,d,90,90);path.CloseFigure();return path;}
+    int SymbolSize {get{return Math.Max(20,Font.Height);}}
     static void DrawSymbol(Graphics g,ButtonSymbol type,Rectangle r,Color color){
+        if(UiAssets.Draw(g,UiAssets.Name(type),r,color))return;
         var saved=g.Save();g.TranslateTransform(r.X,r.Y);g.ScaleTransform(r.Width/20F,r.Height/20F);
         using(var pen=new Pen(color,1.7F))using(var fill=new SolidBrush(color)){
             pen.StartCap=pen.EndCap=LineCap.Round;pen.LineJoin=LineJoin.Round;
