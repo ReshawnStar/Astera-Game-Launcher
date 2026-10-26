@@ -63,6 +63,8 @@ sealed class ScenePreview:Panel {
 }
 
 sealed partial class LibraryForm {
+    readonly System.ComponentModel.IContainer menuComponents=new System.ComponentModel.Container();
+    ContextMenuStrip moreMenu;
     readonly Label heroTitle=new Label(),heroSubtitle=new Label(),installationPath=new Label(),artLabel=new Label();
     readonly Panel overviewPage=new Panel(),backgroundPage=new Panel(),preferencesPage=new Panel();
     readonly TableLayoutPanel information=new TableLayoutPanel();
@@ -86,7 +88,7 @@ sealed partial class LibraryForm {
         var sidebar=new Panel{Dock=DockStyle.Left,Width=220,BackColor=Color.FromArgb(14,19,36),Padding=new Padding(14,26,12,16)};
         sidebar.Controls.Add(new Label{Text="YOUR LIBRARY",ForeColor=Muted,Height=36,Dock=DockStyle.Top,Font=new Font("Segoe UI",9)});
         games.Dock=DockStyle.Fill;games.BorderStyle=BorderStyle.None;games.BackColor=sidebar.BackColor;games.ForeColor=Color.White;games.Font=new Font("Segoe UI",12);games.ItemHeight=76;games.DrawMode=DrawMode.OwnerDrawFixed;games.Items.AddRange(new object[]{"Minecraft²","Star Dash"});games.DrawItem+=DrawGame;games.SelectedIndexChanged+=delegate{RefreshView();};sidebar.Controls.Add(games);games.BringToFront();
-        sidebar.Controls.Add(new Label{Text="ASTERA\nby Star  ·  v0.1.3\n\nSame worlds.\nBrighter tomorrows.",ForeColor=Color.FromArgb(144,155,205),Dock=DockStyle.Bottom,Height=110,Font=new Font("Segoe UI",9)});
+        sidebar.Controls.Add(new Label{Text="ASTERA\nby Star  ·  v0.1.4\n\nSame worlds.\nBrighter tomorrows.",ForeColor=Color.FromArgb(144,155,205),Dock=DockStyle.Bottom,Height=110,Font=new Font("Segoe UI",9)});
 
         var viewport=new Panel{Dock=DockStyle.Fill,AutoScroll=true};
         var body=new TableLayoutPanel{Dock=DockStyle.Top,Height=740,ColumnCount=1,RowCount=4,Padding=new Padding(24,0,24,12)};
@@ -104,7 +106,8 @@ sealed partial class LibraryForm {
         var action=new FlowLayoutPanel{BackColor=Color.Transparent,Location=new Point(24,258),Height=58,WrapContents=false};
         play.Text="PLAY";Style(play);((AsteraButton)play).Role=ButtonRole.Primary;((AsteraButton)play).Symbol=ButtonSymbol.Play;play.Font=new Font("Segoe UI",11,FontStyle.Bold);play.MinimumSize=new Size(170,48);play.Click+=delegate{if(games.SelectedIndex==0)OpenCurseForge();else OpenStarDash();};
         check.Text="Check for updates";Style(check);((AsteraButton)check).Symbol=ButtonSymbol.Refresh;check.MinimumSize=new Size(195,48);check.Click+=async delegate{await Check(false);};
-        var more=Button("…",delegate{var menu=new ContextMenuStrip();menu.Items.Add("Open game folder",null,delegate{OpenGameFolder();});menu.Items.Add("Game settings",null,delegate{Configure();});menu.Items.Add("Update activity",null,delegate{SelectLibraryTab(1);});menu.Closed+=delegate{menu.Dispose();};menu.Show(Cursor.Position);});more.MinimumSize=new Size(48,48);
+        moreMenu=new ContextMenuStrip(menuComponents);moreMenu.Items.Add("Open game folder",null,delegate{OpenGameFolder();});moreMenu.Items.Add("Game settings",null,delegate{Configure();});moreMenu.Items.Add("Update activity",null,delegate{SelectLibraryTab(1);});moreMenu.Items.Add("Open Astera logs",null,delegate{OpenDiagnostics();});moreMenu.Items.Add("Collect game logs",null,delegate{CollectGameLogs();});
+        var more=Button("…",delegate(object sender,EventArgs e){var button=(Control)sender;moreMenu.Show(button,new Point(0,button.Height));});more.MinimumSize=new Size(48,48);
         action.Controls.AddRange(new Control[]{play,check,more});banner.Controls.Add(action);
         banner.Resize+=delegate{heroText.Width=Math.Max(400,(int)(banner.Width*.60));heroText.Top=banner.Height<300?44:66;action.Top=banner.Height-72;action.Width=banner.Width-40;};
 
@@ -134,10 +137,10 @@ sealed partial class LibraryForm {
         openFolder.Text="Open folder";Style(openFolder);openFolder.Dock=DockStyle.Bottom;openFolder.Click+=delegate{OpenGameFolder();};
         installationPath.Dock=DockStyle.Fill;installationPath.ForeColor=Muted;installationPath.AutoEllipsis=true;installationPath.Padding=new Padding(0,4,0,0);installation.Controls.Add(installationPath);installation.Controls.Add(openFolder);installation.Controls.Add(new Label{Text="Installation",Font=new Font("Segoe UI",11,FontStyle.Bold),Dock=DockStyle.Top,Height=28});
         activityCard.Dock=DockStyle.Fill;activityCard.Margin=Padding.Empty;ConfigureReadOnly(log,activityCard.BackColor);activityCard.Controls.Add(log);activityCard.Controls.Add(new Label{Text="Update activity",Dock=DockStyle.Top,Height=34,Font=new Font("Segoe UI",11,FontStyle.Bold)});
-        BuildArtworkPage();BuildPreferencesPage();
+        AddDiagnosticButtons();BuildArtworkPage();BuildPreferencesPage();
         releaseLabel.Dock=DockStyle.Fill;releaseLabel.ForeColor=Muted;releaseLabel.Font=new Font("Segoe UI",9);releaseLabel.TextAlign=ContentAlignment.MiddleLeft;body.Controls.Add(releaseLabel,0,3);
         Controls.Add(viewport);Controls.Add(sidebar);Controls.Add(header);SelectLibraryTab(0);
-        Disposed+=delegate{if(artPreview.Image!=null)artPreview.Image.Dispose();if(activityCard.Parent==null)activityCard.Dispose();if(overviewRight.Parent==null)overviewRight.Dispose();tray.Dispose();timer.Dispose();};
+        Disposed+=delegate{if(artPreview.Image!=null)artPreview.Image.Dispose();if(activityCard.Parent==null)activityCard.Dispose();if(overviewRight.Parent==null)overviewRight.Dispose();tray.Dispose();timer.Dispose();diagnosticsTimer.Dispose();menuComponents.Dispose();};
     }
     static Label Heading(string title){return new Label{Text=title,Font=new Font("Segoe UI",11,FontStyle.Bold),ForeColor=Color.FromArgb(235,238,255),Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleLeft};}
     static void ConfigureReadOnly(TextBox box,Color background){box.Multiline=true;box.ReadOnly=true;box.TabStop=false;box.HideSelection=true;box.ScrollBars=ScrollBars.Vertical;box.Dock=DockStyle.Fill;box.BackColor=background;box.ForeColor=Color.FromArgb(185,196,225);box.BorderStyle=BorderStyle.None;}

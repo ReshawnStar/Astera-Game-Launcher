@@ -1,7 +1,7 @@
 #Requires -Version 7.2
 param(
     [string]$TestRoot=('D:/vale/StarsAllies-Storage/audits/astera-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss')),
-    [string]$BuildDirectory='D:/vale/StarsAllies-Storage/builds/Astera/0.1.3',
+    [string]$BuildDirectory='D:/vale/StarsAllies-Storage/builds/Astera/0.1.4',
     [string]$PrivateKeyFile='D:/vale/StarsAllies-Storage/keys/Astera/publisher.key'
 )
 $ErrorActionPreference='Stop'

@@ -3,7 +3,7 @@ param(
     [string]$FeedUrl='',
     [string]$PublicKeyFile=(Join-Path (Split-Path $PSScriptRoot -Parent) 'channel.public.xml'),
     [string]$IconFile='',
-    [string]$OutputDirectory='D:/vale/StarsAllies-Storage/builds/Astera/0.1.3'
+    [string]$OutputDirectory='D:/vale/StarsAllies-Storage/builds/Astera/0.1.4'
 )
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
@@ -33,5 +33,5 @@ if(Test-Path -LiteralPath $buttons){
 }
 & $compiler /nologo /codepage:65001 /target:winexe /platform:x64 /optimize+ /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Web.Extensions.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll "/out:$exe" "/resource:$channel,Astera.Channel" @art @sources
 if($LASTEXITCODE -ne 0){throw 'Astera compilation failed'}
-@{Version='0.1.3';Executable='Astera.exe';Sha256=(Get-FileHash -LiteralPath $exe).Hash;FeedConfigured=[bool]$FeedUrl;BuiltUtc=[DateTime]::UtcNow.ToString('o')}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $out 'build-receipt.json')
+@{Version='0.1.4';Executable='Astera.exe';Sha256=(Get-FileHash -LiteralPath $exe).Hash;FeedConfigured=[bool]$FeedUrl;BuiltUtc=[DateTime]::UtcNow.ToString('o')}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $out 'build-receipt.json')
 Write-Output ('Built '+$exe)

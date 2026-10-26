@@ -17,6 +17,13 @@ with rollback protection. It does not download Minecraft or replace its launcher
   update notes/activity and installation cards. Backgrounds and character PNGs
   are selected per game and remembered locally. Buttons use drawn placeholders
   until Star supplies final artwork; no crops from the concept image are used.
+- v0.1.4 repairs overflow-menu disposal. Astera writes versioned session/error logs
+  under `%LocalAppData%/Astera/logs`. Updates → Open logs opens that folder.
+  While open, Astera checks the linked Minecraft profile every minute for recent
+  crash reports and JVM fatal-error logs, copying new content only. Collect game
+  logs also snapshots Minecraft's latest.log or StarDash's Godot logs. Originals
+  stay untouched; copies are hash-deduplicated with source receipts. Large files
+  retain their last 4 MiB, marked `-tail`. Logs stay local and are never uploaded.
 - Minecraft Squared profiles discovered by their CurseForge display name, even
   after folder renames. `But Again` is recognised as a **legacy folder name**.
   Multiple matching profiles require a choice; Astera never guesses between them.
