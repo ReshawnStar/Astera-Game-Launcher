@@ -59,6 +59,11 @@ foreach ($folder in @('config','defaultconfigs')) {
     # Enumerate only approved roots, never recurse through unknown/cache/private folders.
     $candidates=@(Get-ChildItem -LiteralPath $path -File | Where-Object { $_.Name -in $rules.ConfigNames -or $_.Name -match '-(common|server)\.(toml|json|json5)$' })
     if($folder -eq 'defaultconfigs') { $candidates=@(Get-ChildItem -LiteralPath $path -File) }
+    foreach($relative in $rules.ConfigPaths){
+        if($relative -notmatch '^[a-zA-Z0-9_.-]+(/[a-zA-Z0-9_.-]+)*\.(json|json5|toml|properties|cfg)$' -or $relative -match '(^|/)\.\.?(/|$)'){throw 'Unsafe explicit configuration path'}
+        $candidate=$path;foreach($part in $relative.Split('/')){$candidate=Join-Path $candidate $part;Assert-Plain $candidate}
+        if(Test-Path -LiteralPath $candidate -PathType Leaf){$candidates+=Get-Item -LiteralPath $candidate}
+    }
     foreach($name in $rules.ConfigFolders) {
         $sub=Join-Path $path $name
         if(Test-Path -LiteralPath $sub) {
@@ -108,6 +113,12 @@ if($ids.ContainsKey('eatinganimationid')){
 }
 if($ids.ContainsKey('punchy')){$builtins+='punchy:punchy'}
 $packList=New-Object 'Collections.Generic.List[string]';$packList.AddRange([string[]]$ordered);$packList.InsertRange($insertion,[string[]]$builtins);$ordered=$packList.ToArray()
+# Preserve the author's tested order, reading only this single options key.
+$options=Join-Path $source 'options.txt'
+if(Test-Path -LiteralPath $options){
+    $line=Get-Content -LiteralPath $options|Where-Object { $_.StartsWith('resourcePacks:') }|Select-Object -First 1
+    if($line){$selected=$line.Substring(14)|ConvertFrom-Json;$curated=[Collections.Generic.List[string]]::new();foreach($pack in @($selected)+@($ordered)){if($pack -ne 'stars_general_fixes:stars_compat' -and $pack -in $ordered -and !$curated.Contains($pack)){$curated.Add($pack)}};$curated.Add('stars_general_fixes:stars_compat');$ordered=$curated.ToArray()}
+}
 $release=[ordered]@{Schema=2;Sequence=$sequence;PackId=$rules.PackId;Name=$ReleaseName;Minecraft=[string]$meta.baseModLoader.minecraftVersion;Loader=[string]$meta.baseModLoader.forgeVersion;Files=$files.ToArray();Retired=@($retired | Sort-Object Path,Hash -Unique);Packs=$ordered}
 $logical=($files | Measure-Object Size -Sum).Sum
 Write-Output ("Release {0}: {1} mods, {2} files, {3:N1} MiB. Minecraft {4} / Fabric {5}." -f $ReleaseName,$ids.Count,$files.Count,($logical/1MB),$release.Minecraft,$release.Loader)

@@ -35,5 +35,8 @@
     "FA+All",
     "TZP",
     "Actually 3D"
+  ],
+  "ConfigPaths": [
+    "wover/client.json"
   ]
 }
