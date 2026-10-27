@@ -1,6 +1,9 @@
-# Astera 0.1.18
+# Astera 0.1.19
 
-- Changing your Minecraft² profile now checks that installation for updates automatically.
-- Added download progress with percentage and transferred size, plus verification and installation stages.
-- Fixed installation failures caused by temporary file locks during mod scanning.
-- Rollback avoids rewriting files already restored to their original state.
+- Added a visible search box under Your Library. Ctrl+F focuses it.
+- Scan a games folder, review a batch and add the selected games together.
+- Drop folders or EXEs onto the library to open the batch review.
+- Common installers, updaters and crash helpers are filtered from folder scans.
+- itch.io games can now show their cover artwork and library icons automatically.
+- Reduced unnecessary icon and page redraws during background checks.
+- Unchanged patch notes keep their scroll position.

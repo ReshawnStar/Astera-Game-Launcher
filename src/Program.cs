@@ -29,6 +29,8 @@ static class Program {
         if(args.Length==2&&args[0]=="--folder-picker-demo"){using(var picker=new ExplorerFolderDialog{Description="Astera Explorer folder picker test",SelectedPath=Path.Combine(args[1],"Folder with spaces")}){var result=picker.ShowDialog();File.WriteAllText(Path.Combine(args[1],"demo-result.json"),Engine.Json.Serialize(new{Result=result.ToString(),SelectedPath=picker.SelectedPath}));return 0;}}
         if(args.Length==2&&args[0]=="--shutdown-audit")return LibraryForm.AuditShutdown(args[1]);
         if(args.Length==2&&args[0]=="--dialog-audit")return LibraryForm.AuditDialogs(args[1]);
+        if(args.Length==2&&args[0]=="--library-features-audit")return LibraryForm.AuditLibraryFeatures(args[1]);
+        if(args.Length==3&&args[0]=="--itch-artwork-check")return LibraryForm.AuditItchArtwork(args[1],args[2]);
         if(args.Length==2&&args[0]=="--layout-audit")return LibraryForm.AuditLayout(args[1]);
         if(args.Length==2&&args[0]=="--install-lock-audit")return NetworkSelfTest.LockRun(args[1]);
         if(args.Length==2&&args[0]=="--full-pack-self-test")return NetworkSelfTest.FullPackRun(args[1]);

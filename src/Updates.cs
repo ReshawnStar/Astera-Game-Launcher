@@ -11,7 +11,7 @@ using MC2Pack;
 
 namespace Astera {
 public sealed class Channel { public string FeedUrl="",AppFeedUrl="",PublicKeyXml=""; }
-public sealed class Preferences { public string ItchAppsRoot="";public bool AnimatedEffects=true; public List<CustomGame> CustomGames=new List<CustomGame>(); public string Profile="",FeedUrl="",StarDashExecutable="",BackgroundMinecraft="",BackgroundStarDash="",CharacterMinecraft="",CharacterStarDash="",ButtonAccent="Violet",FtlDirectory="",FtlWorkspace="",BackgroundFtl="",CharacterFtl="";public bool CheckOnStart=true,KeepInTray=true,ConfigurePacks=true,UseMinecraftSkin=true;public long HighestSequence,HighestAppSequence; }
+public sealed class Preferences { public string GameScanRoot="";public string ItchAppsRoot="";public bool AnimatedEffects=true; public List<CustomGame> CustomGames=new List<CustomGame>(); public string Profile="",FeedUrl="",StarDashExecutable="",BackgroundMinecraft="",BackgroundStarDash="",CharacterMinecraft="",CharacterStarDash="",ButtonAccent="Violet",FtlDirectory="",FtlWorkspace="",BackgroundFtl="",CharacterFtl="";public bool CheckOnStart=true,KeepInTray=true,ConfigurePacks=true,UseMinecraftSkin=true;public long HighestSequence,HighestAppSequence; }
 public sealed class Envelope {public string Payload,Signature;}
 public sealed class PayloadSource {public string Path,Url;}
 public sealed class RequiredMod {public string Id,Version;}

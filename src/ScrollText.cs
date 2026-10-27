@@ -10,7 +10,7 @@ sealed class ScrollText:UserControl {
     readonly TextBody body=new TextBody();readonly TextureScrollbar scroll;
     ScrollBars scrollbarMode=ScrollBars.Vertical;bool updating;
     public ScrollText(){SetStyle(ControlStyles.OptimizedDoubleBuffer,true);scroll=new TextureScrollbar(this);body.Multiline=true;body.ReadOnly=true;body.WordWrap=true;body.ScrollBars=ScrollBars.None;body.BorderStyle=BorderStyle.None;body.Dock=DockStyle.Fill;body.TabStop=false;body.HideSelection=true;scroll.Dock=DockStyle.Right;scroll.Width=14;Controls.Add(body);Controls.Add(scroll);body.Wheel=delta=>MoveLines(-delta/120*Math.Max(1,SystemInformation.MouseWheelScrollLines));body.Changed=UpdateScroll;body.TextChanged+=delegate{UpdateScroll();};body.Resize+=delegate{UpdateScroll();};}
-    public override string Text {get{return body==null?"":body.Text;}set{if(body==null)return;body.Text=value??"";UpdateScroll();}}
+    public override string Text {get{return body==null?"":body.Text;}set{if(body==null||body.Text==(value??""))return;body.Text=value??"";UpdateScroll();}}
     public bool ReadOnly {get{return body.ReadOnly;}set{body.ReadOnly=value;}}
     public bool Multiline {get{return body.Multiline;}set{body.Multiline=value;}}
     public bool HideSelection {get{return body.HideSelection;}set{body.HideSelection=value;}}
