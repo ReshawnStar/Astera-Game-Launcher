@@ -1,5 +1,6 @@
-# Astera 0.1.17
+# Astera 0.1.18
 
-- Folder selection now uses the modern Explorer dialog, with an address bar, search and shortcuts.
-- Paste a folder path directly instead of expanding the old folder tree.
-- Folder selection starts at your current location, including Minecraft² profiles and FTL folders.
+- Changing your Minecraft² profile now checks that installation for updates automatically.
+- Added download progress with percentage and transferred size, plus verification and installation stages.
+- Fixed installation failures caused by temporary file locks during mod scanning.
+- Rollback avoids rewriting files already restored to their original state.

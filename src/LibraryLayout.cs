@@ -172,7 +172,7 @@ sealed partial class LibraryForm {
         installationPath.Dock=DockStyle.Fill;installationPath.ForeColor=Muted;installationPath.AutoEllipsis=true;installationPath.Padding=new Padding(0,4,0,0);installation.Controls.Add(installationPath);installation.Controls.Add(openFolder);installation.Controls.Add(new Label{Text="Installation",Font=UiTheme.Text(17,true),Dock=DockStyle.Top,Height=28});
         activityCard.Dock=DockStyle.Fill;activityCard.Margin=Padding.Empty;ConfigureReadOnly(log,activityCard.BackColor);activityCard.Controls.Add(log);activityCard.Controls.Add(new Label{Text="Update activity",Dock=DockStyle.Top,Height=34,Font=UiTheme.Text(17,true)});
         AddDiagnosticButtons();BuildArtworkPage();BuildPreferencesPage();
-        releaseLabel.Dock=DockStyle.Fill;releaseLabel.ForeColor=Muted;releaseLabel.Font=UiTheme.Text(12);releaseLabel.TextAlign=ContentAlignment.MiddleLeft;body.Controls.Add(releaseLabel,0,3);
+        releaseLabel.Dock=DockStyle.Fill;releaseLabel.ForeColor=Muted;releaseLabel.Font=UiTheme.Text(12);releaseLabel.TextAlign=ContentAlignment.MiddleLeft;BuildWorkProgress(body);
         Controls.Add(viewport);Controls.Add(sidebar);Controls.Add(header);SelectLibraryTab(0);
         Disposed+=delegate{CancelGameTransition();if(artPreview.Image!=null)artPreview.Image.Dispose();if(activityCard.Parent==null)activityCard.Dispose();if(overviewRight.Parent==null)overviewRight.Dispose();timer.Dispose();diagnosticsTimer.Dispose();};
     }

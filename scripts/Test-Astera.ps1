@@ -11,7 +11,7 @@ New-Item -ItemType Directory -Path $TestRoot|Out-Null
 & (Join-Path $PSScriptRoot 'Build-Astera.ps1') -OutputDirectory $BuildDirectory
 $exe=Join-Path $BuildDirectory 'Astera.exe'
 $reports=@()
-foreach($item in @(@{Name='network';Flag='--self-test'},@{Name='full-pack';Flag='--full-pack-self-test'},@{Name='engine';Flag='--engine-self-test'},@{Name='layout';Flag='--layout-audit'},@{Name='shutdown';Flag='--shutdown-audit'},@{Name='folders';Flag='--folder-picker-audit'},@{Name='multiverse';Flag='--multiverse-self-test'})){
+foreach($item in @(@{Name='network';Flag='--self-test'},@{Name='full-pack';Flag='--full-pack-self-test'},@{Name='install-locks';Flag='--install-lock-audit'},@{Name='engine';Flag='--engine-self-test'},@{Name='layout';Flag='--layout-audit'},@{Name='shutdown';Flag='--shutdown-audit'},@{Name='folders';Flag='--folder-picker-audit'},@{Name='multiverse';Flag='--multiverse-self-test'})){
     $folder=Join-Path $TestRoot $item.Name
     $process=Start-Process -FilePath $exe -ArgumentList @($item.Flag,('"'+$folder+'"')) -WindowStyle Hidden -PassThru
     if(!$process.WaitForExit(60000)){$process.Kill();throw ($item.Name+' test timed out')}
