@@ -252,3 +252,4 @@ excluded. Existing personal configuration and shader selections are preserved.
 
 A changed release downloads the complete ZIP. Matching installed files are not
 rewritten; a matching cached ZIP is reused. This is not a delta download system.
+For a single release command, use `scripts/Publish-MinecraftPackRelease.ps1 -ReleaseName <fresh-name> -NotesFile <notes.md> -Publish`. It includes shaders, builds the ZIP, audits an isolated install, then signs/uploads/promotes it. Use `-Preview` for inventory only. No launcher EXE is rebuilt.

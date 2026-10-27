@@ -10,6 +10,14 @@ public sealed partial class UpdateClient {
         transport.Address(feed.Bundle.Url);
         if(!feed.Release.Files.Any(f=>f.Id=="stars_allies")||!feed.Release.Files.Any(f=>f.Id=="stars_general_fixes"))throw new Exception("Full pack is missing its Stars components.");
     }
+    // JSON member order is not part of a release's meaning. Pack ordering is.
+    static bool SameRelease(Release a,Release b){
+        if(a.Schema!=b.Schema||a.Sequence!=b.Sequence||a.PackId!=b.PackId||a.Name!=b.Name||a.Minecraft!=b.Minecraft||a.Loader!=b.Loader||a.Files.Count!=b.Files.Count||a.Retired.Count!=b.Retired.Count||!a.Packs.SequenceEqual(b.Packs))return false;
+        var files=b.Files.ToDictionary(f=>f.Path,StringComparer.Ordinal);
+        foreach(var f in a.Files){PackFile wanted;if(!files.TryGetValue(f.Path,out wanted)||f.Hash!=wanted.Hash||f.Size!=wanted.Size||f.Kind!=wanted.Kind||f.Policy!=wanted.Policy||f.Id!=wanted.Id||f.Version!=wanted.Version||f.Family!=wanted.Family)return false;}
+        var retired=a.Retired.Select(f=>f.Path+"|"+f.Hash).OrderBy(x=>x,StringComparer.Ordinal);
+        return retired.SequenceEqual(b.Retired.Select(f=>f.Path+"|"+f.Hash).OrderBy(x=>x,StringComparer.Ordinal));
+    }
     string MaterializeFullBundle(DownloadPlan plan,string cache,CancellationToken cancel,Action<string> log){
         Validate(plan.Feed);var root=Engine.Root(cache);Directory.CreateDirectory(root);
         var info=plan.Feed.Bundle;var cached=Engine.Inside(root,info.Hash.ToUpperInvariant()+"-full.zip");var partial=cached+".partial";
@@ -22,7 +30,7 @@ public sealed partial class UpdateClient {
         }else log("Using verified cached Minecraft² pack.");
         cancel.ThrowIfCancellationRequested();
         var release=Engine.Read(cached);
-        if(Engine.Json.Serialize(release)!=Engine.Json.Serialize(plan.Feed.Release))throw new Exception("The ZIP contents do not match the signed update notice.");
+        if(!SameRelease(release,plan.Feed.Release))throw new Exception("The ZIP contents do not match the signed update notice.");
         Engine.VerifyPayload(cached,release,log);cancel.ThrowIfCancellationRequested();
         var prepared=Engine.Inside(root,"prepared-full-"+Guid.NewGuid().ToString("N")+".zip");
         try{File.Copy(cached,prepared);cancel.ThrowIfCancellationRequested();return prepared;}catch{if(File.Exists(prepared))File.Delete(prepared);throw;}
