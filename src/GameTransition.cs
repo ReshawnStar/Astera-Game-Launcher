@@ -17,7 +17,7 @@ sealed class GameTransition:Panel {
 sealed partial class LibraryForm {
     Panel gameViewport;TableLayoutPanel gameBody;GameTransition gameTransition;
     void CancelGameTransition(){var old=gameTransition;gameTransition=null;if(old!=null){old.Parent=null;old.Dispose();}if(gameBody!=null)gameBody.Invalidate(true);}
-    void SwitchGame(){UpdatePublicArtworkSelection();if(!UiEffects.Enabled){CancelGameTransition();RefreshView();return;}
+    void SwitchGame(){UpdateRobloxSlidePlayback();UpdatePublicArtworkSelection();if(!UiEffects.Enabled){CancelGameTransition();RefreshView();return;}
         if(gameViewport==null||gameBody==null||!Visible||!IsHandleCreated||gameBody.Width<2||gameBody.Height<2){RefreshView();return;}
         Bitmap before=null;try{
             before=GameTransition.CaptureFrame(gameTransition==null?(Control)gameBody:gameTransition);

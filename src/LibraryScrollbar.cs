@@ -28,7 +28,7 @@ sealed class GameListBox:ListBox {
     }
 }
 sealed class LibraryScrollbar:Control {
-    readonly GameListBox list;readonly Control viewport;bool hover,dragging;int grab;
+    readonly GameListBox list;readonly Control viewport;bool hover,dragging;int grab,wheelRemainder;
     internal LibraryScrollbar(GameListBox gameList,Control clip){list=gameList;viewport=clip;SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true);TabStop=false;Cursor=Cursors.Hand;}
     internal int Page {get{return Math.Max(1,list.ClientSize.Height/Math.Max(1,list.ItemHeight));}}
     internal int Maximum {get{return Math.Max(0,list.Items.Count-Page);}}
@@ -41,11 +41,13 @@ sealed class LibraryScrollbar:Control {
     protected override void OnMouseMove(MouseEventArgs e){base.OnMouseMove(e);if(!dragging)return;int range=Math.Max(1,Height-Thumb.Height-4);MoveTo((int)Math.Round(Math.Max(0,Math.Min(range,e.Y-grab-2))*Maximum/(double)range));}
     protected override void OnMouseUp(MouseEventArgs e){dragging=false;Capture=false;Invalidate();base.OnMouseUp(e);}
     protected override void OnMouseCaptureChanged(EventArgs e){if(!Capture)dragging=false;base.OnMouseCaptureChanged(e);}
-    protected override void OnMouseWheel(MouseEventArgs e){MoveTo(list.TopIndex-e.Delta/120*Math.Max(1,SystemInformation.MouseWheelScrollLines));base.OnMouseWheel(e);}
+    internal static int WheelRows(int delta,int setting,int page,ref int remainder){if(setting==0){remainder=0;return 0;}remainder+=delta;int steps=remainder/120;remainder%=120;long rows=(long)steps*(setting<0?Math.Max(1,page):setting);return (int)Math.Max(Int32.MinValue,Math.Min(Int32.MaxValue,rows));}
+    internal void ScrollWheel(int delta){if(!list.Enabled||list.Items.Count==0)return;int rows=WheelRows(delta,SystemInformation.MouseWheelScrollLines,Page,ref wheelRemainder);if(rows==0)return;long next=(long)list.TopIndex-rows;MoveTo((int)Math.Max(0,Math.Min(Maximum,next)));}
+    protected override void OnMouseWheel(MouseEventArgs e){ScrollWheel(e.Delta);var handled=e as HandledMouseEventArgs;if(handled!=null)handled.Handled=true;base.OnMouseWheel(e);}
 }
 sealed partial class LibraryForm {
-    Panel libraryListHost,libraryListClip;LibraryScrollbar libraryScrollbar;
-    void BuildLibraryViewport(Control sidebar){games.Dock=DockStyle.None;games.IntegralHeight=false;libraryListHost=new Panel{Dock=DockStyle.Fill,BackColor=sidebar.BackColor};libraryListClip=new Panel{Dock=DockStyle.Fill,BackColor=sidebar.BackColor};libraryScrollbar=new LibraryScrollbar(games,libraryListClip){Dock=DockStyle.Right,Width=18,BackColor=sidebar.BackColor,Margin=Padding.Empty};libraryListHost.Controls.Add(libraryListClip);libraryListHost.Controls.Add(libraryScrollbar);libraryListClip.Controls.Add(games);libraryListClip.Resize+=delegate{games.Bounds=new Rectangle(0,0,libraryListClip.ClientSize.Width+SystemInformation.VerticalScrollBarWidth,libraryListClip.ClientSize.Height);libraryScrollbar.Invalidate();};games.ViewChanged=delegate{if(libraryScrollbar!=null&&!libraryScrollbar.IsDisposed)libraryScrollbar.Invalidate();UpdateIconAnimationPlayback();ScheduleLibraryIcons();};sidebar.Controls.Add(libraryListHost);libraryListHost.BringToFront();}
+    Panel libraryListHost,libraryListClip;LibraryScrollbar libraryScrollbar;LibraryWheelRouting libraryWheelRouting;
+    void BuildLibraryViewport(Control sidebar){games.Dock=DockStyle.None;games.IntegralHeight=false;libraryListHost=new Panel{Dock=DockStyle.Fill,BackColor=sidebar.BackColor};libraryListClip=new Panel{Dock=DockStyle.Fill,BackColor=sidebar.BackColor};libraryScrollbar=new LibraryScrollbar(games,libraryListClip){Dock=DockStyle.Right,Width=18,BackColor=sidebar.BackColor,Margin=Padding.Empty};libraryListHost.Controls.Add(libraryListClip);libraryListHost.Controls.Add(libraryScrollbar);libraryListClip.Controls.Add(games);libraryListClip.Resize+=delegate{games.Bounds=new Rectangle(0,0,libraryListClip.ClientSize.Width+SystemInformation.VerticalScrollBarWidth,libraryListClip.ClientSize.Height);libraryScrollbar.Invalidate();};games.ViewChanged=delegate{if(libraryScrollbar!=null&&!libraryScrollbar.IsDisposed)libraryScrollbar.Invalidate();UpdateIconAnimationPlayback();ScheduleLibraryIcons();};sidebar.Controls.Add(libraryListHost);libraryListHost.BringToFront();libraryWheelRouting=new LibraryWheelRouting(this,libraryListHost,games,libraryScrollbar);Disposed+=delegate{libraryWheelRouting.Dispose();};}
     int LibraryRowRight {get{return libraryListClip==null?games.ClientSize.Width:libraryListClip.ClientSize.Width;}}
 }
 }

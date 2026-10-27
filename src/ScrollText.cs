@@ -27,8 +27,13 @@ sealed class ScrollText:UserControl {
     protected override void OnBackColorChanged(EventArgs e){base.OnBackColorChanged(e);if(body!=null)body.BackColor=BackColor;if(scroll!=null)scroll.BackColor=BackColor;}
     protected override void OnForeColorChanged(EventArgs e){base.OnForeColorChanged(e);if(body!=null)body.ForeColor=ForeColor;}
     sealed class TextBody:TextBox {
-        public Action<int> Wheel;public Action Changed;
-        protected override void WndProc(ref Message message){if(message.Msg==0x20A&&Wheel!=null){Wheel((short)((message.WParam.ToInt64()>>16)&0xffff));return;}base.WndProc(ref message);if(Changed!=null&&(message.Msg==0x101||message.Msg==0x115||message.Msg==0xB1))Changed();}
+        public Action<int> Wheel;public Action Changed;bool readOnlyCaretHidden;
+        [DllImport("user32.dll")]static extern bool HideCaret(IntPtr window);
+        [DllImport("user32.dll")]static extern bool ShowCaret(IntPtr window);
+        void UpdateCaret(){if(!Focused||!IsHandleCreated)return;if(ReadOnly&&!readOnlyCaretHidden)readOnlyCaretHidden=HideCaret(Handle);else if(!ReadOnly&&readOnlyCaretHidden){ShowCaret(Handle);readOnlyCaretHidden=false;}}
+        protected override void OnReadOnlyChanged(EventArgs e){base.OnReadOnlyChanged(e);UpdateCaret();}
+        protected override void OnHandleDestroyed(EventArgs e){readOnlyCaretHidden=false;base.OnHandleDestroyed(e);}
+        protected override void WndProc(ref Message message){if(message.Msg==0x20A&&Wheel!=null){Wheel((short)((message.WParam.ToInt64()>>16)&0xffff));return;}base.WndProc(ref message);if(message.Msg==0x7)UpdateCaret();else if(message.Msg==0x8)readOnlyCaretHidden=false;if(Changed!=null&&(message.Msg==0x101||message.Msg==0x115||message.Msg==0xB1))Changed();}
     }
     sealed class TextureScrollbar:Control {
         readonly ScrollText owner;bool hover,dragging;int grabOffset;
