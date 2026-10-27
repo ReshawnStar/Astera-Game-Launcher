@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading;
 using MC2Pack;
 namespace Astera {
-static class NetworkSelfTest {
+static partial class NetworkSelfTest {
     static void Assert(bool value,string message){if(!value)throw new Exception(message);}
     static void Reject(Action action,string message){bool failed=false;try{action();}catch{failed=true;}Assert(failed,message);}
     static void Put(string root,string path,string value){string target=Engine.Inside(root,path);Directory.CreateDirectory(Path.GetDirectoryName(target));File.WriteAllText(target,value);}

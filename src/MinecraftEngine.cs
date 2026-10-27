@@ -70,7 +70,7 @@ public static class Engine {
         if(!loader.ContainsKey("minecraftVersion")||(string)loader["minecraftVersion"]!=r.Minecraft||!loader.ContainsKey("name")||!((string)loader["name"]).StartsWith("fabric-"))throw new Exception("Use CurseForge to select Minecraft "+r.Minecraft+" and Fabric "+r.Loader+" first. Launcher metadata is never rewritten.");
         Version actual,minimum;if(!Version.TryParse(Convert.ToString(loader["forgeVersion"]),out actual)||!Version.TryParse(r.Loader,out minimum)||actual<minimum)throw new Exception("Fabric loader is too old; update it in CurseForge to "+r.Loader+" or newer first.");
     }
-    static void VerifyPayload(string bundle,Release r,Action<string> log){using(var zip=ZipFile.OpenRead(bundle)){
+    public static void VerifyPayload(string bundle,Release r,Action<string> log){using(var zip=ZipFile.OpenRead(bundle)){
         var duplicate=zip.Entries.GroupBy(e=>e.FullName,StringComparer.OrdinalIgnoreCase).Any(g=>g.Count()>1);if(duplicate)throw new Exception("Duplicate ZIP entries refused.");
         foreach(var f in r.Files){var e=zip.GetEntry(f.Path);if(e==null||e.Length!=f.Size)throw new Exception("Missing/size-mismatched payload: "+f.Path);using(var input=e.Open())if(!Hash(input).Equals(f.Hash,StringComparison.OrdinalIgnoreCase))throw new Exception("Payload SHA mismatch: "+f.Path);
             if(f.Kind=="mod")using(var input=e.Open())using(var memory=new MemoryStream()){input.CopyTo(memory);memory.Position=0;using(var inner=new ZipArchive(memory,ZipArchiveMode.Read)){var m=Json.Deserialize<Dictionary<string,object>>(EntryText(inner.GetEntry("fabric.mod.json")));if((string)m["id"]!=f.Id||(string)m["version"]!=f.Version)throw new Exception("JAR identity/version mismatch: "+f.Path);}}

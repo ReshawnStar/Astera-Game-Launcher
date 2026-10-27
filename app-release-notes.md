@@ -1,27 +1,9 @@
-# Astera 0.1.14
+# Astera 0.1.15
 
-## Library
-- Pick installed Steam and itch.io games from Add game.
-- Steam games use their own cached banners and game icons.
-- Add your own transparent PNG library icons.
-- Open games show Running, and repeat launches are guarded.
-- Opening Astera again brings up the existing window.
+- Minecraft² can now receive the complete pack through Astera's Update button.
+- Pack updates include mods, resource packs, shader packs and shared configuration defaults.
+- Resource packs are set up in the recommended order when that option is enabled.
+- Downloads are verified before installation, and changed files are backed up.
+- Worlds, keybinds and personal settings are preserved.
 
-## Updates
-- Read official Steam posts on each game's page.
-- Steam Update opens Steam's controls, separately from Play.
-- Cancel replaces Download while an Astera download is active.
-- Read Astera's own changelog from About or the overflow menu.
-
-## Appearance
-- Added the new Minecraft² icon and description.
-- Fixed the Minecraft preview's left/right arm texture assignment.
-- Added twelve palette colors while keeping the original four.
-- Added an option to turn decorative animations off.
-- Lowered and simplified the version footer.
-
-## Settings and fixes
-- Launcher preferences and game settings now have separate homes.
-- Astera's own dialogs and menus use the current icon and dark styling.
-- Repeated update-status messages are collapsed in the activity view.
-- FTL reports are collected automatically, with more detail after launch failures or game exits.
+Create and link a compatible CurseForge profile once. Future pack updates arrive through Astera.

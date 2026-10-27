@@ -27,7 +27,9 @@ static class Program {
         if(args.Length==2&&args[0]=="--switch-check")return LibraryForm.AuditSwitchFrames(args[1]);
         if(args.Length==2&&args[0]=="--dialog-audit")return LibraryForm.AuditDialogs(args[1]);
         if(args.Length==2&&args[0]=="--layout-audit")return LibraryForm.AuditLayout(args[1]);
+        if(args.Length==2&&args[0]=="--full-pack-self-test")return NetworkSelfTest.FullPackRun(args[1]);
         if(args.Length==2&&args[0]=="--self-test")return NetworkSelfTest.Run(args[1]);
+        if(args.Length==3&&args[0]=="--audit-full-pack-release")return SelfTest.Audit(args[1],args[2]);
         if(args.Length==2&&args[0]=="--engine-self-test")return SelfTest.Run(args[1]);
         if(args.Length==4&&args[0]=="--audit-channel")return HostedAudit.Run(args[1],args[2],args[3]);
         if(args.Length==2&&args[0]=="--verify-feed"){try{Channel source;using(var reader=new StreamReader(Assembly.GetExecutingAssembly().GetManifestResourceStream("Astera.Channel")))source=Engine.Json.Deserialize<Channel>(reader.ReadToEnd());var feed=new UpdateClient(source.PublicKeyXml).Verify(File.ReadAllBytes(args[1]));File.WriteAllText(args[1]+".verified.json",Engine.Json.Serialize(new{Passed=true,Release=feed.Release.Name,Sequence=feed.Release.Sequence,ManagedFiles=feed.Release.Files.Count,RequiredMods=feed.RequiredMods.Count}));return 0;}catch(Exception error){File.WriteAllText(args[1]+".failure.txt",error.ToString());return 1;}}
@@ -43,7 +45,7 @@ sealed partial class LibraryForm:Form {
     static readonly Color Base=Color.FromArgb(24,28,36),Panel=Color.FromArgb(33,39,49),Muted=Color.FromArgb(167,179,197);
     readonly bool previewMode;
     public LibraryForm(Store state,Channel source,bool preview=false){previewMode=preview;store=state;instanceShowMessage=SingleInstance.MessageFor(store.Root);channel=source;Text="Astera Game Launcher";Icon=System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath)??SystemIcons.Application;Size=new Size(1400,900);MinimumSize=new Size(1100,760);StartPosition=FormStartPosition.CenterScreen;BackColor=Base;ForeColor=Color.White;Font=UiTheme.Text(14);AutoScaleMode=AutoScaleMode.Dpi;
-        if(String.IsNullOrEmpty(store.Settings.FeedUrl))store.Settings.FeedUrl=channel.FeedUrl??"";
+        if(String.IsNullOrEmpty(store.Settings.FeedUrl)||store.Settings.FeedUrl=="https://raw.githubusercontent.com/ReshawnStar/Astera-Game-Launcher/main/channels/minecraft-squared.json")store.Settings.FeedUrl=channel.FeedUrl??"";
         if(!previewMode&&String.IsNullOrEmpty(store.Settings.StarDashExecutable)){store.Settings.StarDashExecutable=LocalStarDash.DefaultAt(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));if(!String.IsNullOrEmpty(store.Settings.StarDashExecutable))store.Save();}
         if(!previewMode&&String.IsNullOrEmpty(store.Settings.Profile)){var matches=Profiles.Discover(Profiles.DefaultRoot);if(matches.Count==1){store.Settings.Profile=matches[0].Path;store.Save();}}
         UiEffects.Enabled=store.Settings.AnimatedEffects;ButtonAtlas.SetAccent(store.Settings.ButtonAccent);BuildLibraryLayout();StartSteamArtwork();StartRunningChecks();PageRedraw.BufferLayout(this);GameKind=0;

@@ -1,0 +1,39 @@
+{
+  "PackId": "astera-minecraft-squared",
+  "ConfigNames": [
+    "stars-general-fixes.json",
+    "entity_model_features.json",
+    "entity_texture_features.json",
+    "entity_sound_features.json",
+    "female_gender_mod.json",
+    "skinlayers.json",
+    "firstperson.json",
+    "spatial-gui.json",
+    "spatial-gui.json5",
+    "cinematic-client.json",
+    "icys-better-horses.json"
+  ],
+  "ConfigFolders": [
+    "alexsmobs",
+    "archers",
+    "armory_rpgs",
+    "arsenal",
+    "bettercombat",
+    "jewelry",
+    "paladins",
+    "rearm",
+    "rogues",
+    "rpg_series",
+    "spell_engine",
+    "spell_power",
+    "wizards"
+  ],
+  "ResourceOrder": [
+    "FreshAnimations",
+    "JustExpressions",
+    "FA+Player",
+    "FA+All",
+    "TZP",
+    "Actually 3D"
+  ]
+}

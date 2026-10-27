@@ -219,3 +219,36 @@ The header Settings button contains launcher preferences. Each game's Settings t
 Current global controls cover update checks, tray behavior, library locations, effects, colors and diagnostics. Windows startup registration and automatic managed downloads remain future features; no inactive placeholders are shown. Managed-file backups stay enabled. A library migration/export feature and a unified update center are not implemented.
 
 Running-state detection guards custom Windows games, platform imports, StarDash and FTL, using process paths and Steam's local running flag. Minecraft stays a CurseForge launch handoff. A per-settings-root single-instance guard brings an existing Astera window forward. FTL report collection preserves original files and deduplicates local copies; it does not upload reports. Consecutive duplicate activity messages are hidden in the UI while individual entries remain in the session log.
+
+## Full Minecraft² pack ZIP channel (0.1.15)
+
+The production Minecraft channel is now `channels/minecraft-pack.json`. Its signed
+schema-2 notice identifies one complete ZIP, exact SHA256/size, expiry and the
+entire release manifest. Astera downloads/verifies that ZIP and uses the same
+preview, backup, guarded install and restore engine as component updates. This
+channel can own all declared pack mods; schema-1 component notices remain limited
+to Stars components. Existing default feed addresses migrate; explicit custom
+channels stay unchanged. Older Astera builds retain their component-only channel.
+
+Create a compatible Minecraft/Fabric profile in CurseForge once and link it in
+Astera. There is no CurseForge project publication requirement, no launcher
+replacement and no automatic CurseForge profile registration.
+
+Release routine (ZIPs are produced only for deliberate pack releases):
+
+1. Test the source profile and close Minecraft.
+2. Run `scripts/Build-MinecraftPackZip.ps1 -ReleaseName <fresh-name> -IncludeShaders`.
+   The first release can import retirement history with `-PreviousReleaseZip`.
+3. Test the actual ZIP using `--audit-full-pack-release <zip> <new-test-directory>`.
+4. Run `scripts/Publish-FullPackUpdate.ps1 -Zip <zip> -NotesFile <player-notes> -TestReceipt <audit-result.json> -Publish`.
+
+The publisher signs locally, uploads the ZIP to GitHub Releases, downloads it back
+to verify its hash, then conditionally promotes the signed channel. Friends use
+Astera's existing Check/Update buttons; they never need to extract a ZIP.
+`full-pack-rules.json` controls approved configuration defaults and pack order.
+Active root JARs, resource ZIPs and requested shader ZIPs are included. Backup
+folders, disabled files, worlds, accounts, personal options, maps and caches are
+excluded. Existing personal configuration and shader selections are preserved.
+
+A changed release downloads the complete ZIP. Matching installed files are not
+rewritten; a matching cached ZIP is reused. This is not a delta download system.
