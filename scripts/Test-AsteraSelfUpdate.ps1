@@ -38,6 +38,7 @@ try{
         if((Get-FileHash -LiteralPath (Join-Path $data 'preferences.json')).Hash -ne $prefsHash -or (Get-FileHash -LiteralPath (Join-Path $folder 'personal-game-save.txt')).Hash -ne $saveHash){throw 'Preferences or game save changed'}
     }
     $checks.Add('Settings and unrelated game-save fixture remain byte-for-byte unchanged')
+    $healthRoot=Join-Path $AuditRoot 'confirmation-lock';$health=Start-Process -FilePath $Executable -ArgumentList @('--self-update-health-audit',('"'+$healthRoot+'"')) -WindowStyle Hidden -PassThru -Wait;if($health.ExitCode -ne 0){throw 'Startup confirmation lock regression failed'};$healthReport=Get-Content -LiteralPath (Join-Path $healthRoot 'result.json') -Raw|ConvertFrom-Json;if(!$healthReport.Passed){throw 'Startup confirmation lock regression did not pass'};foreach($check in $healthReport.Checks){$checks.Add($check)}
     @{Passed=$true;Checks=@($checks);LiveGamesChanged=$false;LiveAppReplaced=$false;GitHubContacted=$false;CandidateSha256=(Get-FileHash -LiteralPath $Executable).Hash}|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $AuditRoot 'result.json')
     Write-Output ('SELF_UPDATE_TESTS_PASSED: '+$checks.Count+' checks')
 }finally{$rsa.Dispose()}

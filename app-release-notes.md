@@ -1,8 +1,10 @@
-# Astera 0.1.24
+# Astera 0.1.25
 
-- Reduced library flicker while hovering over games and playing animated icons.
-- Animated icons now refresh their image area without redrawing the whole row.
-- GIF playback follows the artwork's frame timing and uses less idle timer work.
+- Visible library icons now load on startup without selecting each game first.
+- Scrolling and search load icons for newly visible games.
+- Cached Steam, itch.io and Roblox artwork is reused before downloading missing icons.
+- Local games can use their EXE icon when no other artwork is available.
+- Fixed an occasional unnecessary rollback while Astera finishes updating.
 
 ## Known issue
 

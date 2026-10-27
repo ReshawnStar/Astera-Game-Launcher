@@ -17,6 +17,8 @@ static class Program {
         if(args.Length==2&&args[0]=="--roblox-live-audit")return LibraryForm.AuditRoblox(args[1],true);
         if(args.Length==2&&args[0]=="--youtube-audit")return YouTubeAudit.Run(args[1],false);
         if(args.Length==2&&args[0]=="--youtube-live-audit")return YouTubeAudit.Run(args[1],true);
+        if(args.Length==2&&args[0]=="--self-update-health-audit")return SelfUpdate.AuditHealthRead(args[1]);
+        if(args.Length==2&&args[0]=="--library-icons-audit")return LibraryForm.AuditLibraryIconStartup(args[1]);
         if(args.Length==2&&args[0]=="--library-paint-audit")return LibraryForm.AuditLibraryPaint(args[1]);
         if(args.Length==2&&args[0]=="--gif-audit")return LibraryForm.AuditGif(args[1]);
         if(args.Length==3&&args[0]=="--steam-public-artwork-check")return LibraryForm.AuditPublicSteamArtwork(args[1],args[2]);
