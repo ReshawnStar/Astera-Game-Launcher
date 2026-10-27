@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Reflection;
 namespace Astera {
 static class GameArtwork {
+    internal static readonly Image MinecraftIcon=Load("Astera.Games.MinecraftSquaredIcon");
     internal static readonly Image FtlIcon=Load("Astera.Games.FtlMultiverseIcon");
     internal static readonly Image StarDashIcon=Load("Astera.Games.StarDashIcon");
     internal static Image Load(string name){using(var stream=Assembly.GetExecutingAssembly().GetManifestResourceStream(name))if(stream!=null)using(var image=Image.FromStream(stream))return new Bitmap(image);return null;}

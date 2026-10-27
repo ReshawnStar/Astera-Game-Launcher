@@ -21,4 +21,5 @@
     <WriteLinesToFile File="$(IntermediateOutputPath)version.g.cs" Lines="[assembly: System.Reflection.AssemblyVersion(&quot;$(AsteraReleaseVersion).0&quot;)];[assembly: System.Reflection.AssemblyFileVersion(&quot;$(AsteraReleaseVersion).0&quot;)]" Overwrite="true"/>
     <ItemGroup><Compile Include="$(IntermediateOutputPath)version.g.cs"/></ItemGroup>
   </Target>
+  <ItemGroup><EmbeddedResource Include="assets\games\minecraft-squared-icon.png"><LogicalName>Astera.Games.MinecraftSquaredIcon</LogicalName></EmbeddedResource></ItemGroup>
 </Project>

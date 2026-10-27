@@ -171,3 +171,20 @@ routine content updates do not create a new app installer or EXE.
 
 Astera 0.1.12 removes hover/select playback and sound settings. Original audio assets remain archived for possible future use. Game descriptions and patch notes
 remain separate from installation/update diagnostics.
+
+## Steam artwork and launch handoff (0.1.13)
+
+Added Steam games are identified from the selected EXE's actual steamapps/common
+folder and its matching appmanifest, including nested EXEs and secondary drives.
+Artwork is read locally from that user's Steam installation cache (modern per-app
+folders and legacy flat filenames). It never downloads artwork or copies personal
+Steam account data. Custom Astera backgrounds/characters take priority; Reset
+artwork restores the detected banner. Missing cached images use the default scene.
+
+Steam games use Steam's launch protocol, so Steam handles updates, launch options
+and game startup. A pending update reported by the local manifest changes Play to
+UPDATE & PLAY: Steam can update then launch. OPEN IN STEAM opens that game's page.
+This is a Steam handoff, not a guarantee of unattended downloads or a separate
+update-only API. Steam may require login or display its normal prompts. Astera
+does not edit Steam manifests or schedule automatic game downloads. Selected game
+metadata refreshes in the background every 15 seconds while the launcher is open.
