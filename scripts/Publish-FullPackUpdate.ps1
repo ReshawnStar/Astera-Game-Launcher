@@ -4,7 +4,7 @@ param(
  [Parameter(Mandatory)][string]$NotesFile,
  [Parameter(Mandatory)][string]$TestReceipt,
  [string]$Repository='ReshawnStar/Astera-Game-Launcher',
- [string]$Executable='D:/vale/StarsAllies-Storage/builds/Astera/0.1.15/Astera.exe',
+ [string]$Executable='',
  [string]$PrivateKeyFile='D:/vale/StarsAllies-Storage/keys/Astera/publisher.key',
  [string]$GitHubCli='D:/vale/StarsAllies-Storage/tools/github-cli/v2.103.2/bin/gh.exe',
  [switch]$Publish
@@ -12,6 +12,7 @@ param(
 $ErrorActionPreference='Stop'
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $root=Split-Path $PSScriptRoot -Parent
+if(!$Executable){$version=(Get-Content -LiteralPath (Join-Path $root 'VERSION') -Raw).Trim();$Executable="D:/vale/StarsAllies-Storage/builds/Astera/$version/Astera.exe"}
 $zipItem=Get-Item -LiteralPath $Zip
 $archive=[IO.Compression.ZipFile]::OpenRead($zipItem.FullName)
 try{$reader=[IO.StreamReader]::new($archive.GetEntry('mc2-release.json').Open());try{$release=$reader.ReadToEnd()|ConvertFrom-Json}finally{$reader.Dispose()}}finally{$archive.Dispose()}
