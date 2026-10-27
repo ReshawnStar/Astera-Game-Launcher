@@ -1,6 +1,5 @@
-# Astera 0.1.16
+# Astera 0.1.17
 
-- Fixed an error when exiting Astera or restarting to install a launcher update.
-- Kept full Minecraft² pack updates, shader packs and automatic resource-pack setup from 0.1.15.
-
-Your games and personal settings are preserved.
+- Folder selection now uses the modern Explorer dialog, with an address bar, search and shortcuts.
+- Paste a folder path directly instead of expanding the old folder tree.
+- Folder selection starts at your current location, including Minecraft² profiles and FTL folders.
