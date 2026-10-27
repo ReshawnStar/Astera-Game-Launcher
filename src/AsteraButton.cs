@@ -22,7 +22,7 @@ public sealed class AsteraButton:Button {
     public bool OrbitGlow {get{return orbitGlow;}set{orbitGlow=value;UpdateGlowTimer();Invalidate();}}
     public ButtonRole Role {get{return role;}set{role=value;Invalidate();}}
     public ButtonSymbol Symbol {get{return symbol;}set{symbol=value;Invalidate();PerformLayout();}}
-    public AsteraButton(){
+    void EffectsChanged(object sender,EventArgs e){UpdateGlowTimer();Invalidate();}public AsteraButton(){UiEffects.Changed+=EffectsChanged;
         SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw|ControlStyles.SupportsTransparentBackColor|ControlStyles.Opaque,true);
         FlatStyle=FlatStyle.Flat;FlatAppearance.BorderSize=0;UseVisualStyleBackColor=false;
         BackColor=Color.Transparent;ForeColor=Color.FromArgb(237,241,255);Font=UiTheme.Button();
@@ -49,9 +49,9 @@ public sealed class AsteraButton:Button {
     protected override void OnHandleCreated(EventArgs e){base.OnHandleCreated(e);glowOwner=FindForm();if(glowOwner!=null){glowOwner.Resize+=GlowOwnerChanged;glowOwner.VisibleChanged+=GlowOwnerChanged;}UpdateGlowTimer();}
     protected override void OnHandleDestroyed(EventArgs e){DetachGlowOwner();if(!releasingGlow)glowTimer.Stop();base.OnHandleDestroyed(e);}
     void GlowOwnerChanged(object sender,EventArgs e){UpdateGlowTimer();}
-    void UpdateGlowTimer(){if(glowTimer==null||releasingGlow)return;glowTimer.Enabled=orbitGlow&&Enabled&&Visible&&IsHandleCreated&&!IsDisposed&&(glowOwner==null||glowOwner.Visible&&glowOwner.WindowState!=FormWindowState.Minimized);}
+    void UpdateGlowTimer(){if(glowTimer==null||releasingGlow)return;glowTimer.Enabled=UiEffects.Enabled&&orbitGlow&&Enabled&&Visible&&IsHandleCreated&&!IsDisposed&&(glowOwner==null||glowOwner.Visible&&glowOwner.WindowState!=FormWindowState.Minimized);}
     void DetachGlowOwner(){if(glowOwner!=null){glowOwner.Resize-=GlowOwnerChanged;glowOwner.VisibleChanged-=GlowOwnerChanged;glowOwner=null;}}
-    protected override void Dispose(bool disposing){if(disposing&&!releasingGlow){releasingGlow=true;DetachGlowOwner();glowTimer.Dispose();}base.Dispose(disposing);}
+    protected override void Dispose(bool disposing){if(disposing&&!releasingGlow){releasingGlow=true;UiEffects.Changed-=EffectsChanged;DetachGlowOwner();glowTimer.Dispose();}base.Dispose(disposing);}
     protected override void OnPaintBackground(PaintEventArgs e){}
     void PaintBackdrop(PaintEventArgs e){
         // Alpha artwork must start on a fresh parent scene on EVERY repaint.
@@ -80,8 +80,8 @@ public sealed class AsteraButton:Button {
         bool exact;Image art=ButtonArt.Get(Role,state,out exact);
         if(art!=null)ButtonArt.Draw(g,art,bounds,(!Enabled&&!exact) ? .42F : 1F);
         }
-        if(OrbitGlow&&Enabled)DrawOrbitGlow(g);
-        Color caption=Enabled?ForeColor:Color.FromArgb(151,162,188);
+        if(UiEffects.Enabled&&OrbitGlow&&Enabled)DrawOrbitGlow(g);
+        Color caption=Enabled?(Role==ButtonRole.Primary?ButtonAtlas.AccentTextColor:ForeColor):Color.FromArgb(151,162,188);
         Size text=String.IsNullOrEmpty(Text)?Size.Empty:TextRenderer.MeasureText(Text,Font,new Size(Int32.MaxValue,Int32.MaxValue),TextFormatFlags.SingleLine|TextFormatFlags.NoPadding);
         int iconWidth=Symbol==ButtonSymbol.None?0:SymbolSize+(text.Width==0?0:8),total=text.Width+iconWidth;
         int x=(Width-total)/2,y=(Height-text.Height)/2+(pressed&&Enabled?1:0);

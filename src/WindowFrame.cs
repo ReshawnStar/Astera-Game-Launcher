@@ -4,13 +4,14 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 namespace Astera {
 sealed partial class LibraryForm {
-    Button windowMaximize;
+    Button windowMaximize;int instanceShowMessage;
     [DllImport("user32.dll")]static extern bool ReleaseCapture();
     [DllImport("user32.dll")]static extern IntPtr SendMessage(IntPtr window,int message,IntPtr wParam,IntPtr lParam);
     void DragTitleBar(object sender,MouseEventArgs e){if(e.Button!=MouseButtons.Left)return;if(e.Clicks==2){ToggleMaximize();return;}ReleaseCapture();SendMessage(Handle,0x00A1,new IntPtr(2),IntPtr.Zero);}
     void ToggleMaximize(){if(WindowState==FormWindowState.Maximized)WindowState=FormWindowState.Normal;else{MaximizedBounds=Screen.FromControl(this).WorkingArea;WindowState=FormWindowState.Maximized;}}
     Button CaptionButton(ButtonSymbol symbol,string name,EventHandler action){var button=Button("",action);var skin=(AsteraButton)button;skin.Symbol=symbol;skin.Role=ButtonRole.Quiet;skin.Padding=new Padding(8);skin.MinimumSize=new Size(40,40);skin.Margin=new Padding(0,0,4,0);skin.AccessibleName=name;return button;}
     protected override void WndProc(ref Message message){
+        if(instanceShowMessage!=0&&message.Msg==instanceShowMessage){ShowWindow();return;}
         const int hitTest=0x84;
         base.WndProc(ref message);
         if(message.Msg!=hitTest||WindowState==FormWindowState.Maximized)return;

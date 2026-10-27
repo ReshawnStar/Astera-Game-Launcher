@@ -13,13 +13,13 @@ sealed partial class Banner:Panel {
     bool rigDisposed;SkinRig liveRig;string liveRigPath="";readonly System.Windows.Forms.Timer rigClock=new System.Windows.Forms.Timer{Interval=10};readonly System.Diagnostics.Stopwatch rigTime=new System.Diagnostics.Stopwatch();Form rigOwner;
     internal bool LiveSkinActive {get{return liveRig!=null;}}
     internal void LiveSkin(string pose){pose=pose??"";if(pose==liveRigPath)return;if(liveRig!=null)liveRig.Dispose();liveRig=null;liveRigPath=pose;if(pose.Length>0)try{liveRig=new SkinRig(pose);}catch(IOException){}catch(ArgumentException){}rigTime.Restart();UpdateRigClock();frameDirty=true;Invalidate();}
-    void UpdateRigClock(){if(rigDisposed||rigClock==null||IsDisposed)return;var owner=FindForm();rigClock.Enabled=liveRig!=null&&IsHandleCreated&&Visible&&owner!=null&&owner.Visible&&owner.WindowState!=FormWindowState.Minimized;AnimationTiming(rigClock.Enabled);}
+    void UpdateRigClock(){if(rigDisposed||rigClock==null||IsDisposed)return;var owner=FindForm();rigClock.Enabled=UiEffects.Enabled&&liveRig!=null&&IsHandleCreated&&Visible&&owner!=null&&owner.Visible&&owner.WindowState!=FormWindowState.Minimized;AnimationTiming(rigClock.Enabled);}
     void RigOwnerChanged(object sender,EventArgs e){UpdateRigClock();}
     protected override void OnHandleCreated(EventArgs e){base.OnHandleCreated(e);rigOwner=FindForm();if(rigOwner!=null){rigOwner.Resize+=RigOwnerChanged;rigOwner.VisibleChanged+=RigOwnerChanged;}UpdateRigClock();}
     protected override void OnHandleDestroyed(EventArgs e){rigClock.Stop();AnimationTiming(false);if(rigOwner!=null){rigOwner.Resize-=RigOwnerChanged;rigOwner.VisibleChanged-=RigOwnerChanged;rigOwner=null;}base.OnHandleDestroyed(e);}
     protected override void OnVisibleChanged(EventArgs e){base.OnVisibleChanged(e);UpdateRigClock();}
     Image scene,character,defaultScene,starDashScene,starDashLogo,ftlScene;string scenePath="",characterPath="";
-    public Banner(){rigClock.Tick+=delegate{if(!rigDisposed&&liveRig!=null){RenderFrame();Invalidate(new Rectangle((int)(Width*.60F),0,Width-(int)(Width*.60F),Height),false);}};SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.Opaque,true);DoubleBuffered=true;BackColor=Color.FromArgb(12,17,33);defaultScene=GameArtwork.Load("Astera.Backgrounds.MinecraftSquared");starDashScene=GameArtwork.Load("Astera.Backgrounds.StarDash");starDashLogo=GameArtwork.Load("Astera.Games.StarDashLogo");ftlScene=GameArtwork.Load("Astera.Backgrounds.FtlMultiverse");}
+    void EffectsChanged(object sender,EventArgs e){UpdateRigClock();frameDirty=true;Invalidate();}public Banner(){UiEffects.Changed+=EffectsChanged;rigClock.Tick+=delegate{if(!rigDisposed&&liveRig!=null){RenderFrame();Invalidate(new Rectangle((int)(Width*.60F),0,Width-(int)(Width*.60F),Height),false);}};SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.Opaque,true);DoubleBuffered=true;BackColor=Color.FromArgb(12,17,33);defaultScene=GameArtwork.Load("Astera.Backgrounds.MinecraftSquared");starDashScene=GameArtwork.Load("Astera.Backgrounds.StarDash");starDashLogo=GameArtwork.Load("Astera.Games.StarDashLogo");ftlScene=GameArtwork.Load("Astera.Backgrounds.FtlMultiverse");}
     internal Image CopyDefaultArtwork(){var art=Game=="Minecraft²"?defaultScene:Game=="Star Dash"?starDashScene:Game=="FTL: Multiverse"?ftlScene:null;return art==null?null:new Bitmap(art);}
     public void Artwork(string background,string foreground){
         Replace(ref scene,ref scenePath,background);Replace(ref character,ref characterPath,foreground);frameDirty=true;Invalidate();
@@ -73,7 +73,7 @@ sealed partial class Banner:Panel {
         RecordFrame((System.Diagnostics.Stopwatch.GetTimestamp()-frameStart)*1000.0/System.Diagnostics.Stopwatch.Frequency);
     }
     internal static void Cover(Graphics g,Image image,Rectangle target){if(target.Width<1||target.Height<1)return;float ratio=Math.Max(target.Width/(float)image.Width,target.Height/(float)image.Height),width=target.Width/ratio,height=target.Height/ratio;using(var attributes=new System.Drawing.Imaging.ImageAttributes()){attributes.SetWrapMode(WrapMode.TileFlipXY);g.DrawImage(image,target,(image.Width-width)/2,(image.Height-height)/2,width,height,GraphicsUnit.Pixel,attributes);}}
-    protected override void Dispose(bool disposing){if(disposing){rigDisposed=true;rigClock.Dispose();AnimationTiming(false);if(frameBuffer!=null)frameBuffer.Dispose();if(backdropBuffer!=null)backdropBuffer.Dispose();if(liveRig!=null){liveRig.Dispose();liveRig=null;}if(scene!=null)scene.Dispose();if(character!=null)character.Dispose();if(defaultScene!=null)defaultScene.Dispose();if(starDashScene!=null)starDashScene.Dispose();if(starDashLogo!=null)starDashLogo.Dispose();if(ftlScene!=null)ftlScene.Dispose();}base.Dispose(disposing);}
+    protected override void Dispose(bool disposing){if(disposing){rigDisposed=true;UiEffects.Changed-=EffectsChanged;rigClock.Dispose();AnimationTiming(false);if(frameBuffer!=null)frameBuffer.Dispose();if(backdropBuffer!=null)backdropBuffer.Dispose();if(liveRig!=null){liveRig.Dispose();liveRig=null;}if(scene!=null)scene.Dispose();if(character!=null)character.Dispose();if(defaultScene!=null)defaultScene.Dispose();if(starDashScene!=null)starDashScene.Dispose();if(starDashLogo!=null)starDashLogo.Dispose();if(ftlScene!=null)ftlScene.Dispose();}base.Dispose(disposing);}
 }
 
 sealed class Card:Panel {
@@ -90,16 +90,17 @@ sealed class ScenePreview:Panel {
 sealed partial class LibraryForm {
     readonly System.ComponentModel.IContainer menuComponents=new System.ComponentModel.Container();
     ContextMenuStrip moreMenu;
-    readonly Label heroTitle=new Label(),heroSubtitle=new Label(),installationPath=new Label(),artLabel=new Label();
+    Label latestHeading;readonly Label heroTitle=new Label(),heroSubtitle=new Label(),heroTagline=new Label(),installationPath=new Label(),artLabel=new Label();
     readonly Panel overviewPage=new Panel(),backgroundPage=new Panel(),preferencesPage=new Panel();
     readonly TableLayoutPanel information=new TableLayoutPanel();
     readonly Panel overviewRight=new Panel(),activityCard=new Card();
     readonly FlowLayoutPanel tabs=new FlowLayoutPanel();
     readonly PictureBox artPreview=new PictureBox();
     readonly ScenePreview previewScene=new ScenePreview();
-    readonly Button openFolder=new AsteraButton(),chooseBackground=new AsteraButton(),chooseCharacter=new AsteraButton();
+    readonly Button openFolder=new AsteraButton(),chooseBackground=new AsteraButton(),chooseCharacter=new AsteraButton(),chooseLibraryIcon=new AsteraButton();
     int selectedTab;string previewArtwork="";
 
+    TableLayoutPanel updateLayout;FlowLayoutPanel transferActions;void UpdateTransferSlot(){if(updateLayout==null)return;cancel.MinimumSize=new Size(download.GetPreferredSize(Size.Empty).Width,download.MinimumSize.Height);bool cancellable=busy&&cancellation!=null&&!transaction;cancel.Visible=cancellable;download.Visible=!cancellable&&!IsCustomGame;install.Visible=restore.Visible=!IsCustomGame;updateLayout.RowStyles[2].Height=IsCustomGame&&!cancellable?0:110;}
     void BuildLibraryLayout(){
         SetStyle(ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true);DoubleBuffered=true;
         FormBorderStyle=FormBorderStyle.None;Padding=new Padding(6);
@@ -111,7 +112,7 @@ sealed partial class LibraryForm {
         var exit=CaptionButton(ButtonSymbol.Cancel,"Close Astera",delegate{Close();});
         windowMaximize=CaptionButton(ButtonSymbol.WindowMaximize,"Maximize",delegate{ToggleMaximize();});
         var minimize=CaptionButton(ButtonSymbol.WindowMinimize,"Minimize",delegate{WindowState=FormWindowState.Minimized;});
-        settings.Text="Settings";Style(settings);((AsteraButton)settings).Symbol=ButtonSymbol.Settings;settings.Click+=delegate{Configure();};top.Controls.Add(exit);top.Controls.Add(windowMaximize);top.Controls.Add(minimize);top.Controls.Add(settings);
+        settings.Text="Settings";Style(settings);((AsteraButton)settings).Symbol=ButtonSymbol.Settings;settings.Click+=delegate{ConfigureLauncher();};top.Controls.Add(exit);top.Controls.Add(windowMaximize);top.Controls.Add(minimize);top.Controls.Add(settings);
         header.Controls.Add(tagline);header.Controls.Add(top);header.Controls.Add(brand);
         header.MouseDown+=DragTitleBar;brand.MouseDown+=DragTitleBar;tagline.MouseDown+=DragTitleBar;top.MouseDown+=DragTitleBar;
 
@@ -124,23 +125,25 @@ sealed partial class LibraryForm {
         var body=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=1,RowCount=4,Padding=new Padding(24,0,24,12)};
         gameBody=body;body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
         body.RowStyles.Add(new RowStyle(SizeType.Absolute,330));body.RowStyles.Add(new RowStyle(SizeType.Absolute,54));body.RowStyles.Add(new RowStyle(SizeType.Percent,100));body.RowStyles.Add(new RowStyle(SizeType.Absolute,28));
-        viewport.Controls.Add(body);viewport.Resize+=delegate{body.RowStyles[0].Height=viewport.ClientSize.Height<740?280:330;};
+        viewport.Controls.Add(body);viewport.Resize+=delegate{LayoutHeroContent();};
         banner.Dock=DockStyle.Fill;banner.Margin=Padding.Empty;body.Controls.Add(banner,0,0);
         var heroText=new TableLayoutPanel{BackColor=Color.Transparent,ColumnCount=1,RowCount=5,Location=new Point(22,66),Height=160,Anchor=AnchorStyles.Left|AnchorStyles.Top};
-        foreach(int height in new[]{56,40,28,28,8})heroText.RowStyles.Add(new RowStyle(SizeType.Absolute,height));heroText.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
+        heroTextPanel=heroText;foreach(int height in new[]{56,40,0,28,28})heroText.RowStyles.Add(new RowStyle(SizeType.Absolute,height));heroText.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
         heroTitle.Text="Minecraft²";heroTitle.Font=UiTheme.Text(40,true);heroTitle.ForeColor=Color.White;heroTitle.Dock=DockStyle.Fill;
         heroSubtitle.Font=UiTheme.Text(14);heroSubtitle.ForeColor=Color.FromArgb(191,200,246);heroSubtitle.Dock=DockStyle.Fill;
+        heroTagline.Text="You're not alone this time.";heroTagline.Font=UiTheme.Text(14,true);heroTagline.ForeColor=Color.White;heroTagline.Dock=DockStyle.Fill;
         status.Font=UiTheme.Text(12,true);status.Dock=DockStyle.Fill;status.AutoEllipsis=true;status.TextAlign=ContentAlignment.MiddleLeft;
         profileLabel.Dock=DockStyle.Fill;profileLabel.ForeColor=Muted;profileLabel.AutoEllipsis=true;profileLabel.Font=UiTheme.Text(12);
-        heroText.Controls.Add(heroTitle,0,0);heroText.Controls.Add(heroSubtitle,0,1);heroText.Controls.Add(status,0,2);heroText.Controls.Add(profileLabel,0,3);banner.Controls.Add(heroText);
+        heroText.Controls.Add(heroTitle,0,0);heroText.Controls.Add(heroSubtitle,0,1);heroText.Controls.Add(heroTagline,0,2);heroText.Controls.Add(status,0,3);heroText.Controls.Add(profileLabel,0,4);banner.Controls.Add(heroText);
         var action=new FlowLayoutPanel{BackColor=Color.Transparent,Location=new Point(24,258),Height=58,WrapContents=false};
+        heroActions=action;
         play.Text="PLAY";Style(play);((AsteraButton)play).Role=ButtonRole.Primary;((AsteraButton)play).Symbol=ButtonSymbol.Play;((AsteraButton)play).OrbitGlow=true;play.Font=UiTheme.Button();play.MinimumSize=new Size(170,48);play.Click+=delegate{PrimaryGameAction();};
         check.Text="Check for updates";Style(check);((AsteraButton)check).Symbol=ButtonSymbol.Refresh;check.MinimumSize=new Size(195,48);check.Click+=async delegate{await Check(false);};
-        moreMenu=new ContextMenuStrip(menuComponents);moreMenu.Items.Add("Open game folder",null,delegate{OpenGameFolder();});moreMenu.Items.Add("Game settings",null,delegate{Configure();});moreMenu.Items.Add("Update activity",null,delegate{SelectLibraryTab(1);});moreMenu.Items.Add("Open Astera logs",null,delegate{OpenDiagnostics();});moreMenu.Items.Add("Collect game logs",null,delegate{CollectGameLogs();});
-        moreMenu.Items.Add("Capture UI snapshot",null,delegate{CaptureUiFromMenu();});
+        moreMenu=AsteraMenuRenderer.Create(menuComponents);moreMenu.Items.Add("Open game folder",null,delegate{OpenGameFolder();});moreMenu.Items.Add("Game settings",null,delegate{Configure();});moreMenu.Items.Add("Update activity",null,delegate{SelectLibraryTab(1);});moreMenu.Items.Add("Open Astera logs",null,delegate{OpenDiagnostics();});moreMenu.Items.Add("Collect game logs",null,delegate{CollectGameLogs();});
+        moreMenu.Items.Add("Astera changelog",null,delegate{AppChangelog.Show(this);});moreMenu.Items.Add("Capture UI snapshot",null,delegate{CaptureUiFromMenu();});
         var more=Button("",delegate(object sender,EventArgs e){var button=(Control)sender;moreMenu.Show(button,new Point(0,button.Height));});more.MinimumSize=new Size(48,48);((AsteraButton)more).Symbol=ButtonSymbol.More;more.AccessibleName="More options";
         action.Controls.AddRange(new Control[]{play,check,more});banner.Controls.Add(action);
-        banner.Resize+=delegate{heroText.Width=Math.Max(400,(int)(banner.Width*.57));heroText.Top=banner.Height<300?44:66;action.Top=banner.Height-72;action.Width=banner.Width-40;};
+        banner.Resize+=delegate{LayoutHeroContent();};
 
         tabs.Dock=DockStyle.Fill;tabs.Padding=new Padding(0,7,0,4);tabs.WrapContents=false;tabs.Margin=Padding.Empty;
         int index=0;foreach(string title in new[]{"Overview","Updates","Backgrounds","Settings"}){int choice=index++;var tab=Button(title,delegate{SelectLibraryTab(choice);});tab.Tag=choice;tab.Font=UiTheme.Text(14);((AsteraButton)tab).Symbol=new[]{ButtonSymbol.Overview,ButtonSymbol.Updates,ButtonSymbol.Backgrounds,ButtonSymbol.Settings}[choice];tab.MinimumSize=new Size(110,40);tabs.Controls.Add(tab);}body.Controls.Add(tabs,0,1);
@@ -148,30 +151,30 @@ sealed partial class LibraryForm {
 
         information.Dock=DockStyle.Fill;information.ColumnCount=2;information.RowCount=1;information.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,60));information.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,40));information.RowStyles.Add(new RowStyle(SizeType.Percent,100));overviewPage.Controls.Add(information);
         var latest=new Card{Dock=DockStyle.Fill};information.Controls.Add(latest,0,0);
-        var latestLayout=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=1,RowCount=3};latestLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));latestLayout.RowStyles.Add(new RowStyle(SizeType.Absolute,36));latestLayout.RowStyles.Add(new RowStyle(SizeType.Percent,100));latestLayout.RowStyles.Add(new RowStyle(SizeType.Absolute,110));latest.Controls.Add(latestLayout);
-        latestLayout.Controls.Add(Heading("Latest update"),0,0);
+        var latestLayout=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=1,RowCount=3};latestLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));latestLayout.RowStyles.Add(new RowStyle(SizeType.Absolute,36));latestLayout.RowStyles.Add(new RowStyle(SizeType.Percent,100));latestLayout.RowStyles.Add(new RowStyle(SizeType.Absolute,110));latest.Controls.Add(latestLayout);updateLayout=latestLayout;
+        latestHeading=Heading("Latest update");latestLayout.Controls.Add(latestHeading,0,0);
         ConfigureReadOnly(notes,latest.BackColor);latestLayout.Controls.Add(notes,0,1);
         var controls=new FlowLayoutPanel{Dock=DockStyle.Fill,Padding=new Padding(0,9,0,0),WrapContents=true};
         download.Text="Download";Style(download);((AsteraButton)download).Symbol=ButtonSymbol.Download;download.Click+=async delegate{await Download();};
         install.Text="Install update";Style(install);((AsteraButton)install).Role=ButtonRole.Primary;((AsteraButton)install).Symbol=ButtonSymbol.Install;install.Click+=async delegate{await Install();};
         restore.Text="Restore backup";Style(restore);((AsteraButton)restore).Role=ButtonRole.Quiet;((AsteraButton)restore).Symbol=ButtonSymbol.Restore;restore.Click+=async delegate{await Restore();};
         cancel.Text="Cancel";Style(cancel);((AsteraButton)cancel).Role=ButtonRole.Quiet;((AsteraButton)cancel).Symbol=ButtonSymbol.Cancel;cancel.Click+=delegate{if(cancellation!=null)cancellation.Cancel();};
-        foreach(var button in new[]{download,install,restore,cancel})button.Margin=new Padding(0,0,8,6);controls.Controls.AddRange(new Control[]{download,install,restore,cancel});latestLayout.Controls.Add(controls,0,2);
+        foreach(var button in new[]{download,install,restore,cancel})button.Margin=new Padding(0,0,8,6);transferActions=controls;controls.Controls.AddRange(new Control[]{cancel,download,install,restore});latestLayout.Controls.Add(controls,0,2);
 
         overviewRight.Dock=DockStyle.Fill;overviewRight.Margin=Padding.Empty;information.Controls.Add(overviewRight,1,0);
         var rightLayout=new TableLayoutPanel{Dock=DockStyle.Fill,RowCount=2,ColumnCount=1};rightLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));rightLayout.RowStyles.Add(new RowStyle(SizeType.Percent,55));rightLayout.RowStyles.Add(new RowStyle(SizeType.Percent,45));overviewRight.Controls.Add(rightLayout);
         var background=new Card{Dock=DockStyle.Fill,Margin=new Padding(0,0,0,12)};rightLayout.Controls.Add(background,0,0);
         var manage=Button("Manage",delegate{SelectLibraryTab(2);});manage.Dock=DockStyle.Right;manage.MinimumSize=new Size(90,36);
-        var artHeader=new Panel{Dock=DockStyle.Top,Height=42};artHeader.Controls.Add(Heading("Game artwork"));artHeader.Controls.Add(manage);background.Controls.Add(artHeader);
+        var artHeader=new Panel{Dock=DockStyle.Top,Height=42};artHeader.Controls.Add(Heading("Game artwork"));artHeader.Controls.Add(manage);background.Controls.Add(artHeader);background.Resize+=delegate{bool compact=background.ClientSize.Height<165;artLabel.Visible=!compact;artHeader.Height=compact?36:42;};
         artLabel.Text="Default starfield\nBackground + separate character layer";artLabel.Dock=DockStyle.Bottom;artLabel.Height=46;artLabel.ForeColor=Muted;artLabel.Padding=new Padding(0,6,0,0);background.Controls.Add(artLabel);previewScene.Dock=DockStyle.Fill;background.Controls.Add(previewScene);previewScene.BringToFront();
-        var installation=new Card{Dock=DockStyle.Fill,Margin=Padding.Empty};rightLayout.Controls.Add(installation,0,1);
+        var installation=new Card{Dock=DockStyle.Fill,Margin=Padding.Empty};rightLayout.Controls.Add(installation,0,1);installation.Resize+=delegate{installation.Padding=new Padding(installation.ClientSize.Height<145?10:16);};
         openFolder.Text="Open folder";Style(openFolder);((AsteraButton)openFolder).Symbol=ButtonSymbol.Folder;openFolder.Dock=DockStyle.Bottom;openFolder.Click+=delegate{OpenGameFolder();};
         installationPath.Dock=DockStyle.Fill;installationPath.ForeColor=Muted;installationPath.AutoEllipsis=true;installationPath.Padding=new Padding(0,4,0,0);installation.Controls.Add(installationPath);installation.Controls.Add(openFolder);installation.Controls.Add(new Label{Text="Installation",Font=UiTheme.Text(17,true),Dock=DockStyle.Top,Height=28});
         activityCard.Dock=DockStyle.Fill;activityCard.Margin=Padding.Empty;ConfigureReadOnly(log,activityCard.BackColor);activityCard.Controls.Add(log);activityCard.Controls.Add(new Label{Text="Update activity",Dock=DockStyle.Top,Height=34,Font=UiTheme.Text(17,true)});
         AddDiagnosticButtons();BuildArtworkPage();BuildPreferencesPage();
         releaseLabel.Dock=DockStyle.Fill;releaseLabel.ForeColor=Muted;releaseLabel.Font=UiTheme.Text(12);releaseLabel.TextAlign=ContentAlignment.MiddleLeft;body.Controls.Add(releaseLabel,0,3);
         Controls.Add(viewport);Controls.Add(sidebar);Controls.Add(header);SelectLibraryTab(0);
-        Disposed+=delegate{CancelGameTransition();if(artPreview.Image!=null)artPreview.Image.Dispose();if(activityCard.Parent==null)activityCard.Dispose();if(overviewRight.Parent==null)overviewRight.Dispose();tray.Dispose();timer.Dispose();diagnosticsTimer.Dispose();menuComponents.Dispose();};
+        Disposed+=delegate{CancelGameTransition();if(artPreview.Image!=null)artPreview.Image.Dispose();if(activityCard.Parent==null)activityCard.Dispose();if(overviewRight.Parent==null)overviewRight.Dispose();tray.Dispose();timer.Dispose();diagnosticsTimer.Dispose();};
     }
     static Label Heading(string title){return new Label{Text=title,Font=UiTheme.Text(17,true),ForeColor=Color.FromArgb(235,238,255),Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleLeft};}
     static void ConfigureReadOnly(ScrollText box,Color background){box.Multiline=true;box.ReadOnly=true;box.TabStop=false;box.HideSelection=true;box.ScrollBars=ScrollBars.Vertical;box.Dock=DockStyle.Fill;box.BackColor=background;box.ForeColor=Color.FromArgb(185,196,225);box.BorderStyle=BorderStyle.None;}
@@ -179,14 +182,14 @@ sealed partial class LibraryForm {
         foreach(AsteraButton tab in tabs.Controls)tab.Role=(int)tab.Tag==index?ButtonRole.Primary:ButtonRole.Quiet;
         information.SuspendLayout();if(index<2){overviewRight.Visible=index==0;activityCard.Visible=index==1;if(index==1){information.Controls.Remove(overviewRight);information.Controls.Add(activityCard,1,0);}else{information.Controls.Remove(activityCard);information.Controls.Add(overviewRight,1,0);}}information.ResumeLayout();
     }
-    void UpdateLayoutView(){
-        if(IsCustomGame){UpdateCustomLayout();return;}bool mc=GameKind==0;bool ftl=IsMultiverse;if(minecraftSkinChoice!=null)minecraftSkinChoice.Visible=mc;heroTitle.Text=ftl?"FTL: Multiverse":mc?"Minecraft²":"Star Dash";heroSubtitle.Text=ftl?"Explore new sectors, command powerful starships, encounter dangerous enemies, and discover countless adventures across the multiverse.":mc?"Your worlds. A little more alive.":"Ready for your next race.";
+    void UpdateLayoutView(){UpdateGamePreferences();
+        if(IsCustomGame){UpdateCustomLayout();return;}chooseLibraryIcon.Visible=false;bool mc=GameKind==0;bool ftl=IsMultiverse;if(minecraftSkinChoice!=null)minecraftSkinChoice.Visible=mc;heroTitle.Text=ftl?"FTL: Multiverse":mc?"Minecraft²":"Star Dash";heroSubtitle.Text=ftl?"Explore new sectors, command powerful starships, encounter dangerous enemies, and discover countless adventures across the multiverse.":mc?"Explore a reimagined Minecraft world, meet Allies who fight and grow alongside you, and face new dangers together. Build, survive, and create your own adventures.":"Ready for your next race.";LayoutHeroContent();
         string background=ftl?store.Settings.BackgroundFtl:mc?store.Settings.BackgroundMinecraft:store.Settings.BackgroundStarDash,character=ftl?store.Settings.CharacterFtl:mc?store.Settings.CharacterMinecraft:store.Settings.CharacterStarDash;if(mc&&String.IsNullOrEmpty(character)&&store.Settings.UseMinecraftSkin)character=minecraftSkinArt;
         banner.Artwork(background,character);banner.LiveSkin(mc&&character==minecraftSkinArt&&!String.IsNullOrEmpty(minecraftSkinArt)?minecraftSkinArt:null);installationPath.Text=String.IsNullOrWhiteSpace(GameFolder())?"No installation linked":GameFolder();openFolder.Enabled=!busy&&Directory.Exists(GameFolder());
         chooseBackground.Enabled=chooseCharacter.Enabled=!busy;artLabel.Text=(String.IsNullOrEmpty(background)?(ftl?"FTL: Multiverse artwork":mc?"Minecraft² sunrise":"StarDash — original artwork"):Path.GetFileName(background))+(String.IsNullOrEmpty(character)?"":"\n"+(character==minecraftSkinArt?"Your Minecraft skin":Path.GetFileName(character)));
         string previewKey=(ftl?"ftl:":mc?"minecraft:":"stardash:")+(background??"");if(previewArtwork!=previewKey){previewArtwork=previewKey;var old=artPreview.Image;previewScene.Artwork=null;artPreview.Image=null;try{artPreview.Image=String.IsNullOrEmpty(background)?banner.CopyDefaultArtwork():Banner.ReadArtwork(background);}catch{}previewScene.Artwork=artPreview.Image;previewScene.Invalidate();if(old!=null)old.Dispose();}
     }
-    string GameFolder(){if(IsCustomGame)return Path.GetDirectoryName(CurrentCustom.Executable);return IsMultiverse?store.Settings.FtlDirectory:GameKind==0?store.Settings.Profile:String.IsNullOrWhiteSpace(store.Settings.StarDashExecutable)?null:Path.GetDirectoryName(store.Settings.StarDashExecutable);}
+    string GameFolder(){if(IsCustomGame)return PlatformLibraries.Folder(CurrentCustom);return IsMultiverse?store.Settings.FtlDirectory:GameKind==0?store.Settings.Profile:String.IsNullOrWhiteSpace(store.Settings.StarDashExecutable)?null:Path.GetDirectoryName(store.Settings.StarDashExecutable);}
     void OpenGameFolder(){string folder=GameFolder();if(!Directory.Exists(folder)){Configure();return;}try{System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder){UseShellExecute=true});}catch(Exception error){MessageBox.Show(this,error.Message,"Open game folder");}}
     CheckBox minecraftSkinChoice;
     void BuildArtworkPage(){
@@ -194,26 +197,15 @@ sealed partial class LibraryForm {
         var row=new FlowLayoutPanel{Dock=DockStyle.Bottom,Height=100,WrapContents=true,Padding=new Padding(0,8,0,0)};
         chooseBackground.Text="Choose background…";Style(chooseBackground);((AsteraButton)chooseBackground).Symbol=ButtonSymbol.Backgrounds;chooseBackground.Click+=delegate{ChooseArtwork(false);};
         chooseCharacter.Text="Choose character…";Style(chooseCharacter);((AsteraButton)chooseCharacter).Symbol=ButtonSymbol.AddArtwork;chooseCharacter.Click+=delegate{ChooseArtwork(true);};
-        var reset=Button("Reset artwork",delegate{if(busy)return;if(IsCustomGame){CurrentCustom.Background="";CurrentCustom.Character="";}else if(GameKind==0){store.Settings.BackgroundMinecraft="";store.Settings.CharacterMinecraft="";}else if(IsMultiverse){store.Settings.BackgroundFtl="";store.Settings.CharacterFtl="";}else{store.Settings.BackgroundStarDash="";store.Settings.CharacterStarDash="";}store.Save();UpdateLayoutView();RefreshMinecraftSkin();});
-        foreach(var button in new[]{chooseBackground,chooseCharacter,reset})button.Margin=new Padding(0,0,8,6);row.Controls.AddRange(new Control[]{chooseBackground,chooseCharacter,reset});
+        chooseLibraryIcon.Text="Choose icon…";Style(chooseLibraryIcon);chooseLibraryIcon.Click+=delegate{ChooseCustomIcon();};
+        var reset=Button("Reset artwork",delegate{if(busy)return;if(IsCustomGame){CurrentCustom.Background="";CurrentCustom.Character="";CurrentCustom.Icon="";games.Invalidate();}else if(GameKind==0){store.Settings.BackgroundMinecraft="";store.Settings.CharacterMinecraft="";}else if(IsMultiverse){store.Settings.BackgroundFtl="";store.Settings.CharacterFtl="";}else{store.Settings.BackgroundStarDash="";store.Settings.CharacterStarDash="";}store.Save();UpdateLayoutView();RefreshMinecraftSkin();});
+        foreach(var button in new[]{chooseBackground,chooseCharacter,chooseLibraryIcon,reset})button.Margin=new Padding(0,0,8,6);row.Controls.AddRange(new Control[]{chooseBackground,chooseCharacter,chooseLibraryIcon,reset});
         var useSkin=new CheckBox{Text="Use my Minecraft Launcher skin when no custom character is set",AutoSize=true,Checked=store.Settings.UseMinecraftSkin,Margin=new Padding(0,6,0,0)};useSkin.CheckedChanged+=delegate{if(busy){useSkin.Checked=store.Settings.UseMinecraftSkin;return;}store.Settings.UseMinecraftSkin=useSkin.Checked;store.Save();UpdateLayoutView();if(useSkin.Checked)RefreshMinecraftSkin();};row.Controls.Add(useSkin);minecraftSkinChoice=useSkin;
         artPreview.Dock=DockStyle.Fill;artPreview.SizeMode=PictureBoxSizeMode.Zoom;artPreview.BackColor=Color.FromArgb(15,21,39);card.Controls.Add(artPreview);card.Controls.Add(row);card.Controls.Add(new Label{Text="Game artwork  ·  Background fills the scene. Transparent PNG character sits in front and can extend above it.",Dock=DockStyle.Top,Height=45,ForeColor=Muted});
     }
     void ChooseArtwork(bool character){if(busy)return;using(var dialog=new OpenFileDialog{Title=character?"Choose a transparent character PNG":"Choose a game background",Filter=character?"PNG artwork|*.png":"Artwork|*.png;*.jpg;*.jpeg"}){if(dialog.ShowDialog(this)!=DialogResult.OK)return;try{using(var proof=Banner.ReadArtwork(dialog.FileName)){}
         if(IsCustomGame){if(character)CurrentCustom.Character=dialog.FileName;else CurrentCustom.Background=dialog.FileName;}else if(GameKind==0){if(character)store.Settings.CharacterMinecraft=dialog.FileName;else store.Settings.BackgroundMinecraft=dialog.FileName;}else if(IsMultiverse){if(character)store.Settings.CharacterFtl=dialog.FileName;else store.Settings.BackgroundFtl=dialog.FileName;}else{if(character)store.Settings.CharacterStarDash=dialog.FileName;else store.Settings.BackgroundStarDash=dialog.FileName;}store.Save();UpdateLayoutView();
         }catch(Exception error){MessageBox.Show(this,error.Message,"Game artwork");}}}
-    void BuildPreferencesPage(){
-        var card=new Card{Dock=DockStyle.Fill,Margin=Padding.Empty};preferencesPage.Controls.Add(card);
-        var edit=Button("Edit settings",delegate{Configure();});edit.Dock=DockStyle.Bottom;
-        var colors=new FlowLayoutPanel{Dock=DockStyle.Bottom,Height=65,Padding=new Padding(0,10,0,0),WrapContents=false};
-        colors.Controls.Add(new Label{Text="Button color",AutoSize=true,Margin=new Padding(0,5,16,0)});
-        var accents=new ComboBox{DropDownStyle=ComboBoxStyle.DropDownList,Width=160,BackColor=Color.FromArgb(31,40,63),ForeColor=Color.White};accents.Items.AddRange(ButtonAtlas.Accents);accents.SelectedItem=Array.IndexOf(ButtonAtlas.Accents,store.Settings.ButtonAccent)>=0?store.Settings.ButtonAccent:"Violet";
-        accents.SelectedIndexChanged+=delegate{if(busy){accents.SelectedItem=store.Settings.ButtonAccent;return;}store.Settings.ButtonAccent=(string)accents.SelectedItem;store.Save();ButtonAtlas.SetAccent(store.Settings.ButtonAccent);InvalidateButtons(this);};colors.Controls.Add(accents);
-        card.Controls.Add(new Label{Text="Game settings\n\nLink your CurseForge profile or StarDash export, choose the update channel, and control background checks and tray behaviour.",Dock=DockStyle.Fill,ForeColor=Muted,Font=UiTheme.Text(15)});card.Controls.Add(colors);card.Controls.Add(edit);
-    }
-    static void InvalidateButtons(Control parent){foreach(Control child in parent.Controls){if(child is AsteraButton)child.Invalidate();if(child is ScrollText)child.Invalidate(true);InvalidateButtons(child);}}
-    protected override bool ShowWithoutActivation {get{return previewMode||base.ShowWithoutActivation;}}
-    bool resizeRefreshPending;
-    protected override void OnResize(EventArgs e){base.OnResize(e);if(windowMaximize!=null){((AsteraButton)windowMaximize).Symbol=WindowState==FormWindowState.Maximized?ButtonSymbol.WindowRestore:ButtonSymbol.WindowMaximize;windowMaximize.AccessibleName=WindowState==FormWindowState.Maximized?"Restore window":"Maximize";}if(!IsHandleCreated||IsDisposed||resizeRefreshPending)return;resizeRefreshPending=true;BeginInvoke(new Action(delegate{resizeRefreshPending=false;if(IsDisposed)return;PerformLayout();Invalidate(true);Update();}));}
+    void BuildPreferencesPage(){BuildGamePreferences();}
 }
 }

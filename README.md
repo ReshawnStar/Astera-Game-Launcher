@@ -2,7 +2,7 @@
 
 **Your worlds. One place.** A small Windows game library and update companion by Star.
 
-Development build: the first packaged Astera app download is still being prepared.
+Development releases are available from https://github.com/ReshawnStar/Astera-Game-Launcher/releases/latest.
 The Minecraft² content channel is live; content releases are separate from the app.
 
 Minecraft² stays in CurseForge. Astera finds its profile, checks Star's signed
@@ -188,3 +188,34 @@ This is a Steam handoff, not a guarantee of unattended downloads or a separate
 update-only API. Steam may require login or display its normal prompts. Astera
 does not edit Steam manifests or schedule automatic game downloads. Selected game
 metadata refreshes in the background every 15 seconds while the launcher is open.
+
+Custom games support Backgrounds → Choose icon for transparent PNG library
+icons. Images preserve alpha, fit inside a padded square and override Steam's
+cached game icon. Reset artwork restores automatic artwork. Steam JPGs retain
+the pixels supplied by Steam; Astera does not remove their baked-in backgrounds.
+
+### Installed library picker and Steam news
+
+Add game offers Steam library, itch.io games and a local EXE. Steam discovers
+registered libraries from libraryfolders.vdf and installed app manifests; entries
+launch by app ID and do not guess a game's EXE. itch.io reads public game metadata
+from .itch/receipt.json.gz inside its apps folder. Its default is per-user AppData;
+Choose library folder supports another install location and remembers that folder.
+This picker does not read the itch account database or credentials. itch launch
+uses its official protocol, which may ask the user to confirm startup.
+
+Steam UPDATE opens the selected game's Steam library page and never requests
+launch. Steam's public protocol has no verified universal update-only command;
+the user may need to press Update/Resume in Steam. PLAY uses the normal Steam
+launch route after the pending update clears. The earlier Update & Play behavior
+is superseded. Official developer posts are fetched asynchronously from Steam's
+public GetNewsForApp API, with dates, plain text formatting and a local offline
+cache. These posts may include announcements as well as patch notes.
+
+## Settings and diagnostics in 0.1.14
+
+The header Settings button contains launcher preferences. Each game's Settings tab contains only that game's location, setup and artwork actions. Button colors live under global Appearance: the four legacy colors plus twelve requested palette options. Decorative animations can be disabled. About and the overflow menu expose the embedded Astera changelog.
+
+Current global controls cover update checks, tray behavior, library locations, effects, colors and diagnostics. Windows startup registration and automatic managed downloads remain future features; no inactive placeholders are shown. Managed-file backups stay enabled. A library migration/export feature and a unified update center are not implemented.
+
+Running-state detection guards custom Windows games, platform imports, StarDash and FTL, using process paths and Steam's local running flag. Minecraft stays a CurseForge launch handoff. A per-settings-root single-instance guard brings an existing Astera window forward. FTL report collection preserves original files and deduplicates local copies; it does not upload reports. Consecutive duplicate activity messages are hidden in the UI while individual entries remain in the session log.

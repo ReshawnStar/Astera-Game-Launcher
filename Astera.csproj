@@ -22,4 +22,5 @@
     <ItemGroup><Compile Include="$(IntermediateOutputPath)version.g.cs"/></ItemGroup>
   </Target>
   <ItemGroup><EmbeddedResource Include="assets\games\minecraft-squared-icon.png"><LogicalName>Astera.Games.MinecraftSquaredIcon</LogicalName></EmbeddedResource></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="app-release-notes.md"><LogicalName>Astera.Notes.App</LogicalName></EmbeddedResource></ItemGroup>
 </Project>

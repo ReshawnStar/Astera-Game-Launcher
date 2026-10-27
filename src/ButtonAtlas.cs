@@ -13,9 +13,12 @@ static class ButtonAtlas {
     static readonly Bitmap Art=Load("Buttons"),Mask=Load("Mask");
     static readonly Dictionary<string,Bitmap> Cache=new Dictionary<string,Bitmap>();
     static string accent="Violet";
-    public static readonly string[] Accents={"Violet","Teal","Rose","Gold"};
+    public static readonly string[] Accents={"Violet","Teal","Rose","Gold","Nebula Purple","Orbital Blue","Stellar Cyan","Aurora Teal","Emerald Green","Nova Pink","Rose Red","Solar Gold","Ember Orange","Ice White","Moonlight Silver","Deep Indigo"};
+    static readonly Dictionary<string,Color> Palette=new Dictionary<string,Color>{{"Violet",ColorTranslator.FromHtml("#8B74FF")},{"Teal",ColorTranslator.FromHtml("#34DAD1")},{"Rose",ColorTranslator.FromHtml("#F055A6")},{"Gold",ColorTranslator.FromHtml("#EBB43F")},{"Nebula Purple",ColorTranslator.FromHtml("#865BFF")},{"Orbital Blue",ColorTranslator.FromHtml("#4C80FF")},{"Stellar Cyan",ColorTranslator.FromHtml("#36C9F0")},{"Aurora Teal",ColorTranslator.FromHtml("#32C9B3")},{"Emerald Green",ColorTranslator.FromHtml("#4BCC8A")},{"Nova Pink",ColorTranslator.FromHtml("#F56EB5")},{"Rose Red",ColorTranslator.FromHtml("#F36A86")},{"Solar Gold",ColorTranslator.FromHtml("#EAB758")},{"Ember Orange",ColorTranslator.FromHtml("#F48A50")},{"Ice White",ColorTranslator.FromHtml("#DCE9FF")},{"Moonlight Silver",ColorTranslator.FromHtml("#A6B4CC")},{"Deep Indigo",ColorTranslator.FromHtml("#6265CB")}};
     public static bool Available {get{return Art!=null&&Mask!=null;}}
-    public static Color AccentColor {get{return accent=="Teal"?Color.FromArgb(52,218,209):accent=="Rose"?Color.FromArgb(240,85,166):accent=="Gold"?Color.FromArgb(235,180,63):Color.FromArgb(139,116,255);}}
+    public static Color AccentColor {get{Color color;return Palette.TryGetValue(accent,out color)?color:Palette["Violet"];}}
+    static double Linear(byte value){double v=value/255.0;return v<=.04045?v/12.92:Math.Pow((v+.055)/1.055,2.4);}
+    public static Color AccentTextColor {get{if(accent=="Violet")return Color.White;Color color=AccentColor;double luminance=.2126*Linear(color.R)+.7152*Linear(color.G)+.0722*Linear(color.B);return 1.05/(luminance+.05)>=4.5?Color.White:Color.FromArgb(12,17,33);}}
     public static void SetAccent(string value){if(Array.IndexOf(Accents,value)<0)value="Violet";if(value==accent)return;accent=value;foreach(var item in Cache.Values)item.Dispose();Cache.Clear();}
     static Bitmap Load(string name){using(var stream=Assembly.GetExecutingAssembly().GetManifestResourceStream("Astera.Art."+name)){if(stream==null)return null;using(var image=Image.FromStream(stream)){if(image.Width!=2164||image.Height!=727)throw new InvalidOperationException("Button artwork dimensions changed; update its frame map before building.");return new Bitmap(image);}}}
     public static bool Draw(Graphics g,Rectangle bounds,ButtonRole role,string state){
