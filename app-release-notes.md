@@ -1,12 +1,10 @@
-# Astera 0.1.22
+# Astera 0.1.23
 
-- Animated GIF backgrounds, character artwork and library icons now play in Astera.
-- Animations pause when hidden or minimized, or when animated effects are disabled.
-- Animated itch covers can play instead of being flattened to a still image.
-- Artwork changes release the previous animation cleanly.
-
-- YouTube links in update notes can play inside Astera, including Steam video posts.
-- Add Roblox experience favorites by link or Place ID, with artwork and a Play handoff.
+- Multiverse downloads now show the current file, percentage and downloaded size.
+- Hyperspace setup, patching and verification show their current stage and elapsed time.
+- Added a moving indicator for work without a known percentage.
+- Preparation can be cancelled from any tab; backups and installation remain protected.
+- Installer activity logs now update while the patching tool is running.
 
 ## Known issue
 
