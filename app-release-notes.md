@@ -1,9 +1,12 @@
-# Astera 0.1.19
+# Astera 0.1.20
 
-- Added a visible search box under Your Library. Ctrl+F focuses it.
-- Scan a games folder, review a batch and add the selected games together.
-- Drop folders or EXEs onto the library to open the batch review.
-- Common installers, updaters and crash helpers are filtered from folder scans.
-- itch.io games can now show their cover artwork and library icons automatically.
-- Reduced unnecessary icon and page redraws during background checks.
-- Unchanged patch notes keep their scroll position.
+- Steam games can fetch missing backgrounds from Steam's public store artwork.
+- Downloaded Steam backgrounds are cached for later use.
+- The library now has a dark, textured scrollbar matching Astera's other panels.
+- Gave library titles and icons more room beside the scrollbar.
+
+## Known issue
+
+One tester reported Windows Defender detecting Astera as Program:Win32/Contebrew.A!ml.
+We believe the detection is incorrect; Microsoft has not confirmed a review result.
+Please report the version and threat name if this happens to you.

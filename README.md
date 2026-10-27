@@ -9,6 +9,15 @@ Minecraft² stays in CurseForge. Astera finds its profile, checks Star's signed
 update channel, downloads changed managed files and installs a previewed update
 with rollback protection. It does not download Minecraft or replace its launcher.
 
+## Reported Windows Defender detection
+
+One tester reported Defender removing Astera 0.1.19 as `Program:Win32/Contebrew.A!ml`,
+which appeared in Brave as “Virus detected.” We believe this is an incorrect
+detection; Microsoft has not confirmed that assessment, and no review result is
+available yet. Download only from this repository's official releases. Do not
+disable antivirus protection for Astera. Detection reports should include the
+Astera version and exact threat name, without private account or folder details.
+
 ## Current build
 
 - Steam-inspired library: games on the left, Play and update status on the right.

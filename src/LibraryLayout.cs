@@ -116,9 +116,9 @@ sealed partial class LibraryForm {
         header.Controls.Add(tagline);header.Controls.Add(top);header.Controls.Add(brand);
         header.MouseDown+=DragTitleBar;brand.MouseDown+=DragTitleBar;tagline.MouseDown+=DragTitleBar;top.MouseDown+=DragTitleBar;
 
-        var sidebar=new Panel{Dock=DockStyle.Left,Width=220,BackColor=Color.FromArgb(14,19,36),Padding=new Padding(14,26,12,16)};
+        var sidebar=new Panel{Dock=DockStyle.Left,Width=260,BackColor=Color.FromArgb(14,19,36),Padding=new Padding(14,26,12,16)};
         BuildLibrarySearch(sidebar);sidebar.Controls.Add(new Label{Text="YOUR LIBRARY",ForeColor=Muted,Height=36,Dock=DockStyle.Top,Font=UiTheme.Text(12)});
-        games.Dock=DockStyle.Fill;games.BorderStyle=BorderStyle.None;games.BackColor=sidebar.BackColor;games.ForeColor=Color.White;games.Font=UiTheme.Text(15);games.ItemHeight=76;games.DrawMode=DrawMode.OwnerDrawFixed;ReloadGames(null);games.DrawItem+=DrawGame;games.SelectedIndexChanged+=delegate{if(!reloadingLibrary&&games.SelectedItem!=null){activeLibraryEntry=(LibraryEntry)games.SelectedItem;SwitchGame();}};sidebar.Controls.Add(games);games.BringToFront();
+        games.Dock=DockStyle.Fill;games.BorderStyle=BorderStyle.None;games.BackColor=sidebar.BackColor;games.ForeColor=Color.White;games.Font=UiTheme.Text(15);games.ItemHeight=76;games.DrawMode=DrawMode.OwnerDrawFixed;ReloadGames(null);games.DrawItem+=DrawGame;games.SelectedIndexChanged+=delegate{if(!reloadingLibrary&&games.SelectedItem!=null){activeLibraryEntry=(LibraryEntry)games.SelectedItem;SwitchGame();}};BuildLibraryViewport(sidebar);
         BuildVersionFooter(sidebar);var addGame=Button("+ Add game",delegate{AddCustomGame();});addGame.Dock=DockStyle.Bottom;sidebar.Controls.Add(addGame);addGame.BringToFront();
 
         var viewport=new Panel{Dock=DockStyle.Fill};gameViewport=viewport;viewport.Resize+=delegate{CancelGameTransition();};
