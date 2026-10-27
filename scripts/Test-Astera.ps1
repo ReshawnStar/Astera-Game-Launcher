@@ -1,16 +1,17 @@
 #Requires -Version 7.2
 param(
     [string]$TestRoot=('D:/vale/StarsAllies-Storage/audits/astera-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss')),
-    [string]$BuildDirectory='D:/vale/StarsAllies-Storage/builds/Astera/0.1.9',
+    [string]$BuildDirectory='',
     [string]$PrivateKeyFile='D:/vale/StarsAllies-Storage/keys/Astera/publisher.key'
 )
 $ErrorActionPreference='Stop'
+if(!$BuildDirectory){$BuildDirectory='D:/vale/StarsAllies-Storage/builds/Astera/'+(Get-Content -LiteralPath (Join-Path (Split-Path $PSScriptRoot -Parent) 'VERSION') -Raw).Trim()}
 if(Test-Path -LiteralPath $TestRoot){throw 'Use a new test directory; preserve previous test evidence'}
 New-Item -ItemType Directory -Path $TestRoot|Out-Null
 & (Join-Path $PSScriptRoot 'Build-Astera.ps1') -OutputDirectory $BuildDirectory
 $exe=Join-Path $BuildDirectory 'Astera.exe'
 $reports=@()
-foreach($item in @(@{Name='network';Flag='--self-test'},@{Name='engine';Flag='--engine-self-test'},@{Name='layout';Flag='--layout-audit'})){
+foreach($item in @(@{Name='network';Flag='--self-test'},@{Name='engine';Flag='--engine-self-test'},@{Name='layout';Flag='--layout-audit'},@{Name='multiverse';Flag='--multiverse-self-test'})){
     $folder=Join-Path $TestRoot $item.Name
     $process=Start-Process -FilePath $exe -ArgumentList @($item.Flag,('"'+$folder+'"')) -WindowStyle Hidden -PassThru
     if(!$process.WaitForExit(60000)){$process.Kill();throw ($item.Name+' test timed out')}

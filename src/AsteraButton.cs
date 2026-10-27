@@ -33,7 +33,8 @@ public sealed class AsteraButton:Button {
         Size text=String.IsNullOrEmpty(Text)?Size.Empty:TextRenderer.MeasureText(Text,Font,new Size(Int32.MaxValue,Int32.MaxValue),TextFormatFlags.SingleLine|TextFormatFlags.NoPadding);
         return new Size(Math.Max(MinimumSize.Width,text.Width+Padding.Horizontal+(Symbol==ButtonSymbol.None?0:SymbolSize+(text.Width==0?0:8))+4),Math.Max(MinimumSize.Height,Math.Max(text.Height,Symbol==ButtonSymbol.None?0:SymbolSize)+Padding.Vertical+2));
     }
-    protected override void OnMouseEnter(EventArgs e){hover=true;base.OnMouseEnter(e);Invalidate();}
+    protected override void OnMouseEnter(EventArgs e){hover=true;if(Enabled)UiAudio.Hover();base.OnMouseEnter(e);Invalidate();}
+    protected override void OnClick(EventArgs e){if(Enabled)UiAudio.Select();base.OnClick(e);}
     protected override void OnMouseLeave(EventArgs e){hover=false;base.OnMouseLeave(e);Invalidate();}
     protected override void OnMouseDown(MouseEventArgs e){if(e.Button==MouseButtons.Left)pressed=true;base.OnMouseDown(e);Invalidate();}
     protected override void OnMouseUp(MouseEventArgs e){pressed=false;base.OnMouseUp(e);Invalidate();}

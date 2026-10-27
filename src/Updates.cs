@@ -10,8 +10,8 @@ using System.Threading;
 using MC2Pack;
 
 namespace Astera {
-public sealed class Channel { public string FeedUrl="",PublicKeyXml=""; }
-public sealed class Preferences { public string Profile="",FeedUrl="",StarDashExecutable="",BackgroundMinecraft="",BackgroundStarDash="",CharacterMinecraft="",CharacterStarDash="",ButtonAccent="Violet";public bool CheckOnStart=true,KeepInTray=true,ConfigurePacks=true,UseMinecraftSkin=true;public long HighestSequence; }
+public sealed class Channel { public string FeedUrl="",AppFeedUrl="",PublicKeyXml=""; }
+public sealed class Preferences { public List<CustomGame> CustomGames=new List<CustomGame>(); public string Profile="",FeedUrl="",StarDashExecutable="",BackgroundMinecraft="",BackgroundStarDash="",CharacterMinecraft="",CharacterStarDash="",ButtonAccent="Violet",FtlDirectory="",FtlWorkspace="",BackgroundFtl="",CharacterFtl="";public bool CheckOnStart=true,KeepInTray=true,ConfigurePacks=true,UseMinecraftSkin=true;public long HighestSequence,HighestAppSequence;public bool UiSounds=true;public double UiVolume=.7; }
 public sealed class Envelope {public string Payload,Signature;}
 public sealed class PayloadSource {public string Path,Url;}
 public sealed class RequiredMod {public string Id,Version;}
@@ -20,7 +20,7 @@ public sealed class DownloadPlan {public UpdateFeed Feed;public Dictionary<strin
 public sealed class Store {
     public readonly string Root,Cache;public Preferences Settings;
     public Store(string root){Root=Engine.Root(root);Directory.CreateDirectory(Root);Cache=Engine.Inside(Root,"cache");Directory.CreateDirectory(Cache);var p=Engine.Inside(Root,"preferences.json");Settings=File.Exists(p)?Engine.Json.Deserialize<Preferences>(File.ReadAllText(p)):new Preferences();if(Settings==null)throw new Exception("Astera settings are unreadable.");}
-    public void Save(){var p=Engine.Inside(Root,"preferences.json");var next=Engine.Inside(Root,"preferences.next");File.WriteAllText(next,Engine.Json.Serialize(Settings),new UTF8Encoding(false));if(File.Exists(p))File.Replace(next,p,null);else File.Move(next,p);}
+    readonly object saveGate=new object(); public void Save(){lock(saveGate){var p=Engine.Inside(Root,"preferences.json");var next=Engine.Inside(Root,"preferences.next");File.WriteAllText(next,Engine.Json.Serialize(Settings),new UTF8Encoding(false));if(File.Exists(p))File.Replace(next,p,null);else File.Move(next,p);}}
 }
 public sealed class Transport {
     readonly bool testLoopback;

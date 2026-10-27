@@ -1,0 +1,18 @@
+using System;
+using System.Drawing;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+namespace Astera {
+sealed partial class LibraryForm {
+    readonly AsteraButton appUpdateIcon=new AsteraButton();ToolTip appUpdateTip;bool checkingApp;byte[] appEnvelope;AppRelease appRelease;
+    void BuildVersionFooter(Control sidebar){
+        var footer=new Panel{Dock=DockStyle.Bottom,Height=64,BackColor=sidebar.BackColor};var label=new Label{Text="ASTERA\nby Star  ·  v"+SelfUpdate.CurrentVersion,ForeColor=Color.FromArgb(144,155,205),Location=new Point(0,0),Size=new Size(144,42),Font=UiTheme.Text(12)};
+        appUpdateIcon.AutoSize=false;appUpdateIcon.MinimumSize=new Size(26,26);appUpdateIcon.Size=new Size(26,26);appUpdateIcon.Location=new Point(146,10);appUpdateIcon.Padding=new Padding(3);appUpdateIcon.Margin=Padding.Empty;appUpdateIcon.Role=ButtonRole.Quiet;appUpdateIcon.Symbol=ButtonSymbol.Refresh;appUpdateIcon.AccessibleName="Check for Astera updates";appUpdateIcon.Click+=async delegate{if(appRelease!=null&&SelfUpdate.ParseVersion(appRelease.Version)>SelfUpdate.ParseVersion(SelfUpdate.CurrentVersion))await InstallAsteraUpdate();else await CheckAsteraUpdates(false);};
+        appUpdateTip=new ToolTip(menuComponents);appUpdateTip.SetToolTip(appUpdateIcon,"Check for Astera updates");footer.Controls.Add(label);footer.Controls.Add(appUpdateIcon);sidebar.Controls.Add(footer);
+    }
+    async Task CheckAsteraUpdates(bool background){if(previewMode||checkingApp||String.IsNullOrWhiteSpace(channel.AppFeedUrl))return;checkingApp=true;appUpdateIcon.Enabled=false;try{var envelope=await Task.Run(()=>SelfUpdate.Check(channel,CancellationToken.None));var release=SelfUpdate.Verify(envelope,channel.PublicKeyXml);if(release.Sequence<store.Settings.HighestAppSequence)throw new Exception("The launcher channel served an older notice");if(IsDisposed)return;appEnvelope=envelope;appRelease=release;store.Settings.HighestAppSequence=Math.Max(store.Settings.HighestAppSequence,release.Sequence);store.Save();bool ready=SelfUpdate.ParseVersion(release.Version)>SelfUpdate.ParseVersion(SelfUpdate.CurrentVersion);appUpdateIcon.Role=ready?ButtonRole.Primary:ButtonRole.Quiet;appUpdateIcon.Symbol=ready?ButtonSymbol.Download:ButtonSymbol.Refresh;appUpdateIcon.AccessibleName=ready?"Update Astera to "+release.Version:"Check for Astera updates";appUpdateTip.SetToolTip(appUpdateIcon,ready?"Astera "+release.Version+" is ready":"Astera is up to date");if(!background)MessageBox.Show(this,ready?"Astera "+release.Version+" is ready. Click the update icon to download it.":"Astera is up to date.","Astera updates");}catch(Exception error){AsteraDiagnostics.Write("Astera update check",error);if(!background&&!IsDisposed)MessageBox.Show(this,"Could not check for Astera updates. Try again later.","Astera updates");}finally{checkingApp=false;if(!IsDisposed)appUpdateIcon.Enabled=!busy;}}
+    async Task InstallAsteraUpdate(){if(busy||appEnvelope==null||appRelease==null)return;string job=null;await Work(delegate{job=SelfUpdate.Prepare(store,appEnvelope,cancellation.Token,Log);},false);if(job==null||IsDisposed)return;if(MessageBox.Show(this,"Astera "+appRelease.Version+" is ready. Restart Astera now?\n\nYour games and settings will stay as they are.","Update Astera",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes){SelfUpdate.Save(Path.Combine(Path.GetDirectoryName(job),"result.json"),new SelfUpdateReceipt{Status="cancelled",Message="Restart postponed"});return;}try{SelfUpdate.StartHelper(job);quitting=true;Close();}catch(Exception error){AsteraDiagnostics.Report("Start launcher update",error);}}
+}
+}

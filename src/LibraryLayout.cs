@@ -7,13 +7,22 @@ using System.Windows.Forms;
 namespace Astera {
 // The background and character are separate assets. The character's canvas starts
 // above the background, so hair/hats can extend beyond the hero's upper edge.
-sealed class Banner:Panel {
+sealed partial class Banner:Panel {
+    Bitmap backdropBuffer,frameBuffer;bool frameDirty=true;
     public string Game="Minecraft²";
-    Image scene,character,defaultScene;string scenePath="",characterPath="";
-    public Banner(){DoubleBuffered=true;BackColor=Color.FromArgb(12,17,33);using(var stream=System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Astera.Backgrounds.MinecraftSquared"))if(stream!=null)using(var image=Image.FromStream(stream))defaultScene=new Bitmap(image);}
-    internal Image CopyDefaultArtwork(){return Game=="Minecraft²"&&defaultScene!=null?new Bitmap(defaultScene):null;}
+    bool rigDisposed;SkinRig liveRig;string liveRigPath="";readonly System.Windows.Forms.Timer rigClock=new System.Windows.Forms.Timer{Interval=10};readonly System.Diagnostics.Stopwatch rigTime=new System.Diagnostics.Stopwatch();Form rigOwner;
+    internal bool LiveSkinActive {get{return liveRig!=null;}}
+    internal void LiveSkin(string pose){pose=pose??"";if(pose==liveRigPath)return;if(liveRig!=null)liveRig.Dispose();liveRig=null;liveRigPath=pose;if(pose.Length>0)try{liveRig=new SkinRig(pose);}catch(IOException){}catch(ArgumentException){}rigTime.Restart();UpdateRigClock();frameDirty=true;Invalidate();}
+    void UpdateRigClock(){if(rigDisposed||rigClock==null||IsDisposed)return;var owner=FindForm();rigClock.Enabled=liveRig!=null&&IsHandleCreated&&Visible&&owner!=null&&owner.Visible&&owner.WindowState!=FormWindowState.Minimized;AnimationTiming(rigClock.Enabled);}
+    void RigOwnerChanged(object sender,EventArgs e){UpdateRigClock();}
+    protected override void OnHandleCreated(EventArgs e){base.OnHandleCreated(e);rigOwner=FindForm();if(rigOwner!=null){rigOwner.Resize+=RigOwnerChanged;rigOwner.VisibleChanged+=RigOwnerChanged;}UpdateRigClock();}
+    protected override void OnHandleDestroyed(EventArgs e){rigClock.Stop();AnimationTiming(false);if(rigOwner!=null){rigOwner.Resize-=RigOwnerChanged;rigOwner.VisibleChanged-=RigOwnerChanged;rigOwner=null;}base.OnHandleDestroyed(e);}
+    protected override void OnVisibleChanged(EventArgs e){base.OnVisibleChanged(e);UpdateRigClock();}
+    Image scene,character,defaultScene,starDashScene,starDashLogo,ftlScene;string scenePath="",characterPath="";
+    public Banner(){rigClock.Tick+=delegate{if(!rigDisposed&&liveRig!=null){RenderFrame();Invalidate(new Rectangle((int)(Width*.60F),0,Width-(int)(Width*.60F),Height),false);}};SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.Opaque,true);DoubleBuffered=true;BackColor=Color.FromArgb(12,17,33);defaultScene=GameArtwork.Load("Astera.Backgrounds.MinecraftSquared");starDashScene=GameArtwork.Load("Astera.Backgrounds.StarDash");starDashLogo=GameArtwork.Load("Astera.Games.StarDashLogo");ftlScene=GameArtwork.Load("Astera.Backgrounds.FtlMultiverse");}
+    internal Image CopyDefaultArtwork(){var art=Game=="Minecraft²"?defaultScene:Game=="Star Dash"?starDashScene:Game=="FTL: Multiverse"?ftlScene:null;return art==null?null:new Bitmap(art);}
     public void Artwork(string background,string foreground){
-        Replace(ref scene,ref scenePath,background);Replace(ref character,ref characterPath,foreground);Invalidate();
+        Replace(ref scene,ref scenePath,background);Replace(ref character,ref characterPath,foreground);frameDirty=true;Invalidate();
     }
     static void Replace(ref Image image,ref string oldPath,string path){
         path=path??"";if(path==oldPath)return;
@@ -27,24 +36,44 @@ sealed class Banner:Panel {
             return new Bitmap(input);
         }
     }
-    protected override void OnPaint(PaintEventArgs e){
-        base.OnPaint(e);if(Width<2||Height<35)return;var g=e.Graphics;
+    void PaintBackdrop(Graphics g){
+        if(Width<2||Height<35)return;
         g.SmoothingMode=SmoothingMode.AntiAlias;g.InterpolationMode=InterpolationMode.HighQualityBicubic;
         var area=new Rectangle(0,30,Width,Height-30);
-        var backdrop=scene??(Game=="Minecraft²"?defaultScene:null);
-        if(backdrop!=null){var clip=g.Save();g.SetClip(area);Cover(g,backdrop,area);g.Restore(clip);}
+        var backdrop=scene??(Game=="Minecraft²"?defaultScene:Game=="Star Dash"?starDashScene:Game=="FTL: Multiverse"?ftlScene:null);
+        if(backdrop!=null){var clip=g.Save();g.SetClip(area,CombineMode.Intersect);Cover(g,backdrop,area);g.Restore(clip);}
         else {
             using(var fill=new LinearGradientBrush(area,Color.FromArgb(22,31,65),Color.FromArgb(54,38,88),25F))g.FillRectangle(fill,area);
             var random=new Random(17);for(int i=0;i<110;i++){int x=random.Next(Width),y=30+random.Next(Height-30);using(var star=new SolidBrush(Color.FromArgb(70+i%150,155,168,241)))g.FillEllipse(star,x,y,i%7==0?3:1.5F,i%7==0?3:1.5F);}
             using(var moon=new SolidBrush(Color.FromArgb(22,164,155,240)))g.FillEllipse(moon,Width*.68F,45,150,150);
         }
         // Reserve the left side for live text and controls, even with bright art.
-        using(var shade=new LinearGradientBrush(area,Color.FromArgb(235,10,15,31),Color.FromArgb(15,10,15,31),0F))g.FillRectangle(shade,area);
-        if(character!=null){float scale=Math.Min(Height/(float)character.Height,Width*.47F/character.Width);int w=(int)(character.Width*scale),h=(int)(character.Height*scale);g.DrawImage(character,new Rectangle(Width-w-12,Height-h,w,h));}
+        using(var shade=new LinearGradientBrush(area,Color.FromArgb(235,10,15,31),Color.FromArgb(15,10,15,31),0F)){shade.WrapMode=WrapMode.TileFlipXY;var smoothing=g.SmoothingMode;g.SmoothingMode=SmoothingMode.None;g.FillRectangle(shade,area);g.SmoothingMode=smoothing;}
+        if(character==null&&Game=="Star Dash")GameArtwork.Contain(g,starDashLogo,new Rectangle((int)(Width*.61F),16,(int)(Width*.37F),Height-32));
+        if(liveRig==null&&character!=null){float scale=Math.Min(Height/(float)character.Height,Width*.47F/character.Width);int w=(int)(character.Width*scale),h=(int)(character.Height*scale);g.DrawImage(character,new Rectangle(Width-w-12,Height-h,w,h));}
         using(var edge=new Pen(Color.FromArgb(58,76,116)))g.DrawLine(edge,0,Height-1,Width,Height-1);
     }
-    internal static void Cover(Graphics g,Image image,Rectangle target){float ratio=Math.Max(target.Width/(float)image.Width,target.Height/(float)image.Height);float w=image.Width*ratio,h=image.Height*ratio;g.DrawImage(image,target.X+(target.Width-w)/2,target.Y+(target.Height-h)/2,w,h);}
-    protected override void Dispose(bool disposing){if(disposing){if(scene!=null)scene.Dispose();if(character!=null)character.Dispose();if(defaultScene!=null)defaultScene.Dispose();}base.Dispose(disposing);}
+    // Animation advances only on the timer. Transparent child controls can ask
+    // their parent to paint; those requests must reuse exactly the same pixels.
+    protected override void OnPaintBackground(PaintEventArgs e){}
+    protected override void OnPaint(PaintEventArgs e){if(frameDirty||frameBuffer==null)RenderFrame();if(frameBuffer!=null)e.Graphics.DrawImageUnscaled(frameBuffer,0,0);RecordPaint(e.ClipRectangle);base.OnPaint(e);}
+    protected override void OnResize(EventArgs e){frameDirty=true;base.OnResize(e);Invalidate();}
+    void RenderFrame(){
+        if(rigDisposed||Width<2||Height<35)return;long frameStart=System.Diagnostics.Stopwatch.GetTimestamp();
+        if(frameBuffer==null||frameBuffer.Width!=Width||frameBuffer.Height!=Height){
+            if(frameBuffer!=null)frameBuffer.Dispose();if(backdropBuffer!=null)backdropBuffer.Dispose();
+            frameBuffer=new Bitmap(Width,Height);backdropBuffer=new Bitmap(Width,Height);frameDirty=true;
+        }
+        bool backdropChanged=frameDirty;
+        if(frameDirty){using(var g=Graphics.FromImage(backdropBuffer)){g.Clear(BackColor);PaintBackdrop(g);}frameDirty=false;}
+        using(var g=Graphics.FromImage(frameBuffer)){
+            if(!backdropChanged)g.SetClip(new Rectangle((int)(Width*.60F),0,Width-(int)(Width*.60F),Height));g.CompositingMode=CompositingMode.SourceCopy;g.DrawImageUnscaled(backdropBuffer,0,0);g.CompositingMode=CompositingMode.SourceOver;
+            if(liveRig!=null)liveRig.Draw(g,new Rectangle((int)(Width*.53F),0,(int)(Width*.47F),Height),PointToClient(Cursor.Position),rigTime.Elapsed.TotalSeconds);
+        }
+        RecordFrame((System.Diagnostics.Stopwatch.GetTimestamp()-frameStart)*1000.0/System.Diagnostics.Stopwatch.Frequency);
+    }
+    internal static void Cover(Graphics g,Image image,Rectangle target){if(target.Width<1||target.Height<1)return;float ratio=Math.Max(target.Width/(float)image.Width,target.Height/(float)image.Height),width=target.Width/ratio,height=target.Height/ratio;using(var attributes=new System.Drawing.Imaging.ImageAttributes()){attributes.SetWrapMode(WrapMode.TileFlipXY);g.DrawImage(image,target,(image.Width-width)/2,(image.Height-height)/2,width,height,GraphicsUnit.Pixel,attributes);}}
+    protected override void Dispose(bool disposing){if(disposing){rigDisposed=true;rigClock.Dispose();AnimationTiming(false);if(frameBuffer!=null)frameBuffer.Dispose();if(backdropBuffer!=null)backdropBuffer.Dispose();if(liveRig!=null){liveRig.Dispose();liveRig=null;}if(scene!=null)scene.Dispose();if(character!=null)character.Dispose();if(defaultScene!=null)defaultScene.Dispose();if(starDashScene!=null)starDashScene.Dispose();if(starDashLogo!=null)starDashLogo.Dispose();if(ftlScene!=null)ftlScene.Dispose();}base.Dispose(disposing);}
 }
 
 sealed class Card:Panel {
@@ -88,30 +117,30 @@ sealed partial class LibraryForm {
 
         var sidebar=new Panel{Dock=DockStyle.Left,Width=220,BackColor=Color.FromArgb(14,19,36),Padding=new Padding(14,26,12,16)};
         sidebar.Controls.Add(new Label{Text="YOUR LIBRARY",ForeColor=Muted,Height=36,Dock=DockStyle.Top,Font=UiTheme.Text(12)});
-        games.Dock=DockStyle.Fill;games.BorderStyle=BorderStyle.None;games.BackColor=sidebar.BackColor;games.ForeColor=Color.White;games.Font=UiTheme.Text(15);games.ItemHeight=76;games.DrawMode=DrawMode.OwnerDrawFixed;games.Items.AddRange(new object[]{"Minecraft²","Star Dash"});games.DrawItem+=DrawGame;games.SelectedIndexChanged+=delegate{RefreshView();};sidebar.Controls.Add(games);games.BringToFront();
-        sidebar.Controls.Add(new Label{Text="ASTERA\nby Star  ·  v0.1.9\n\nSame worlds.\nBrighter tomorrows.",ForeColor=Color.FromArgb(144,155,205),Dock=DockStyle.Bottom,Height=110,Font=UiTheme.Text(12)});
+        games.Dock=DockStyle.Fill;games.BorderStyle=BorderStyle.None;games.BackColor=sidebar.BackColor;games.ForeColor=Color.White;games.Font=UiTheme.Text(15);games.ItemHeight=76;games.DrawMode=DrawMode.OwnerDrawFixed;ReloadGames(null);games.DrawItem+=DrawGame;games.SelectedIndexChanged+=delegate{if(!previewMode&&games.Focused)UiAudio.Select();SwitchGame();};int hoveredGame=-1;games.MouseMove+=delegate(object sender,MouseEventArgs e){int hoverIndex=games.IndexFromPoint(e.Location);if(hoverIndex!=hoveredGame){hoveredGame=hoverIndex;if(hoverIndex>=0&&games.Enabled)UiAudio.Hover();}};games.MouseLeave+=delegate{hoveredGame=-1;};sidebar.Controls.Add(games);games.BringToFront();
+        BuildVersionFooter(sidebar);var addGame=Button("+ Add game",delegate{AddCustomGame();});addGame.Dock=DockStyle.Bottom;sidebar.Controls.Add(addGame);addGame.BringToFront();
 
-        var viewport=new Panel{Dock=DockStyle.Fill};
+        var viewport=new Panel{Dock=DockStyle.Fill};gameViewport=viewport;viewport.Resize+=delegate{CancelGameTransition();};
         var body=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=1,RowCount=4,Padding=new Padding(24,0,24,12)};
-        body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
+        gameBody=body;body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
         body.RowStyles.Add(new RowStyle(SizeType.Absolute,330));body.RowStyles.Add(new RowStyle(SizeType.Absolute,54));body.RowStyles.Add(new RowStyle(SizeType.Percent,100));body.RowStyles.Add(new RowStyle(SizeType.Absolute,28));
         viewport.Controls.Add(body);viewport.Resize+=delegate{body.RowStyles[0].Height=viewport.ClientSize.Height<740?280:330;};
         banner.Dock=DockStyle.Fill;banner.Margin=Padding.Empty;body.Controls.Add(banner,0,0);
         var heroText=new TableLayoutPanel{BackColor=Color.Transparent,ColumnCount=1,RowCount=5,Location=new Point(22,66),Height=160,Anchor=AnchorStyles.Left|AnchorStyles.Top};
-        foreach(int height in new[]{56,32,34,30,8})heroText.RowStyles.Add(new RowStyle(SizeType.Absolute,height));heroText.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
+        foreach(int height in new[]{56,40,28,28,8})heroText.RowStyles.Add(new RowStyle(SizeType.Absolute,height));heroText.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
         heroTitle.Text="Minecraft²";heroTitle.Font=UiTheme.Text(40,true);heroTitle.ForeColor=Color.White;heroTitle.Dock=DockStyle.Fill;
-        heroSubtitle.Font=UiTheme.Text(16);heroSubtitle.ForeColor=Color.FromArgb(191,200,246);heroSubtitle.Dock=DockStyle.Fill;
+        heroSubtitle.Font=UiTheme.Text(14);heroSubtitle.ForeColor=Color.FromArgb(191,200,246);heroSubtitle.Dock=DockStyle.Fill;
         status.Font=UiTheme.Text(12,true);status.Dock=DockStyle.Fill;status.AutoEllipsis=true;status.TextAlign=ContentAlignment.MiddleLeft;
         profileLabel.Dock=DockStyle.Fill;profileLabel.ForeColor=Muted;profileLabel.AutoEllipsis=true;profileLabel.Font=UiTheme.Text(12);
         heroText.Controls.Add(heroTitle,0,0);heroText.Controls.Add(heroSubtitle,0,1);heroText.Controls.Add(status,0,2);heroText.Controls.Add(profileLabel,0,3);banner.Controls.Add(heroText);
         var action=new FlowLayoutPanel{BackColor=Color.Transparent,Location=new Point(24,258),Height=58,WrapContents=false};
-        play.Text="PLAY";Style(play);((AsteraButton)play).Role=ButtonRole.Primary;((AsteraButton)play).Symbol=ButtonSymbol.Play;((AsteraButton)play).OrbitGlow=true;play.Font=UiTheme.Button();play.MinimumSize=new Size(170,48);play.Click+=delegate{if(games.SelectedIndex==0)OpenCurseForge();else OpenStarDash();};
+        play.Text="PLAY";Style(play);((AsteraButton)play).Role=ButtonRole.Primary;((AsteraButton)play).Symbol=ButtonSymbol.Play;((AsteraButton)play).OrbitGlow=true;play.Font=UiTheme.Button();play.MinimumSize=new Size(170,48);play.Click+=delegate{PrimaryGameAction();};
         check.Text="Check for updates";Style(check);((AsteraButton)check).Symbol=ButtonSymbol.Refresh;check.MinimumSize=new Size(195,48);check.Click+=async delegate{await Check(false);};
         moreMenu=new ContextMenuStrip(menuComponents);moreMenu.Items.Add("Open game folder",null,delegate{OpenGameFolder();});moreMenu.Items.Add("Game settings",null,delegate{Configure();});moreMenu.Items.Add("Update activity",null,delegate{SelectLibraryTab(1);});moreMenu.Items.Add("Open Astera logs",null,delegate{OpenDiagnostics();});moreMenu.Items.Add("Collect game logs",null,delegate{CollectGameLogs();});
         moreMenu.Items.Add("Capture UI snapshot",null,delegate{CaptureUiFromMenu();});
         var more=Button("",delegate(object sender,EventArgs e){var button=(Control)sender;moreMenu.Show(button,new Point(0,button.Height));});more.MinimumSize=new Size(48,48);((AsteraButton)more).Symbol=ButtonSymbol.More;more.AccessibleName="More options";
         action.Controls.AddRange(new Control[]{play,check,more});banner.Controls.Add(action);
-        banner.Resize+=delegate{heroText.Width=Math.Max(400,(int)(banner.Width*.60));heroText.Top=banner.Height<300?44:66;action.Top=banner.Height-72;action.Width=banner.Width-40;};
+        banner.Resize+=delegate{heroText.Width=Math.Max(400,(int)(banner.Width*.57));heroText.Top=banner.Height<300?44:66;action.Top=banner.Height-72;action.Width=banner.Width-40;};
 
         tabs.Dock=DockStyle.Fill;tabs.Padding=new Padding(0,7,0,4);tabs.WrapContents=false;tabs.Margin=Padding.Empty;
         int index=0;foreach(string title in new[]{"Overview","Updates","Backgrounds","Settings"}){int choice=index++;var tab=Button(title,delegate{SelectLibraryTab(choice);});tab.Tag=choice;tab.Font=UiTheme.Text(14);((AsteraButton)tab).Symbol=new[]{ButtonSymbol.Overview,ButtonSymbol.Updates,ButtonSymbol.Backgrounds,ButtonSymbol.Settings}[choice];tab.MinimumSize=new Size(110,40);tabs.Controls.Add(tab);}body.Controls.Add(tabs,0,1);
@@ -142,7 +171,7 @@ sealed partial class LibraryForm {
         AddDiagnosticButtons();BuildArtworkPage();BuildPreferencesPage();
         releaseLabel.Dock=DockStyle.Fill;releaseLabel.ForeColor=Muted;releaseLabel.Font=UiTheme.Text(12);releaseLabel.TextAlign=ContentAlignment.MiddleLeft;body.Controls.Add(releaseLabel,0,3);
         Controls.Add(viewport);Controls.Add(sidebar);Controls.Add(header);SelectLibraryTab(0);
-        Disposed+=delegate{if(artPreview.Image!=null)artPreview.Image.Dispose();if(activityCard.Parent==null)activityCard.Dispose();if(overviewRight.Parent==null)overviewRight.Dispose();tray.Dispose();timer.Dispose();diagnosticsTimer.Dispose();menuComponents.Dispose();};
+        Disposed+=delegate{CancelGameTransition();if(artPreview.Image!=null)artPreview.Image.Dispose();if(activityCard.Parent==null)activityCard.Dispose();if(overviewRight.Parent==null)overviewRight.Dispose();tray.Dispose();timer.Dispose();diagnosticsTimer.Dispose();menuComponents.Dispose();};
     }
     static Label Heading(string title){return new Label{Text=title,Font=UiTheme.Text(17,true),ForeColor=Color.FromArgb(235,238,255),Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleLeft};}
     static void ConfigureReadOnly(ScrollText box,Color background){box.Multiline=true;box.ReadOnly=true;box.TabStop=false;box.HideSelection=true;box.ScrollBars=ScrollBars.Vertical;box.Dock=DockStyle.Fill;box.BackColor=background;box.ForeColor=Color.FromArgb(185,196,225);box.BorderStyle=BorderStyle.None;}
@@ -151,26 +180,27 @@ sealed partial class LibraryForm {
         information.SuspendLayout();if(index<2){overviewRight.Visible=index==0;activityCard.Visible=index==1;if(index==1){information.Controls.Remove(overviewRight);information.Controls.Add(activityCard,1,0);}else{information.Controls.Remove(activityCard);information.Controls.Add(overviewRight,1,0);}}information.ResumeLayout();
     }
     void UpdateLayoutView(){
-        bool mc=games.SelectedIndex==0;heroTitle.Text=mc?"Minecraft²":"Star Dash";heroSubtitle.Text=mc?"Your worlds. A little more alive.":"Ready for your next race.";
-        string background=mc?store.Settings.BackgroundMinecraft:store.Settings.BackgroundStarDash,character=mc?store.Settings.CharacterMinecraft:store.Settings.CharacterStarDash;if(mc&&String.IsNullOrEmpty(character)&&store.Settings.UseMinecraftSkin)character=minecraftSkinArt;
-        banner.Artwork(background,character);installationPath.Text=String.IsNullOrWhiteSpace(GameFolder())?"No installation linked":GameFolder();openFolder.Enabled=!busy&&Directory.Exists(GameFolder());
-        chooseBackground.Enabled=chooseCharacter.Enabled=!busy;artLabel.Text=(String.IsNullOrEmpty(background)?(mc?"Minecraft² sunrise":"Default starfield"):Path.GetFileName(background))+(String.IsNullOrEmpty(character)?"":"\n"+(character==minecraftSkinArt?"Your Minecraft skin":Path.GetFileName(character)));
-        string previewKey=(mc?"minecraft:":"stardash:")+(background??"");if(previewArtwork!=previewKey){previewArtwork=previewKey;var old=artPreview.Image;previewScene.Artwork=null;artPreview.Image=null;try{artPreview.Image=String.IsNullOrEmpty(background)?banner.CopyDefaultArtwork():Banner.ReadArtwork(background);}catch{}previewScene.Artwork=artPreview.Image;previewScene.Invalidate();if(old!=null)old.Dispose();}
+        if(IsCustomGame){UpdateCustomLayout();return;}bool mc=GameKind==0;bool ftl=IsMultiverse;if(minecraftSkinChoice!=null)minecraftSkinChoice.Visible=mc;heroTitle.Text=ftl?"FTL: Multiverse":mc?"Minecraft²":"Star Dash";heroSubtitle.Text=ftl?"Explore new sectors, command powerful starships, encounter dangerous enemies, and discover countless adventures across the multiverse.":mc?"Your worlds. A little more alive.":"Ready for your next race.";
+        string background=ftl?store.Settings.BackgroundFtl:mc?store.Settings.BackgroundMinecraft:store.Settings.BackgroundStarDash,character=ftl?store.Settings.CharacterFtl:mc?store.Settings.CharacterMinecraft:store.Settings.CharacterStarDash;if(mc&&String.IsNullOrEmpty(character)&&store.Settings.UseMinecraftSkin)character=minecraftSkinArt;
+        banner.Artwork(background,character);banner.LiveSkin(mc&&character==minecraftSkinArt&&!String.IsNullOrEmpty(minecraftSkinArt)?minecraftSkinArt:null);installationPath.Text=String.IsNullOrWhiteSpace(GameFolder())?"No installation linked":GameFolder();openFolder.Enabled=!busy&&Directory.Exists(GameFolder());
+        chooseBackground.Enabled=chooseCharacter.Enabled=!busy;artLabel.Text=(String.IsNullOrEmpty(background)?(ftl?"FTL: Multiverse artwork":mc?"Minecraft² sunrise":"StarDash — original artwork"):Path.GetFileName(background))+(String.IsNullOrEmpty(character)?"":"\n"+(character==minecraftSkinArt?"Your Minecraft skin":Path.GetFileName(character)));
+        string previewKey=(ftl?"ftl:":mc?"minecraft:":"stardash:")+(background??"");if(previewArtwork!=previewKey){previewArtwork=previewKey;var old=artPreview.Image;previewScene.Artwork=null;artPreview.Image=null;try{artPreview.Image=String.IsNullOrEmpty(background)?banner.CopyDefaultArtwork():Banner.ReadArtwork(background);}catch{}previewScene.Artwork=artPreview.Image;previewScene.Invalidate();if(old!=null)old.Dispose();}
     }
-    string GameFolder(){return games.SelectedIndex==0?store.Settings.Profile:String.IsNullOrWhiteSpace(store.Settings.StarDashExecutable)?null:Path.GetDirectoryName(store.Settings.StarDashExecutable);}
+    string GameFolder(){if(IsCustomGame)return Path.GetDirectoryName(CurrentCustom.Executable);return IsMultiverse?store.Settings.FtlDirectory:GameKind==0?store.Settings.Profile:String.IsNullOrWhiteSpace(store.Settings.StarDashExecutable)?null:Path.GetDirectoryName(store.Settings.StarDashExecutable);}
     void OpenGameFolder(){string folder=GameFolder();if(!Directory.Exists(folder)){Configure();return;}try{System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(folder){UseShellExecute=true});}catch(Exception error){MessageBox.Show(this,error.Message,"Open game folder");}}
+    CheckBox minecraftSkinChoice;
     void BuildArtworkPage(){
         var card=new Card{Dock=DockStyle.Fill,Margin=Padding.Empty};backgroundPage.Controls.Add(card);
         var row=new FlowLayoutPanel{Dock=DockStyle.Bottom,Height=100,WrapContents=true,Padding=new Padding(0,8,0,0)};
         chooseBackground.Text="Choose background…";Style(chooseBackground);((AsteraButton)chooseBackground).Symbol=ButtonSymbol.Backgrounds;chooseBackground.Click+=delegate{ChooseArtwork(false);};
         chooseCharacter.Text="Choose character…";Style(chooseCharacter);((AsteraButton)chooseCharacter).Symbol=ButtonSymbol.AddArtwork;chooseCharacter.Click+=delegate{ChooseArtwork(true);};
-        var reset=Button("Reset artwork",delegate{if(busy)return;if(games.SelectedIndex==0){store.Settings.BackgroundMinecraft="";store.Settings.CharacterMinecraft="";}else{store.Settings.BackgroundStarDash="";store.Settings.CharacterStarDash="";}store.Save();UpdateLayoutView();RefreshMinecraftSkin();});
+        var reset=Button("Reset artwork",delegate{if(busy)return;if(IsCustomGame){CurrentCustom.Background="";CurrentCustom.Character="";}else if(GameKind==0){store.Settings.BackgroundMinecraft="";store.Settings.CharacterMinecraft="";}else if(IsMultiverse){store.Settings.BackgroundFtl="";store.Settings.CharacterFtl="";}else{store.Settings.BackgroundStarDash="";store.Settings.CharacterStarDash="";}store.Save();UpdateLayoutView();RefreshMinecraftSkin();});
         foreach(var button in new[]{chooseBackground,chooseCharacter,reset})button.Margin=new Padding(0,0,8,6);row.Controls.AddRange(new Control[]{chooseBackground,chooseCharacter,reset});
-        var useSkin=new CheckBox{Text="Use my Minecraft Launcher skin when no custom character is set",AutoSize=true,Checked=store.Settings.UseMinecraftSkin,Margin=new Padding(0,6,0,0)};useSkin.CheckedChanged+=delegate{if(busy){useSkin.Checked=store.Settings.UseMinecraftSkin;return;}store.Settings.UseMinecraftSkin=useSkin.Checked;store.Save();UpdateLayoutView();if(useSkin.Checked)RefreshMinecraftSkin();};row.Controls.Add(useSkin);
+        var useSkin=new CheckBox{Text="Use my Minecraft Launcher skin when no custom character is set",AutoSize=true,Checked=store.Settings.UseMinecraftSkin,Margin=new Padding(0,6,0,0)};useSkin.CheckedChanged+=delegate{if(busy){useSkin.Checked=store.Settings.UseMinecraftSkin;return;}store.Settings.UseMinecraftSkin=useSkin.Checked;store.Save();UpdateLayoutView();if(useSkin.Checked)RefreshMinecraftSkin();};row.Controls.Add(useSkin);minecraftSkinChoice=useSkin;
         artPreview.Dock=DockStyle.Fill;artPreview.SizeMode=PictureBoxSizeMode.Zoom;artPreview.BackColor=Color.FromArgb(15,21,39);card.Controls.Add(artPreview);card.Controls.Add(row);card.Controls.Add(new Label{Text="Game artwork  ·  Background fills the scene. Transparent PNG character sits in front and can extend above it.",Dock=DockStyle.Top,Height=45,ForeColor=Muted});
     }
     void ChooseArtwork(bool character){if(busy)return;using(var dialog=new OpenFileDialog{Title=character?"Choose a transparent character PNG":"Choose a game background",Filter=character?"PNG artwork|*.png":"Artwork|*.png;*.jpg;*.jpeg"}){if(dialog.ShowDialog(this)!=DialogResult.OK)return;try{using(var proof=Banner.ReadArtwork(dialog.FileName)){}
-        if(games.SelectedIndex==0){if(character)store.Settings.CharacterMinecraft=dialog.FileName;else store.Settings.BackgroundMinecraft=dialog.FileName;}else{if(character)store.Settings.CharacterStarDash=dialog.FileName;else store.Settings.BackgroundStarDash=dialog.FileName;}store.Save();UpdateLayoutView();
+        if(IsCustomGame){if(character)CurrentCustom.Character=dialog.FileName;else CurrentCustom.Background=dialog.FileName;}else if(GameKind==0){if(character)store.Settings.CharacterMinecraft=dialog.FileName;else store.Settings.BackgroundMinecraft=dialog.FileName;}else if(IsMultiverse){if(character)store.Settings.CharacterFtl=dialog.FileName;else store.Settings.BackgroundFtl=dialog.FileName;}else{if(character)store.Settings.CharacterStarDash=dialog.FileName;else store.Settings.BackgroundStarDash=dialog.FileName;}store.Save();UpdateLayoutView();
         }catch(Exception error){MessageBox.Show(this,error.Message,"Game artwork");}}}
     void BuildPreferencesPage(){
         var card=new Card{Dock=DockStyle.Fill,Margin=Padding.Empty};preferencesPage.Controls.Add(card);

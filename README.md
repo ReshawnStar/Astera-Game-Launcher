@@ -135,3 +135,40 @@ synthetic profile and the real signed HTTPS channel; it never launches mod code.
 
 No source licence has been selected yet. Publishing this repository does not
 change third-party games' or mods' licences.
+
+## Astera app releases (0.1.11 onward)
+
+Add game selects a local Windows EXE. Custom entries are sorted A–Z alongside
+the managed games and run from their own EXE folder. Game settings can rename,
+relink or remove an entry; removal never deletes the game. Custom games do not
+inherit Minecraft or FTL update actions. Their artwork is saved independently.
+
+The small icon beside the sidebar version checks the signed Astera app channel.
+Startup/30-minute checks follow the existing automatic-check setting. Updating
+requires a download and restart confirmation. A separate helper waits for Astera
+to close, verifies the announced EXE and keeps one previous executable. It rolls
+back automatically if the new app fails its startup health check. This is a
+startup check, not a guarantee against later crashes or sudden power loss.
+Game saves and preferences are outside the replaced EXE. Older app versions
+without this feature need the 0.1.11 EXE once before future app updates work.
+
+For a release, change VERSION, place Cipher's player-facing notes in
+app-release-notes.md, and run these from PowerShell 7 on the signing PC:
+
+```powershell
+./scripts/Test-Astera.ps1 -TestRoot 'D:/vale/StarsAllies-Storage/audits/my-release'
+./scripts/Test-AsteraSelfUpdate.ps1 -AuditRoot 'D:/vale/StarsAllies-Storage/audits/my-release-self-update'
+./scripts/Publish-AppUpdate.ps1 -TestReceipt 'D:/vale/StarsAllies-Storage/audits/my-release/result.json' -SelfUpdateReceipt 'D:/vale/StarsAllies-Storage/audits/my-release-self-update/result.json' -Publish
+```
+
+The publisher refuses receipts for different EXE bytes, verifies its signing key,
+uploads the immutable release, downloads it back and checks its SHA-256 before
+conditionally promoting channels/astera.json. Without -Publish it only prepares
+an isolated signed release folder. A failed upload never promotes the channel;
+a channel conflict requires inspection before retrying. The private signing key
+stays DPAPI-encrypted outside Git. Minecraft content publishing remains separate;
+routine content updates do not create a new app installer or EXE.
+
+UI hover/select WAVs share one volume setting and were matched by active RMS;
+the artist's original OGGs remain unchanged. Game descriptions and patch notes
+remain separate from installation/update diagnostics.

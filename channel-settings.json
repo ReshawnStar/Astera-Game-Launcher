@@ -1,4 +1,5 @@
 {
   "FeedUrl": "https://raw.githubusercontent.com/ReshawnStar/Astera-Game-Launcher/main/channels/minecraft-squared.json",
-  "GitHubRepository": "ReshawnStar/Astera-Game-Launcher"
+  "GitHubRepository": "ReshawnStar/Astera-Game-Launcher",
+  "AppFeedUrl": "https://raw.githubusercontent.com/ReshawnStar/Astera-Game-Launcher/main/channels/astera.json"
 }

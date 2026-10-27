@@ -24,18 +24,19 @@ sealed partial class LibraryForm {
             graphics.CopyFromScreen(origin,Point.Empty,ClientSize,CopyPixelOperation.SourceCopy);image.Save(Path.Combine(directory,name+".png"),ImageFormat.Png);
         }
         var controls=new List<object>();DescribeControls(this,controls);
-        File.WriteAllText(Path.Combine(directory,name+".json"),Engine.Json.Serialize(new{Version=System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(),Capture="Displayed client pixels; not DrawToBitmap",Window=Bounds.ToString(),Client=ClientSize.ToString(),Tab=selectedTab,Controls=controls}));
+        File.WriteAllText(Path.Combine(directory,name+".json"),Engine.Json.Serialize(new{Version=System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(),Capture="Displayed client pixels; not DrawToBitmap",Window=Bounds.ToString(),Client=ClientSize.ToString(),Tab=selectedTab,LiveSkinActive=banner.LiveSkinActive,TransitionActive=gameTransition!=null,Controls=controls}));
     }
     static void DescribeControls(Control parent,List<object> controls){foreach(Control child in parent.Controls){if(child.Visible)controls.Add(new{Type=child.GetType().Name,Text=child.Text.Length>256?child.Text.Substring(0,256):child.Text,Bounds=child.Bounds.ToString(),Parent=parent.GetType().Name,Enabled=child.Enabled});DescribeControls(child,controls);}}
     internal void CaptureUiFromMenu(){
         var captureTimer=new System.Windows.Forms.Timer{Interval=300};captureTimer.Tick+=delegate{captureTimer.Stop();captureTimer.Dispose();if(IsDisposed||!Visible||WindowState==FormWindowState.Minimized)return;try{string directory=Path.Combine(DiagnosticsRoot,"ui",DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fff"));Refresh();CaptureVisibleUi(directory,"window");Log("Saved visible UI pixels and control bounds: "+directory);SelectLibraryTab(1);}catch(Exception error){AsteraDiagnostics.Report("Capture UI snapshot",error);}};captureTimer.Start();
     }
-    public static int AuditVisibleUi(string directory,string characterFile=null){
+    public static int AuditVisibleUi(string directory,string characterFile=null,bool liveSkin=false){
         directory=Path.GetFullPath(directory);if(Directory.Exists(directory))return 2;Directory.CreateDirectory(directory);
         Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);
         var store=new Store(Path.Combine(directory,"preferences"));store.Settings.CheckOnStart=false;store.Settings.KeepInTray=false;
-        if(characterFile!=null){using(var proof=Banner.ReadArtwork(characterFile)){}store.Settings.CharacterMinecraft=Path.GetFullPath(characterFile);}
+        if(characterFile!=null){using(var proof=Banner.ReadArtwork(characterFile)){}if(!liveSkin)store.Settings.CharacterMinecraft=Path.GetFullPath(characterFile);}
         using(var form=new LibraryForm(store,new Channel(),true))using(var sequence=new System.Windows.Forms.Timer{Interval=700}){
+            if(liveSkin){form.minecraftSkinArt=Path.GetFullPath(characterFile);form.UpdateLayoutView();if(!form.banner.LiveSkinActive)throw new InvalidOperationException("Live skin audit did not load the rig");}
             int step=0;Exception failure=null;form.TopMost=true;form.StartPosition=FormStartPosition.CenterScreen;form.notes.Text=String.Join(Environment.NewLine,Enumerable.Range(1,60).Select(i=>"Update-note scroll fixture line "+i));form.log.Text=String.Join(Environment.NewLine,Enumerable.Range(1,60).Select(i=>"Activity scroll fixture line "+i));
             sequence.Tick+=delegate{try{
                 switch(step++){
@@ -49,13 +50,19 @@ sealed partial class LibraryForm {
                     case 7:form.CaptureVisibleUi(directory,"disabled");form.play.Enabled=true;break;
                     case 8:form.CaptureVisibleUi(directory,"resumed");form.ToggleMaximize();break;
                     case 9:form.CaptureVisibleUi(directory,"maximized");form.ToggleMaximize();break;
-                    default:form.CaptureVisibleUi(directory,"restored-from-maximized");sequence.Stop();form.Close();break;
+                    case 10:form.CaptureVisibleUi(directory,"restored-from-maximized");form.GameKind=1;break;
+                    case 11:form.CaptureVisibleUi(directory,"stardash");form.Size=new Size(1100,760);break;
+                    case 12:form.CaptureVisibleUi(directory,"stardash-compact");form.GameKind=0;break;
+                    case 13:form.CaptureVisibleUi(directory,"minecraft-after-stardash");form.GameKind=2;break;
+                    case 14:form.CaptureVisibleUi(directory,"multiverse");form.Size=new Size(1400,900);break;
+                    case 15:form.CaptureVisibleUi(directory,"multiverse-wide");form.GameKind=0;break;
+                    default:form.CaptureVisibleUi(directory,"minecraft-after-multiverse");sequence.Stop();form.Close();break;
                 }
             }catch(Exception error){failure=error;sequence.Stop();form.Close();}};
             form.Shown+=delegate{form.Activate();sequence.Start();};Application.Run(form);
             if(failure!=null){File.WriteAllText(Path.Combine(directory,"failure.txt"),failure.ToString());return 1;}
         }
-        File.WriteAllText(Path.Combine(directory,"result.json"),Engine.Json.Serialize(new{Completed=true,Capture="Actual displayed client pixels",Snapshots=11,LiveProfilesChanged=false,NetworkUsed=false,VisualReviewRequired=true}));return 0;
+        File.WriteAllText(Path.Combine(directory,"result.json"),Engine.Json.Serialize(new{Completed=true,Capture="Actual displayed client pixels",Snapshots=17,LiveProfilesChanged=false,NetworkUsed=false,VisualReviewRequired=true}));return 0;
     }
 }
 }

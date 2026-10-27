@@ -1,5 +1,5 @@
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup><OutputType>WinExe</OutputType><TargetFrameworkVersion>v4.8</TargetFrameworkVersion><AssemblyName>Astera</AssemblyName><RootNamespace>Astera</RootNamespace><PlatformTarget>x64</PlatformTarget><OutputPath>bin\Debug\</OutputPath></PropertyGroup>
+  <PropertyGroup><OutputType>WinExe</OutputType><TargetFrameworkVersion>v4.8</TargetFrameworkVersion><AssemblyName>Astera</AssemblyName><RootNamespace>Astera</RootNamespace><PlatformTarget>x64</PlatformTarget><AllowUnsafeBlocks>true</AllowUnsafeBlocks><OutputPath>bin\Debug\</OutputPath></PropertyGroup>
   <ItemGroup><Reference Include="System"/><Reference Include="System.Core"/><Reference Include="System.Drawing"/><Reference Include="System.Windows.Forms"/><Reference Include="System.Web.Extensions"/><Reference Include="System.IO.Compression"/><Reference Include="System.IO.Compression.FileSystem"/></ItemGroup>
   <ItemGroup><Compile Include="src\*.cs"/></ItemGroup>
   <ItemGroup><EmbeddedResource Include="channel.local.json"><LogicalName>Astera.Channel</LogicalName></EmbeddedResource></ItemGroup>
@@ -7,6 +7,19 @@
   <ItemGroup><EmbeddedResource Include="assets\button-art\button-atlas.png"><LogicalName>Astera.Art.Buttons</LogicalName></EmbeddedResource><EmbeddedResource Include="assets\button-art\button-mask.png"><LogicalName>Astera.Art.Mask</LogicalName></EmbeddedResource></ItemGroup>
   <ItemGroup><EmbeddedResource Include="assets\ui-v1\icons\png_128\*.png"><LogicalName>Astera.Icons.%(Filename)</LogicalName></EmbeddedResource></ItemGroup>
   <ItemGroup><EmbeddedResource Include="assets\backgrounds\minecraft-squared.png"><LogicalName>Astera.Backgrounds.MinecraftSquared</LogicalName></EmbeddedResource></ItemGroup>
+  <ItemGroup><EmbeddedResource Include="assets\backgrounds\stardash.png"><LogicalName>Astera.Backgrounds.StarDash</LogicalName></EmbeddedResource><EmbeddedResource Include="assets\games\stardash-logo.png"><LogicalName>Astera.Games.StarDashLogo</LogicalName></EmbeddedResource><EmbeddedResource Include="assets\games\stardash-icon.png"><LogicalName>Astera.Games.StarDashIcon</LogicalName></EmbeddedResource></ItemGroup>
   <Target Name="CreateLocalChannel" BeforeTargets="PrepareForBuild"><Error Condition="!Exists('channel.local.json')" Text="Run scripts/Build-Astera.ps1 first and copy its generated channel.json to channel.local.json (public information only)."/></Target>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
+  <ItemGroup>
+    <EmbeddedResource Include="assets\backgrounds\ftl-multiverse.png"><LogicalName>Astera.Backgrounds.FtlMultiverse</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="assets\games\ftl-multiverse-icon.png"><LogicalName>Astera.Games.FtlMultiverseIcon</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="content\minecraft-0.7.173-gf205.md"><LogicalName>Astera.Notes.Minecraft205</LogicalName></EmbeddedResource>
+    <EmbeddedResource Include="assets\sounds\*.wav"><LogicalName>Astera.Sounds.%(Filename)</LogicalName></EmbeddedResource>
+  </ItemGroup>
+  <PropertyGroup><ApplicationIcon>assets\astera.ico</ApplicationIcon></PropertyGroup>
+  <Target Name="AsteraVersion" BeforeTargets="BeforeCompile">
+    <ReadLinesFromFile File="VERSION"><Output TaskParameter="Lines" PropertyName="AsteraReleaseVersion"/></ReadLinesFromFile>
+    <WriteLinesToFile File="$(IntermediateOutputPath)version.g.cs" Lines="[assembly: System.Reflection.AssemblyVersion(&quot;$(AsteraReleaseVersion).0&quot;)];[assembly: System.Reflection.AssemblyFileVersion(&quot;$(AsteraReleaseVersion).0&quot;)]" Overwrite="true"/>
+    <ItemGroup><Compile Include="$(IntermediateOutputPath)version.g.cs"/></ItemGroup>
+  </Target>
 </Project>

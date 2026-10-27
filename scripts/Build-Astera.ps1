@@ -3,7 +3,7 @@ param(
     [string]$FeedUrl='',
     [string]$PublicKeyFile=(Join-Path (Split-Path $PSScriptRoot -Parent) 'channel.public.xml'),
     [string]$IconFile='',
-    [string]$OutputDirectory='D:/vale/StarsAllies-Storage/builds/Astera/0.1.9'
+    [string]$OutputDirectory=''
 )
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
@@ -11,12 +11,12 @@ if(!$FeedUrl -and (Test-Path -LiteralPath (Join-Path $root 'channel-settings.jso
 if($FeedUrl){$uri=[Uri]$FeedUrl;if(!$uri.IsAbsoluteUri -or $uri.Scheme -ne 'https' -or $uri.UserInfo -or $uri.Fragment){throw 'Feed URL must be HTTPS without credentials or a fragment'}}
 $public=Get-Content -Raw -LiteralPath $PublicKeyFile
 if($public -match '<D>|<P>|<Q>|<DP>|<DQ>|<InverseQ>'){throw 'Refusing to embed a private key'}
-$out=[IO.Path]::GetFullPath($OutputDirectory)
+$version=(Get-Content -LiteralPath (Join-Path $root 'VERSION') -Raw).Trim();if($version -notmatch '^\d+\.\d+\.\d+$'){throw 'VERSION must be major.minor.patch'};if(!$OutputDirectory){$OutputDirectory='D:/vale/StarsAllies-Storage/builds/Astera/'+$version};$out=[IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Path $out -Force|Out-Null
 $channel=Join-Path $out 'channel.json'
-@{FeedUrl=$FeedUrl;PublicKeyXml=$public}|ConvertTo-Json|Set-Content -LiteralPath $channel -Encoding utf8
+@{FeedUrl=$FeedUrl;AppFeedUrl=(Get-Content -LiteralPath (Join-Path $root 'channel-settings.json') -Raw|ConvertFrom-Json).AppFeedUrl;PublicKeyXml=$public}|ConvertTo-Json|Set-Content -LiteralPath $channel -Encoding utf8
 $compiler=Join-Path $env:WINDIR 'Microsoft.NET/Framework64/v4.0.30319/csc.exe'
-$exe=Join-Path $out 'Astera.exe'
+$exe=Join-Path $out 'Astera.exe'; $versionSource=Join-Path $out 'version.g.cs';[IO.File]::WriteAllText($versionSource,('[assembly: System.Reflection.AssemblyVersion("'+$version+'.0")][assembly: System.Reflection.AssemblyFileVersion("'+$version+'.0")]'),[Text.UTF8Encoding]::new($false))
 $sources=@(Get-ChildItem -LiteralPath (Join-Path $root 'src') -Filter '*.cs' -File|Sort-Object Name|ForEach-Object FullName)
 if(!$IconFile -and (Test-Path -LiteralPath (Join-Path $root 'assets/astera.ico'))){$IconFile=Join-Path $root 'assets/astera.ico'}
 $art=@();if($IconFile){if([IO.Path]::GetExtension($IconFile) -ne '.ico'){throw 'Use a Windows .ico for -IconFile'};$art+=('/win32icon:'+([IO.Path]::GetFullPath($IconFile)))}
@@ -51,7 +51,16 @@ foreach($icon in Get-ChildItem -LiteralPath $icons -Filter '*.png' -File){
 $background=Join-Path $root 'assets/backgrounds/minecraft-squared.png'
 if(!(Test-Path -LiteralPath $background) -or (Get-Item -LiteralPath $background).Length -gt 25MB){throw 'Minecraft background is missing or too large'}
 $art+=('/resource:'+$background+',Astera.Backgrounds.MinecraftSquared')
-& $compiler /nologo /codepage:65001 /target:winexe /platform:x64 /optimize+ /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Web.Extensions.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll "/out:$exe" "/resource:$channel,Astera.Channel" @art @sources
+$art+=('/resource:'+(Join-Path $root 'assets/backgrounds/ftl-multiverse.png')+',Astera.Backgrounds.FtlMultiverse')
+$art+=('/resource:'+(Join-Path $root 'assets/games/ftl-multiverse-icon.png')+',Astera.Games.FtlMultiverseIcon')
+$art+=('/resource:'+(Join-Path $root 'content/minecraft-0.7.173-gf205.md')+',Astera.Notes.Minecraft205')
+foreach($name in @('hover','select')){$art+=('/resource:'+(Join-Path $root ('assets/sounds/'+$name+'.wav'))+',Astera.Sounds.'+$name)}
+foreach($item in @(@{File='assets/backgrounds/stardash.png';Resource='Astera.Backgrounds.StarDash'},@{File='assets/games/stardash-logo.png';Resource='Astera.Games.StarDashLogo'},@{File='assets/games/stardash-icon.png';Resource='Astera.Games.StarDashIcon'})){
+    $file=Join-Path $root $item.File
+    if(!(Test-Path -LiteralPath $file) -or (Get-Item -LiteralPath $file).Length -gt 25MB){throw ('Game artwork missing or too large: '+$item.File)}
+    $art+=('/resource:'+$file+','+$item.Resource)
+}
+& $compiler /nologo /codepage:65001 /target:winexe /unsafe+ /platform:x64 /optimize+ /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Web.Extensions.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll "/out:$exe" "/resource:$channel,Astera.Channel" @art @sources $versionSource
 if($LASTEXITCODE -ne 0){throw 'Astera compilation failed'}
-@{Version='0.1.9';Executable='Astera.exe';Sha256=(Get-FileHash -LiteralPath $exe).Hash;FeedConfigured=[bool]$FeedUrl;BuiltUtc=[DateTime]::UtcNow.ToString('o')}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $out 'build-receipt.json')
+@{Version=$version;Executable='Astera.exe';Sha256=(Get-FileHash -LiteralPath $exe).Hash;FeedConfigured=[bool]$FeedUrl;BuiltUtc=[DateTime]::UtcNow.ToString('o')}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $out 'build-receipt.json')
 Write-Output ('Built '+$exe)
