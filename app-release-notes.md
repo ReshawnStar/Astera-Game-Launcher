@@ -1,12 +1,12 @@
-# Astera 0.1.21
+# Astera 0.1.22
 
-- Steam games without a local icon can use their store portrait as a library image.
-- Steam artwork downloads now follow the selected game and stop when you switch away.
-- Downloaded images are resized and cached locally, with a size limit for the cache.
-- Custom icons and backgrounds keep priority over automatic artwork.
+- Animated GIF backgrounds, character artwork and library icons now play in Astera.
+- Animations pause when hidden or minimized, or when animated effects are disabled.
+- Animated itch covers can play instead of being flattened to a still image.
+- Artwork changes release the previous animation cleanly.
 
-- itch.io supports plain receipts and still-image cover URLs alongside compressed receipts.
-- itch cover downloads now cancel when switching games, with a bounded local cache.
+- YouTube links in update notes can play inside Astera, including Steam video posts.
+- Add Roblox experience favorites by link or Place ID, with artwork and a Play handoff.
 
 ## Known issue
 

@@ -20,6 +20,13 @@ Astera version and exact threat name, without private account or folder details.
 
 ## Current build
 
+Current0.1.22 supports animated GIF backgrounds/character layers/library icons,
+including animated itch covers. YouTube links in update notes open an in-app
+player on click (Microsoft Edge WebView2 Runtime required; no autoplay).
+Add game → Roblox experience adds a Place-ID shortcut with public artwork;
+Roblox manages its client and experience updates. Actual joining still depends
+on the installed Roblox client and the player's access to the experience.
+
 - Steam-inspired library: games on the left, Play and update status on the right.
 - v0.1.3 layout: large hero with a separate transparent character layer that can
   extend above the background; Overview, Updates, Backgrounds and Settings pages;

@@ -61,6 +61,10 @@ foreach($item in @(@{File='assets/backgrounds/stardash.png';Resource='Astera.Bac
     if(!(Test-Path -LiteralPath $file) -or (Get-Item -LiteralPath $file).Length -gt 25MB){throw ('Game artwork missing or too large: '+$item.File)}
     $art+=('/resource:'+$file+','+$item.Resource)
 }
+$webview=Join-Path $root 'assets/vendor/webview2'
+$provenance=Get-Content -LiteralPath (Join-Path $webview 'provenance.json') -Raw|ConvertFrom-Json
+foreach($file in $provenance.Files){$path=Join-Path $webview $file.Name;if((Get-FileHash -LiteralPath $path).Hash -ne $file.Sha256){throw 'WebView2 component differs from its pinned package'};$art+=('/resource:'+$path+',Astera.WebView2.'+$file.Name)}
+$art+=('/resource:'+(Join-Path $webview 'LICENSE.txt')+',Astera.WebView2.LICENSE.txt');$art+=('/r:'+(Join-Path $webview 'Microsoft.Web.WebView2.Core.dll'));$art+=('/r:'+(Join-Path $webview 'Microsoft.Web.WebView2.WinForms.dll'));$art+=('/win32manifest:'+(Join-Path $root 'app.manifest'))
 & $compiler /nologo /codepage:65001 /target:winexe /unsafe+ /platform:x64 /optimize+ /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.Web.Extensions.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll "/out:$exe" "/resource:$channel,Astera.Channel" @art @sources $versionSource
 if($LASTEXITCODE -ne 0){throw 'Astera compilation failed'}
 @{Version=$version;Executable='Astera.exe';Sha256=(Get-FileHash -LiteralPath $exe).Hash;FeedConfigured=[bool]$FeedUrl;BuiltUtc=[DateTime]::UtcNow.ToString('o')}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $out 'build-receipt.json')
