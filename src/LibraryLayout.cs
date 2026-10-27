@@ -174,7 +174,7 @@ sealed partial class LibraryForm {
         AddDiagnosticButtons();BuildArtworkPage();BuildPreferencesPage();
         releaseLabel.Dock=DockStyle.Fill;releaseLabel.ForeColor=Muted;releaseLabel.Font=UiTheme.Text(12);releaseLabel.TextAlign=ContentAlignment.MiddleLeft;body.Controls.Add(releaseLabel,0,3);
         Controls.Add(viewport);Controls.Add(sidebar);Controls.Add(header);SelectLibraryTab(0);
-        Disposed+=delegate{CancelGameTransition();if(artPreview.Image!=null)artPreview.Image.Dispose();if(activityCard.Parent==null)activityCard.Dispose();if(overviewRight.Parent==null)overviewRight.Dispose();tray.Dispose();timer.Dispose();diagnosticsTimer.Dispose();};
+        Disposed+=delegate{CancelGameTransition();if(artPreview.Image!=null)artPreview.Image.Dispose();if(activityCard.Parent==null)activityCard.Dispose();if(overviewRight.Parent==null)overviewRight.Dispose();timer.Dispose();diagnosticsTimer.Dispose();};
     }
     static Label Heading(string title){return new Label{Text=title,Font=UiTheme.Text(17,true),ForeColor=Color.FromArgb(235,238,255),Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleLeft};}
     static void ConfigureReadOnly(ScrollText box,Color background){box.Multiline=true;box.ReadOnly=true;box.TabStop=false;box.HideSelection=true;box.ScrollBars=ScrollBars.Vertical;box.Dock=DockStyle.Fill;box.BackColor=background;box.ForeColor=Color.FromArgb(185,196,225);box.BorderStyle=BorderStyle.None;}

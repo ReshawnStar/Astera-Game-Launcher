@@ -25,6 +25,7 @@ static class Program {
         if(args.Length==3&&args[0]=="--visual-check")return LibraryForm.AuditVisibleUi(args[1],args[2]);
         if(args.Length==2&&args[0]=="--visual-check")return LibraryForm.AuditVisibleUi(args[1]);
         if(args.Length==2&&args[0]=="--switch-check")return LibraryForm.AuditSwitchFrames(args[1]);
+        if(args.Length==2&&args[0]=="--shutdown-audit")return LibraryForm.AuditShutdown(args[1]);
         if(args.Length==2&&args[0]=="--dialog-audit")return LibraryForm.AuditDialogs(args[1]);
         if(args.Length==2&&args[0]=="--layout-audit")return LibraryForm.AuditLayout(args[1]);
         if(args.Length==2&&args[0]=="--full-pack-self-test")return NetworkSelfTest.FullPackRun(args[1]);
@@ -54,7 +55,7 @@ sealed partial class LibraryForm:Form {
         Shown+=delegate{RefreshMinecraftSkin();};
         tray.Icon=Icon;tray.Text="Astera Game Launcher";var menu=AsteraMenuRenderer.Create(menuComponents);menu.Items.Add("Open Astera",null,delegate{ShowWindow();});menu.Items.Add("Exit",null,delegate{quitting=true;Close();});tray.ContextMenuStrip=menu;tray.DoubleClick+=delegate{ShowWindow();};tray.BalloonTipClicked+=delegate{ShowWindow();};tray.Visible=true;
         timer.Interval=30*60*1000;timer.Tick+=async delegate{if(store.Settings.CheckOnStart&&!busy)await CheckScheduled();};timer.Start();
-        Shown+=async delegate{if(store.Settings.CheckOnStart)await CheckScheduled();};FormClosing+=delegate(object sender,FormClosingEventArgs e){if(busy){e.Cancel=true;MessageBox.Show(this,"Let the current operation finish, or cancel the download first.","Astera");return;}if(!quitting&&store.Settings.KeepInTray){e.Cancel=true;Hide();tray.ShowBalloonTip(2500,"Astera is still here","Update checks continue while Astera is in the tray.",ToolTipIcon.Info);}else{timer.Stop();tray.Dispose();ClearPrepared();}};RefreshView();
+        Shown+=async delegate{if(store.Settings.CheckOnStart)await CheckScheduled();};FormClosing+=delegate(object sender,FormClosingEventArgs e){if(busy){e.Cancel=true;MessageBox.Show(this,"Let the current operation finish, or cancel the download first.","Astera");return;}if(!quitting&&store.Settings.KeepInTray){e.Cancel=true;Hide();tray.ShowBalloonTip(2500,"Astera is still here","Update checks continue while Astera is in the tray.",ToolTipIcon.Info);}else{timer.Stop();ClearPrepared();}};RefreshView();
     }
     static Button Button(string text,EventHandler handler){var button=new AsteraButton{Text=text};Style(button);button.Click+=handler;return button;}
     internal static void Style(Button button){button.AutoSize=true;button.MinimumSize=new Size(80,40);button.FlatStyle=FlatStyle.Flat;button.FlatAppearance.BorderSize=0;button.UseVisualStyleBackColor=false;button.BackColor=button is AsteraButton?Color.Transparent:Color.FromArgb(38,48,80);button.ForeColor=Color.FromArgb(239,242,255);button.Padding=new Padding(14,8,14,8);button.Margin=new Padding(0,0,10,0);}
