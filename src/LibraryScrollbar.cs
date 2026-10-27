@@ -1,12 +1,31 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
 namespace Astera {
 // Keep native list selection/keyboard behaviour. Clip its Windows scrollbar out
 // of the viewport and paint a separate thumb, without compositing native HWNDs.
 sealed class GameListBox:ListBox {
     internal Action ViewChanged;
-    protected override void WndProc(ref Message m){base.WndProc(ref m);if(ViewChanged!=null&&(m.Msg==0x20A||m.Msg==0x115||m.Msg==0x100||m.Msg==0x101||m.Msg==0x197||m.Msg==0x185||m.Msg==0x5))ViewChanged();}
+    internal Action<Rectangle> FramePresented;
+    bool painting;
+    [StructLayout(LayoutKind.Sequential)]struct PaintInfo {internal IntPtr hdc;internal int erase,left,top,right,bottom,restore,update;internal int reserved0,reserved1,reserved2,reserved3,reserved4,reserved5,reserved6,reserved7;}
+    [DllImport("user32.dll")]static extern IntPtr BeginPaint(IntPtr window,out PaintInfo paint);
+    [DllImport("user32.dll")]static extern bool EndPaint(IntPtr window,ref PaintInfo paint);
+    // Buffer this HWND only. Parent compositing stalls native child controls.
+    void Present(IntPtr target,Rectangle dirty){if(target==IntPtr.Zero||ClientSize.Width<1||ClientSize.Height<1)return;dirty=Rectangle.Intersect(ClientRectangle,dirty);if(dirty.IsEmpty)return;using(var buffer=BufferedGraphicsManager.Current.Allocate(target,ClientRectangle)){
+        buffer.Graphics.Clear(BackColor);buffer.Graphics.SetClip(dirty);painting=true;
+        try{int first=Items.Count==0?0:TopIndex,last=Math.Min(Items.Count,first+ClientSize.Height/Math.Max(1,ItemHeight)+1);for(int i=first;i<last;i++){var row=GetItemRectangle(i);if(!row.IntersectsWith(dirty))continue;var state=SelectedIndices.Contains(i)?DrawItemState.Selected:DrawItemState.None;if(!Enabled)state|=DrawItemState.Disabled;if(Focused&&i==SelectedIndex)state|=DrawItemState.Focus;OnDrawItem(new DrawItemEventArgs(buffer.Graphics,Font,row,i,state,ForeColor,BackColor));}}
+        finally{painting=false;}buffer.Render(target);
+    }if(FramePresented!=null)FramePresented(dirty);}
+    protected override void OnDrawItem(DrawItemEventArgs e){if(painting||e.Bounds.Width<1||e.Bounds.Height<1){base.OnDrawItem(e);return;}using(var buffer=BufferedGraphicsManager.Current.Allocate(e.Graphics,e.Bounds)){using(var brush=new SolidBrush(BackColor))buffer.Graphics.FillRectangle(brush,e.Bounds);base.OnDrawItem(new DrawItemEventArgs(buffer.Graphics,e.Font,e.Bounds,e.Index,e.State,e.ForeColor,e.BackColor));buffer.Render(e.Graphics);}}
+    protected override void WndProc(ref Message m){
+        // Native erase + direct owner drawing exposed the blank row between GIF frames.
+        if(m.Msg==0x14){m.Result=new IntPtr(1);return;}
+        if(m.Msg==0xF&&m.WParam==IntPtr.Zero){PaintInfo paint;var dc=BeginPaint(Handle,out paint);try{Present(dc,Rectangle.FromLTRB(paint.left,paint.top,paint.right,paint.bottom));}finally{EndPaint(Handle,ref paint);}m.Result=IntPtr.Zero;return;}
+        if(m.Msg==0x318){Present(m.WParam,ClientRectangle);m.Result=IntPtr.Zero;return;}
+        base.WndProc(ref m);if(ViewChanged!=null&&(m.Msg==0x20A||m.Msg==0x115||m.Msg==0x100||m.Msg==0x101||m.Msg==0x197||m.Msg==0x185||m.Msg==0x5))ViewChanged();
+    }
 }
 sealed class LibraryScrollbar:Control {
     readonly GameListBox list;readonly Control viewport;bool hover,dragging;int grab;

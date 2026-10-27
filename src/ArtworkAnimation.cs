@@ -21,6 +21,8 @@ sealed class ArtworkAnimation:IDisposable {
         long total=0;for(int i=0;i<count;i++){int duration=100;if(delays!=null&&delays.Length>=(i+1)*4){int raw=BitConverter.ToInt32(delays,i*4);duration=raw<=0?100:(int)Math.Min(60000L,Math.Max(20L,(long)raw*10));}total+=duration;ends[i]=total;}cycle=total;cycles=hasRepeat?(repeat==0?0:repeat+1):1;
     }
     internal void SetPlaying(bool play){if(play&&WantsPlayback)clock.Start();else clock.Stop();}
+    internal int NextFrameDelay {get{return DelayAt(clock.ElapsedMilliseconds);}}
+    internal int DelayAt(long elapsed){if(!WantsPlayback)return 60000;long position=Math.Max(0,elapsed)%cycle;int index=Array.BinarySearch(ends,position+1);if(index<0)index=~index;return (int)Math.Max(1,Math.Min(60000,ends[Math.Min(FrameCount-1,index)]-position));}
     internal bool Advance(){return AdvanceAt(clock.ElapsedMilliseconds);}
     internal bool AdvanceAt(long elapsed){if(!Animated||image==null)return false;long position=Math.Max(0,elapsed);int next;if(cycles>0&&position>=cycle*cycles){next=FrameCount-1;completed=true;clock.Stop();}else{position%=cycle;next=Array.BinarySearch(ends,position+1);if(next<0)next=~next;next=Math.Min(FrameCount-1,next);}if(next==frame)return false;image.SelectActiveFrame(FrameDimension.Time,next);frame=next;return true;}
     public void Dispose(){clock.Stop();if(image!=null){image.Dispose();image=null;}if(stream!=null){stream.Dispose();stream=null;}}
@@ -31,6 +33,7 @@ sealed partial class Banner {
     internal bool ArtworkPlayback {get{return rigClock.Enabled&&(sceneAnimation!=null&&sceneAnimation.Playing||characterAnimation!=null&&characterAnimation.Playing);}}
     bool HasAnimatedArtwork {get{return sceneAnimation!=null&&sceneAnimation.WantsPlayback||characterAnimation!=null&&characterAnimation.WantsPlayback;}}
     void SetArtworkPlayback(bool enabled){if(sceneAnimation!=null)sceneAnimation.SetPlaying(enabled);if(characterAnimation!=null)characterAnimation.SetPlaying(enabled);}
-    void TickArtworkAndRig(){bool changed=false;if(sceneAnimation!=null)changed|=sceneAnimation.Advance();if(characterAnimation!=null)changed|=characterAnimation.Advance();if(changed){frameDirty=true;RenderFrame();Invalidate();}else if(liveRig!=null){RenderFrame();Invalidate(new Rectangle((int)(Width*.60F),0,Width-(int)(Width*.60F),Height),false);}if(liveRig==null&&!HasAnimatedArtwork)UpdateRigClock();}
+    int ArtworkFrameDelay {get{int delay=60000;if(sceneAnimation!=null&&sceneAnimation.WantsPlayback)delay=Math.Min(delay,sceneAnimation.NextFrameDelay);if(characterAnimation!=null&&characterAnimation.WantsPlayback)delay=Math.Min(delay,characterAnimation.NextFrameDelay);return Math.Max(15,delay);}}
+    void TickArtworkAndRig(){bool changed=false;if(sceneAnimation!=null)changed|=sceneAnimation.Advance();if(characterAnimation!=null)changed|=characterAnimation.Advance();if(changed){frameDirty=true;RenderFrame();Invalidate();}else if(liveRig!=null){RenderFrame();Invalidate(new Rectangle((int)(Width*.60F),0,Width-(int)(Width*.60F),Height),false);}if(liveRig==null)UpdateRigClock();}
 }
 }

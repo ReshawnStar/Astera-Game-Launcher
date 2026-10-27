@@ -1,10 +1,8 @@
-# Astera 0.1.23
+# Astera 0.1.24
 
-- Multiverse downloads now show the current file, percentage and downloaded size.
-- Hyperspace setup, patching and verification show their current stage and elapsed time.
-- Added a moving indicator for work without a known percentage.
-- Preparation can be cancelled from any tab; backups and installation remain protected.
-- Installer activity logs now update while the patching tool is running.
+- Reduced library flicker while hovering over games and playing animated icons.
+- Animated icons now refresh their image area without redrawing the whole row.
+- GIF playback follows the artwork's frame timing and uses less idle timer work.
 
 ## Known issue
 
