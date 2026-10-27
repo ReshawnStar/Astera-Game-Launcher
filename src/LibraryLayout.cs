@@ -117,7 +117,7 @@ sealed partial class LibraryForm {
 
         var sidebar=new Panel{Dock=DockStyle.Left,Width=220,BackColor=Color.FromArgb(14,19,36),Padding=new Padding(14,26,12,16)};
         sidebar.Controls.Add(new Label{Text="YOUR LIBRARY",ForeColor=Muted,Height=36,Dock=DockStyle.Top,Font=UiTheme.Text(12)});
-        games.Dock=DockStyle.Fill;games.BorderStyle=BorderStyle.None;games.BackColor=sidebar.BackColor;games.ForeColor=Color.White;games.Font=UiTheme.Text(15);games.ItemHeight=76;games.DrawMode=DrawMode.OwnerDrawFixed;ReloadGames(null);games.DrawItem+=DrawGame;games.SelectedIndexChanged+=delegate{if(!previewMode&&games.Focused)UiAudio.Select();SwitchGame();};int hoveredGame=-1;games.MouseMove+=delegate(object sender,MouseEventArgs e){int hoverIndex=games.IndexFromPoint(e.Location);if(hoverIndex!=hoveredGame){hoveredGame=hoverIndex;if(hoverIndex>=0&&games.Enabled)UiAudio.Hover();}};games.MouseLeave+=delegate{hoveredGame=-1;};sidebar.Controls.Add(games);games.BringToFront();
+        games.Dock=DockStyle.Fill;games.BorderStyle=BorderStyle.None;games.BackColor=sidebar.BackColor;games.ForeColor=Color.White;games.Font=UiTheme.Text(15);games.ItemHeight=76;games.DrawMode=DrawMode.OwnerDrawFixed;ReloadGames(null);games.DrawItem+=DrawGame;games.SelectedIndexChanged+=delegate{SwitchGame();};sidebar.Controls.Add(games);games.BringToFront();
         BuildVersionFooter(sidebar);var addGame=Button("+ Add game",delegate{AddCustomGame();});addGame.Dock=DockStyle.Bottom;sidebar.Controls.Add(addGame);addGame.BringToFront();
 
         var viewport=new Panel{Dock=DockStyle.Fill};gameViewport=viewport;viewport.Resize+=delegate{CancelGameTransition();};

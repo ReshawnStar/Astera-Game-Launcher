@@ -14,7 +14,6 @@
     <EmbeddedResource Include="assets\backgrounds\ftl-multiverse.png"><LogicalName>Astera.Backgrounds.FtlMultiverse</LogicalName></EmbeddedResource>
     <EmbeddedResource Include="assets\games\ftl-multiverse-icon.png"><LogicalName>Astera.Games.FtlMultiverseIcon</LogicalName></EmbeddedResource>
     <EmbeddedResource Include="content\minecraft-0.7.173-gf205.md"><LogicalName>Astera.Notes.Minecraft205</LogicalName></EmbeddedResource>
-    <EmbeddedResource Include="assets\sounds\*.wav"><LogicalName>Astera.Sounds.%(Filename)</LogicalName></EmbeddedResource>
   </ItemGroup>
   <PropertyGroup><ApplicationIcon>assets\astera.ico</ApplicationIcon></PropertyGroup>
   <Target Name="AsteraVersion" BeforeTargets="BeforeCompile">

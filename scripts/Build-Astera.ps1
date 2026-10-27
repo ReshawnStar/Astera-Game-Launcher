@@ -54,7 +54,6 @@ $art+=('/resource:'+$background+',Astera.Backgrounds.MinecraftSquared')
 $art+=('/resource:'+(Join-Path $root 'assets/backgrounds/ftl-multiverse.png')+',Astera.Backgrounds.FtlMultiverse')
 $art+=('/resource:'+(Join-Path $root 'assets/games/ftl-multiverse-icon.png')+',Astera.Games.FtlMultiverseIcon')
 $art+=('/resource:'+(Join-Path $root 'content/minecraft-0.7.173-gf205.md')+',Astera.Notes.Minecraft205')
-foreach($name in @('hover','select')){$art+=('/resource:'+(Join-Path $root ('assets/sounds/'+$name+'.wav'))+',Astera.Sounds.'+$name)}
 foreach($item in @(@{File='assets/backgrounds/stardash.png';Resource='Astera.Backgrounds.StarDash'},@{File='assets/games/stardash-logo.png';Resource='Astera.Games.StarDashLogo'},@{File='assets/games/stardash-icon.png';Resource='Astera.Games.StarDashIcon'})){
     $file=Join-Path $root $item.File
     if(!(Test-Path -LiteralPath $file) -or (Get-Item -LiteralPath $file).Length -gt 25MB){throw ('Game artwork missing or too large: '+$item.File)}

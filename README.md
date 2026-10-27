@@ -169,6 +169,5 @@ a channel conflict requires inspection before retrying. The private signing key
 stays DPAPI-encrypted outside Git. Minecraft content publishing remains separate;
 routine content updates do not create a new app installer or EXE.
 
-UI hover/select WAVs share one volume setting and were matched by active RMS;
-the artist's original OGGs remain unchanged. Game descriptions and patch notes
+Astera 0.1.12 removes hover/select playback and sound settings. Original audio assets remain archived for possible future use. Game descriptions and patch notes
 remain separate from installation/update diagnostics.

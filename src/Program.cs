@@ -43,7 +43,7 @@ sealed partial class LibraryForm:Form {
         if(String.IsNullOrEmpty(store.Settings.FeedUrl))store.Settings.FeedUrl=channel.FeedUrl??"";
         if(!previewMode&&String.IsNullOrEmpty(store.Settings.StarDashExecutable)){store.Settings.StarDashExecutable=LocalStarDash.DefaultAt(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));if(!String.IsNullOrEmpty(store.Settings.StarDashExecutable))store.Save();}
         if(!previewMode&&String.IsNullOrEmpty(store.Settings.Profile)){var matches=Profiles.Discover(Profiles.DefaultRoot);if(matches.Count==1){store.Settings.Profile=matches[0].Path;store.Save();}}
-        UiAudio.Configure(!previewMode&&store.Settings.UiSounds,store.Settings.UiVolume);ButtonAtlas.SetAccent(store.Settings.ButtonAccent);BuildLibraryLayout();PageRedraw.BufferLayout(this);GameKind=0;
+        ButtonAtlas.SetAccent(store.Settings.ButtonAccent);BuildLibraryLayout();PageRedraw.BufferLayout(this);GameKind=0;
         if(previewMode){RefreshView();return;}
         StartDiagnostics();
         Shown+=delegate{RefreshMinecraftSkin();};
@@ -61,7 +61,7 @@ sealed partial class LibraryForm:Form {
     }
     void Log(string message){if(IsDisposed)return;if(InvokeRequired){BeginInvoke(new Action<string>(Log),message);return;}log.AppendText(message+Environment.NewLine);}
     void ShowWindow(){Show();WindowState=FormWindowState.Normal;Activate();}
-    void Configure(){if(busy)return;if(IsCustomGame){EditCustomGame();return;}if(IsMultiverse){ConfigureMultiverse();return;}using(var dialog=new SettingsForm(store.Settings)){if(dialog.ShowDialog(this)!=DialogResult.OK)return;ClearPrepared();feed=null;plan=null;updateReady=false;store.Settings=dialog.Result;store.Save();UiAudio.Configure(store.Settings.UiSounds,store.Settings.UiVolume);RefreshView();}}
+    void Configure(){if(busy)return;if(IsCustomGame){EditCustomGame();return;}if(IsMultiverse){ConfigureMultiverse();return;}using(var dialog=new SettingsForm(store.Settings)){if(dialog.ShowDialog(this)!=DialogResult.OK)return;ClearPrepared();feed=null;plan=null;updateReady=false;store.Settings=dialog.Result;store.Save();RefreshView();}}
     async Task Work(Action operation,bool background){if(busy)return;busy=true;cancellation=new CancellationTokenSource();RefreshView();try{await Task.Run(operation);}catch(Exception error){plan=null;AsteraDiagnostics.Write("Update operation",error);Log(cancellation.IsCancellationRequested?"Download/check cancelled. No installation was started.":"Stopped: "+error.Message);if(!background&&!cancellation.IsCancellationRequested)MessageBox.Show(this,error.Message,"Astera",MessageBoxButtons.OK,MessageBoxIcon.Information);}finally{cancellation.Dispose();cancellation=null;busy=false;RefreshView();}}
     async Task Check(bool background){if(IsMultiverse)await CheckMultiverse(background);else await CheckMinecraft(background);}
     async Task CheckScheduled(){await CheckAsteraUpdates(true);if(!String.IsNullOrWhiteSpace(store.Settings.Profile)&&!String.IsNullOrWhiteSpace(store.Settings.FeedUrl))await CheckMinecraft(true);if(!multiversePrepared&&!String.IsNullOrWhiteSpace(store.Settings.FtlDirectory))await CheckMultiverse(true);}
@@ -77,10 +77,10 @@ sealed partial class LibraryForm:Form {
 sealed class SettingsForm:Form {
     public Preferences Result;
     readonly TextBox profile=new TextBox(),url=new TextBox(),stardash=new TextBox();
-    readonly CheckBox auto=new CheckBox(),tray=new CheckBox(),packs=new CheckBox(),uiSound=new CheckBox();readonly TrackBar uiVolume=new TrackBar();
+    readonly CheckBox auto=new CheckBox(),tray=new CheckBox(),packs=new CheckBox();
     readonly Preferences original;
     public SettingsForm(Preferences settings){
-        original=settings;Text="Astera • Settings";Size=new Size(820,690);MinimumSize=Size;StartPosition=FormStartPosition.CenterParent;Font=UiTheme.Text(14);BackColor=Color.FromArgb(28,33,43);ForeColor=Color.White;
+        original=settings;Text="Astera • Settings";Size=new Size(820,620);MinimumSize=Size;StartPosition=FormStartPosition.CenterParent;Font=UiTheme.Text(14);BackColor=Color.FromArgb(28,33,43);ForeColor=Color.White;
         var grid=new TableLayoutPanel{Dock=DockStyle.Fill,Padding=new Padding(22),ColumnCount=2,RowCount=9};
         grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));grid.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,150));Controls.Add(grid);
         grid.Controls.Add(new Label{Text="Minecraft Squared • CurseForge profile",AutoSize=true},0,0);
@@ -98,14 +98,13 @@ sealed class SettingsForm:Form {
         auto.Text="Check at startup and every 30 minutes while Astera is open";auto.Checked=settings.CheckOnStart;
         tray.Text="Keep Astera in the tray when its window closes";tray.Checked=settings.KeepInTray;
         packs.Text="Set up supplied resource packs during an update";packs.Checked=settings.ConfigurePacks;
-        uiSound.Text="UI sounds";uiSound.Checked=settings.UiSounds;uiVolume.Minimum=0;uiVolume.Maximum=100;uiVolume.Value=(int)(Math.Max(0,Math.Min(1,settings.UiVolume))*100);uiVolume.Width=230;uiVolume.TickFrequency=10;uiVolume.BackColor=BackColor;
-        foreach(var c in new[]{auto,tray,packs,uiSound}){c.AutoSize=true;choices.Controls.Add(c);}choices.Controls.Add(new Label{Text="UI volume",AutoSize=true});choices.Controls.Add(uiVolume);grid.Controls.Add(choices,0,7);grid.SetColumnSpan(choices,2);
+        foreach(var c in new[]{auto,tray,packs}){c.AutoSize=true;choices.Controls.Add(c);}grid.Controls.Add(choices,0,7);grid.SetColumnSpan(choices,2);
         var save=new AsteraButton{Text="Save",AutoSize=true};LibraryForm.Style(save);
         save.Click+=delegate{try{
             if(!String.IsNullOrWhiteSpace(profile.Text))Profiles.Read(profile.Text.Trim());
             if(!String.IsNullOrWhiteSpace(stardash.Text))LocalStarDash.Validate(stardash.Text.Trim());
             if(!String.IsNullOrWhiteSpace(url.Text))new Transport().Address(url.Text.Trim());
-            Result=new Preferences{CustomGames=original.CustomGames,Profile=profile.Text.Trim(),FeedUrl=url.Text.Trim(),StarDashExecutable=stardash.Text.Trim(),CheckOnStart=auto.Checked,KeepInTray=tray.Checked,ConfigurePacks=packs.Checked,HighestSequence=original.HighestSequence,HighestAppSequence=original.HighestAppSequence,UiSounds=uiSound.Checked,UiVolume=uiVolume.Value/100.0,BackgroundMinecraft=original.BackgroundMinecraft,BackgroundStarDash=original.BackgroundStarDash,CharacterMinecraft=original.CharacterMinecraft,CharacterStarDash=original.CharacterStarDash,ButtonAccent=original.ButtonAccent,UseMinecraftSkin=original.UseMinecraftSkin,FtlDirectory=original.FtlDirectory,FtlWorkspace=original.FtlWorkspace,BackgroundFtl=original.BackgroundFtl,CharacterFtl=original.CharacterFtl};
+            Result=new Preferences{CustomGames=original.CustomGames,Profile=profile.Text.Trim(),FeedUrl=url.Text.Trim(),StarDashExecutable=stardash.Text.Trim(),CheckOnStart=auto.Checked,KeepInTray=tray.Checked,ConfigurePacks=packs.Checked,HighestSequence=original.HighestSequence,HighestAppSequence=original.HighestAppSequence,BackgroundMinecraft=original.BackgroundMinecraft,BackgroundStarDash=original.BackgroundStarDash,CharacterMinecraft=original.CharacterMinecraft,CharacterStarDash=original.CharacterStarDash,ButtonAccent=original.ButtonAccent,UseMinecraftSkin=original.UseMinecraftSkin,FtlDirectory=original.FtlDirectory,FtlWorkspace=original.FtlWorkspace,BackgroundFtl=original.BackgroundFtl,CharacterFtl=original.CharacterFtl};
             DialogResult=DialogResult.OK;Close();
         }catch(Exception error){MessageBox.Show(this,error.Message,"Astera settings");}};
         grid.Controls.Add(save,1,8);

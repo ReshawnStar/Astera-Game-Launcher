@@ -1,3 +1,3 @@
-# Astera 0.1.11
+# Astera 0.1.12
 
-No patch notes available yet.
+- Removed hover and click sounds.
