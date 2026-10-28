@@ -1,6 +1,7 @@
-# Astera 0.1.33 — Updates belong to their game
+# Astera 0.1.34 — About your Roblox experiences
 
-- Update activity now stays with the game it belongs to. Minecraft² and FTL messages no longer appear on unrelated games.
-- Background results and errors keep their correct game even when you switch pages.
-- Each game's activity keeps its own scroll position and duplicate-message handling.
-- Astera's own update activity has a separate entry in the More menu.
+- Roblox pages now show the experience's own description instead of generic launcher text.
+- Descriptions are cached for offline browsing and existing library entries refresh automatically when opened.
+- A clear fallback appears if Roblox has no description available.
+
+- Smoothed and restyled the Working indicator, with a rounded track and softer moving highlight. Conflicting idle status stays hidden during work.
