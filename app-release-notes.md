@@ -1,6 +1,6 @@
-# Astera 0.1.32 — Straight into your game
+# Astera 0.1.33 — Updates belong to their game
 
-- Installed itch.io games now launch their detected Windows application directly, instead of opening the download chooser.
-- If an installation has several game applications, choose once and Astera remembers it.
-- Moved estimated playtime beside the Play button and added Last played.
-- Existing playtime totals are preserved. Last played starts recording with this update.
+- Update activity now stays with the game it belongs to. Minecraft² and FTL messages no longer appear on unrelated games.
+- Background results and errors keep their correct game even when you switch pages.
+- Each game's activity keeps its own scroll position and duplicate-message handling.
+- Astera's own update activity has a separate entry in the More menu.

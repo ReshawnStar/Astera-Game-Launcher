@@ -1,0 +1,7 @@
+# Per-game update activity — 0.1.33
+
+The Update activity panel previously appended every game and launcher message to one text control, so automatic Minecraft/FTL checks appeared on unrelated custom games. Activity now uses stable per-game identities and a separate app channel. Managed operations declare their owner explicitly before background execution; an AsyncLocal context travels through worker tasks and the resolved identity is passed in queued UI callbacks. Errors and cancellation inherit the same owner. Ambient ownership is restored before the next UI action.
+
+Each game has independent bounded session history, duplicate suppression and scroll position. Background messages for another owner do not rewrite the selected game's text. Complete diagnostic logs remain available separately. App activity is available through More → Astera update activity. Automatic report collection routes to app activity; explicit FTL reports route to FTL. Unrelated background progress is not shown as that custom game's operation; launcher progress is labeled Astera.
+
+Regression tests hold an actual worker behind a gate, switch selected games, then release it, and check delayed success/error routing and ambient cleanup. They also verify distinct Minecraft/FTL/app histories, notes remaining independent, per-game duplicate handling/scroll restoration, unchanged-refresh stability and bounded history. A native screenshot was inspected. No external update server or game is launched by the focused audit.

@@ -96,7 +96,7 @@ sealed partial class LibraryForm {
     readonly Button openFolder=new AsteraButton(),chooseBackground=new AsteraButton(),chooseCharacter=new AsteraButton(),chooseLibraryIcon=new AsteraButton();
     int selectedTab;string previewArtwork="";
 
-    TableLayoutPanel updateLayout;FlowLayoutPanel transferActions;void UpdateTransferSlot(){if(updateLayout==null)return;cancel.MinimumSize=new Size(download.GetPreferredSize(Size.Empty).Width,download.MinimumSize.Height);bool cancellable=busy&&cancellation!=null&&!transaction;cancel.Visible=cancellable;download.Visible=!cancellable&&!IsCustomGame;install.Visible=restore.Visible=!IsCustomGame;updateLayout.RowStyles[2].Height=IsCustomGame&&!cancellable?0:110;}
+    TableLayoutPanel updateLayout;FlowLayoutPanel transferActions;void UpdateTransferSlot(){if(updateLayout==null)return;cancel.MinimumSize=new Size(download.GetPreferredSize(Size.Empty).Width,download.MinimumSize.Height);bool cancellable=busy&&WorkBelongsToPage&&cancellation!=null&&!transaction;cancel.Visible=cancellable;download.Visible=!cancellable&&!IsCustomGame;install.Visible=restore.Visible=!IsCustomGame;updateLayout.RowStyles[2].Height=IsCustomGame&&!cancellable?0:110;}
     void BuildLibraryLayout(){
         SetStyle(ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true);DoubleBuffered=true;
         FormBorderStyle=FormBorderStyle.None;Padding=new Padding(6);
@@ -136,7 +136,7 @@ sealed partial class LibraryForm {
         play.Text="PLAY";Style(play);((AsteraButton)play).Role=ButtonRole.Primary;((AsteraButton)play).Symbol=ButtonSymbol.Play;((AsteraButton)play).OrbitGlow=true;play.Font=UiTheme.Button();play.MinimumSize=new Size(170,48);play.Click+=delegate{PrimaryGameAction();};
         check.Text="Check for updates";Style(check);((AsteraButton)check).Symbol=ButtonSymbol.Refresh;check.MinimumSize=new Size(195,48);check.Click+=async delegate{await Check(false);};
         moreMenu=AsteraMenuRenderer.Create(menuComponents);moreMenu.Items.Add("Open game folder",null,delegate{OpenGameFolder();});moreMenu.Items.Add("Game settings",null,delegate{Configure();});moreMenu.Items.Add("Update activity",null,delegate{SelectLibraryTab(1);});moreMenu.Items.Add("Open Astera logs",null,delegate{OpenDiagnostics();});moreMenu.Items.Add("Collect game logs",null,delegate{CollectGameLogs();});
-        moreMenu.Items.Add("Astera changelog",null,delegate{AppChangelog.Show(this);});moreMenu.Items.Add("Capture UI snapshot",null,delegate{CaptureUiFromMenu();});
+        moreMenu.Items.Add("Astera update activity",null,delegate{ShowAsteraActivity();});moreMenu.Items.Add("Astera changelog",null,delegate{AppChangelog.Show(this);});moreMenu.Items.Add("Capture UI snapshot",null,delegate{CaptureUiFromMenu();});
         var more=Button("",delegate(object sender,EventArgs e){var button=(Control)sender;moreMenu.Show(button,new Point(0,button.Height));});more.MinimumSize=new Size(48,48);((AsteraButton)more).Symbol=ButtonSymbol.More;more.AccessibleName="More options";
         action.Controls.AddRange(new Control[]{play,check,more});BuildPlaytimeStats(action);banner.Controls.Add(action);
         banner.Resize+=delegate{LayoutHeroContent();};
