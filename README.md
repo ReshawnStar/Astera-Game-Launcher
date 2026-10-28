@@ -20,7 +20,9 @@ Astera version and exact threat name, without private account or folder details.
 
 ## Current build
 
-Current0.1.22 supports animated GIF backgrounds/character layers/library icons,
+Current0.1.30 adds a six-dot loading indicator and default-on The Renegade Collection support for FTL: Multiverse. Disable TRC in FTL settings if you prefer the base ship list. Add-on choices are saved for future updates; unknown external modifications are refused. See [TRC details](docs/TRC-provenance.md).
+
+Astera supports animated GIF backgrounds/character layers/library icons,
 including animated itch covers. YouTube links in update notes open an in-app
 player on click (Microsoft Edge WebView2 Runtime required; no autoplay).
 Add game → Roblox experience adds a Place-ID shortcut with public artwork;

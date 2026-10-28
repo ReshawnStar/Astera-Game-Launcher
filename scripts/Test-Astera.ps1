@@ -2,13 +2,20 @@
 param(
     [string]$TestRoot=('D:/vale/StarsAllies-Storage/audits/astera-'+[DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss')),
     [string]$BuildDirectory='',
+    [switch]$UseExistingBuild,
     [string]$PrivateKeyFile='D:/vale/StarsAllies-Storage/keys/Astera/publisher.key'
 )
 $ErrorActionPreference='Stop'
 if(!$BuildDirectory){$BuildDirectory='D:/vale/StarsAllies-Storage/builds/Astera/'+(Get-Content -LiteralPath (Join-Path (Split-Path $PSScriptRoot -Parent) 'VERSION') -Raw).Trim()}
 if(Test-Path -LiteralPath $TestRoot){throw 'Use a new test directory; preserve previous test evidence'}
 New-Item -ItemType Directory -Path $TestRoot|Out-Null
-& (Join-Path $PSScriptRoot 'Build-Astera.ps1') -OutputDirectory $BuildDirectory
+if($UseExistingBuild){
+    $candidate=Join-Path $BuildDirectory 'Astera.exe';$build=Get-Content -Raw -LiteralPath (Join-Path $BuildDirectory 'build-receipt.json')|ConvertFrom-Json
+    $sourceRoot=Split-Path $PSScriptRoot -Parent
+    if($build.Sha256 -ne (Get-FileHash -LiteralPath $candidate).Hash -or $build.Version -ne (Get-Content -Raw -LiteralPath (Join-Path $sourceRoot 'VERSION')).Trim()){throw 'Existing build does not match its receipt/version'}
+    $inputs=@(Get-ChildItem -LiteralPath (Join-Path $sourceRoot 'src') -File -Filter '*.cs')+@(Get-ChildItem -LiteralPath (Join-Path $sourceRoot 'assets') -File -Recurse)+@(Get-Item -LiteralPath (Join-Path $sourceRoot 'app-release-notes.md'))
+    if($inputs|Where-Object LastWriteTimeUtc -gt (Get-Item -LiteralPath $candidate).LastWriteTimeUtc){throw 'Runtime source/assets changed after this build; rebuild before testing'}
+}else{& (Join-Path $PSScriptRoot 'Build-Astera.ps1') -OutputDirectory $BuildDirectory}
 $exe=Join-Path $BuildDirectory 'Astera.exe'
 $reports=@()
 foreach($item in @(@{Name='network';Flag='--self-test'},@{Name='full-pack';Flag='--full-pack-self-test'},@{Name='install-locks';Flag='--install-lock-audit'},@{Name='engine';Flag='--engine-self-test'},@{Name='layout';Flag='--layout-audit'},@{Name='library-features';Flag='--library-features-audit'},@{Name='animated-gif';Flag='--gif-audit'},@{Name='library-paint';Flag='--library-paint-audit'},@{Name='buffer-offset';Flag='--buffer-offset-audit'},@{Name='library-icons';Flag='--library-icons-audit'},@{Name='library-wheel';Flag='--library-wheel-audit'},@{Name='motion';Flag='--motion-audit'},@{Name='display-polish';Flag='--display-polish-audit'},@{Name='youtube';Flag='--youtube-audit'},@{Name='roblox';Flag='--roblox-audit'},@{Name='shutdown';Flag='--shutdown-audit'},@{Name='folders';Flag='--folder-picker-audit'},@{Name='multiverse';Flag='--multiverse-self-test'},@{Name='ftl-progress';Flag='--ftl-progress-audit'})){

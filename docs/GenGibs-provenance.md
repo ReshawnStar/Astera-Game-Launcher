@@ -34,3 +34,5 @@ by the original download. Loading/memory cost is disclosed in setup and notes.
 
 These are file/patch verification claims, not proof of a visually observed ship
 explosion. The live author game was not patched while it was running.
+
+For the default TRC-enabled stack and its separate debris package, see [TRC-provenance.md](TRC-provenance.md).
