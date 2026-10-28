@@ -23,7 +23,7 @@ static class GameDiagnostics {
     // Read only known diagnostic locations. Never move or remove a game's files.
     public static int Collect(string logRoot,string game,string profile,string godotRoot,bool includeRuntime){lock(Gate){
         var sources=new List<string>();
-        if(game=="ftl"&&!String.IsNullOrWhiteSpace(profile)&&Directory.Exists(profile)){foreach(string name in includeRuntime?new[]{"FTL_HS.log","crash.log","FTL.log","stdout.txt","stderr.txt"}:new[]{"FTL_HS.log","crash.log"}){string path=Path.Combine(profile,name);if(File.Exists(path))sources.Add(path);}}
+        if(game=="ftl"&&!String.IsNullOrWhiteSpace(profile)&&Directory.Exists(profile)){foreach(string name in includeRuntime?new[]{"FTL_HS.log","crash.log","FTL.log","stdout.txt","stderr.txt","zhl.log","settings.ini"}:new[]{"FTL_HS.log","crash.log"}){string path=Path.Combine(profile,name);if(File.Exists(path))sources.Add(path);}}
         if(game=="minecraft"&&!String.IsNullOrWhiteSpace(profile)&&Directory.Exists(profile)){
             string crash=Path.Combine(profile,"crash-reports");if(Directory.Exists(crash))sources.AddRange(Directory.GetFiles(crash,"crash-*.txt").OrderByDescending(File.GetLastWriteTimeUtc).Take(5));
             sources.AddRange(Directory.GetFiles(profile,"hs_err_pid*.log").OrderByDescending(File.GetLastWriteTimeUtc).Take(3));
@@ -45,6 +45,11 @@ static class GameDiagnostics {
             }catch(IOException error){AsteraDiagnostics.Write("Game diagnostic read skipped: "+source,error);}catch(UnauthorizedAccessException error){AsteraDiagnostics.Write("Game diagnostic access skipped: "+source,error);}
         }
         if(copied.Count>0)File.WriteAllText(Path.Combine(destination,"collection-"+DateTime.UtcNow.ToString("yyyyMMdd-HHmmss-fffffff")+".json"),Engine.Json.Serialize(new{CollectedUtc=DateTime.UtcNow.ToString("o"),OriginalsPreserved=true,Files=copied}));
+        if(game=="ftl"&&includeRuntime&&File.Exists(Path.Combine(profile??"",Multiverse.Marker))){try{
+            string report=Multiverse.ContentReport(profile),digest=Engine.Hash(Encoding.UTF8.GetBytes(report));
+            string file=Path.Combine(destination,"installation-"+digest.Substring(0,16)+".json");
+            if(!File.Exists(file)){File.WriteAllText(file,report,new UTF8Encoding(false));return copied.Count+1;}
+        }catch(Exception error){AsteraDiagnostics.Write("FTL installation evidence unavailable",error);}}
         return copied.Count;
     }}
 }

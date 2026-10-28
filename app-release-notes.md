@@ -1,12 +1,12 @@
-# Astera 0.1.26
+# Astera 0.1.27
 
-- Scroll the library with the mouse wheel by hovering over it; no click needed.
-- Scrolling keeps keyboard focus where you left it and does not select another game.
-- Improved support for small wheel movements and Windows scrolling preferences.
-- Removed the blinking editing caret from read-only notes and activity text; selection and copying still work.
+- Added optional ship breakup effects for FTL: Multiverse through Generated Gibs.
+- Astera checks that the selected Multiverse version, debris images and ship layout changes were installed correctly.
+- Fixed selected game names disappearing after scrolling away and back.
+- Fixed old panel borders remaining visible after resizing the window.
+- Improved FTL troubleshooting reports with installed-version and graphics-setting details.
 
-- Roblox backgrounds now rotate through usable gallery images every 12 seconds.
-- Blocked thumbnail placeholders are skipped, including the old cached banner.
+Ship breakup effects can be changed in FTL: Multiverse settings. The extra download is about 67 MiB and increases the game's loading time and memory use.
 
 ## Known issue
 
