@@ -23,4 +23,4 @@
   </Target>
   <ItemGroup><EmbeddedResource Include="assets\games\minecraft-squared-icon.png"><LogicalName>Astera.Games.MinecraftSquaredIcon</LogicalName></EmbeddedResource></ItemGroup>
   <ItemGroup><EmbeddedResource Include="app-release-notes.md"><LogicalName>Astera.Notes.App</LogicalName></EmbeddedResource></ItemGroup>
-</Project>
+  <ItemGroup><EmbeddedResource Include="assets\astera-icon-source.png"><LogicalName>Astera.Brand.Mark</LogicalName></EmbeddedResource><EmbeddedResource Include="content\startup\astera_startup_lines.json"><LogicalName>Astera.Startup.Lines</LogicalName></EmbeddedResource></ItemGroup></Project>

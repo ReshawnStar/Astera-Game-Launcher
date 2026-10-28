@@ -20,6 +20,8 @@ $exe=Join-Path $out 'Astera.exe'; $versionSource=Join-Path $out 'version.g.cs';[
 $sources=@(Get-ChildItem -LiteralPath (Join-Path $root 'src') -Filter '*.cs' -File|Sort-Object Name|ForEach-Object FullName)
 if(!$IconFile -and (Test-Path -LiteralPath (Join-Path $root 'assets/astera.ico'))){$IconFile=Join-Path $root 'assets/astera.ico'}
 $art=@();if($IconFile){if([IO.Path]::GetExtension($IconFile) -ne '.ico'){throw 'Use a Windows .ico for -IconFile'};$art+=('/win32icon:'+([IO.Path]::GetFullPath($IconFile)))}
+$art+=('/resource:'+(Join-Path $root 'assets/astera-icon-source.png')+',Astera.Brand.Mark')
+$art+=('/resource:'+(Join-Path $root 'content/startup/astera_startup_lines.json')+',Astera.Startup.Lines')
 $buttons=Join-Path $root 'assets/buttons'
 if(Test-Path -LiteralPath $buttons){
     Add-Type -AssemblyName System.Drawing

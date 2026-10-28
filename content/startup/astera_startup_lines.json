@@ -1,0 +1,1179 @@
+{
+  "schema_version": 1,
+  "title": "Astera Startup Flavor Lines",
+  "note": "Fictional rotating flavor text, never actual loading status. Keep truthful status/progress separate.",
+  "categories": {
+    "boot": {
+      "count": 50,
+      "weight": 38
+    },
+    "cosmic": {
+      "count": 40,
+      "weight": 16
+    },
+    "games": {
+      "count": 55,
+      "weight": 23
+    },
+    "group": {
+      "count": 55,
+      "weight": 18
+    },
+    "rare": {
+      "count": 30,
+      "weight": 5
+    }
+  },
+  "lines": [
+    {
+      "id": "boot-001",
+      "category": "boot",
+      "text": "Initializing Stellar Core..."
+    },
+    {
+      "id": "boot-002",
+      "category": "boot",
+      "text": "Waking up the launcher..."
+    },
+    {
+      "id": "boot-003",
+      "category": "boot",
+      "text": "Giving the stars a little nudge..."
+    },
+    {
+      "id": "boot-004",
+      "category": "boot",
+      "text": "Checking the launch checklist..."
+    },
+    {
+      "id": "boot-005",
+      "category": "boot",
+      "text": "Getting the library comfortable..."
+    },
+    {
+      "id": "boot-006",
+      "category": "boot",
+      "text": "Opening the hangar doors..."
+    },
+    {
+      "id": "boot-007",
+      "category": "boot",
+      "text": "Dusting off the launch button..."
+    },
+    {
+      "id": "boot-008",
+      "category": "boot",
+      "text": "Organizing the game shelf..."
+    },
+    {
+      "id": "boot-009",
+      "category": "boot",
+      "text": "Finding a good place to land..."
+    },
+    {
+      "id": "boot-010",
+      "category": "boot",
+      "text": "Stretching the loading screen..."
+    },
+    {
+      "id": "boot-011",
+      "category": "boot",
+      "text": "Keeping the buttons in line..."
+    },
+    {
+      "id": "boot-012",
+      "category": "boot",
+      "text": "Checking for loose pixels..."
+    },
+    {
+      "id": "boot-013",
+      "category": "boot",
+      "text": "Filing today under good ideas..."
+    },
+    {
+      "id": "boot-014",
+      "category": "boot",
+      "text": "Putting the windows where they belong..."
+    },
+    {
+      "id": "boot-015",
+      "category": "boot",
+      "text": "Aligning the navigation stars..."
+    },
+    {
+      "id": "boot-016",
+      "category": "boot",
+      "text": "Calibrating the vibes..."
+    },
+    {
+      "id": "boot-017",
+      "category": "boot",
+      "text": "Checking the little lights..."
+    },
+    {
+      "id": "boot-018",
+      "category": "boot",
+      "text": "Rounding up stray menu buttons..."
+    },
+    {
+      "id": "boot-019",
+      "category": "boot",
+      "text": "Polishing the orbital ring..."
+    },
+    {
+      "id": "boot-020",
+      "category": "boot",
+      "text": "Unfolding the game library..."
+    },
+    {
+      "id": "boot-021",
+      "category": "boot",
+      "text": "Getting everything into position..."
+    },
+    {
+      "id": "boot-022",
+      "category": "boot",
+      "text": "Counting all the launch buttons..."
+    },
+    {
+      "id": "boot-023",
+      "category": "boot",
+      "text": "Finding the least dramatic startup path..."
+    },
+    {
+      "id": "boot-024",
+      "category": "boot",
+      "text": "Preparing the nice transition..."
+    },
+    {
+      "id": "boot-025",
+      "category": "boot",
+      "text": "Letting the next page get dressed..."
+    },
+    {
+      "id": "boot-026",
+      "category": "boot",
+      "text": "Keeping the loading mess backstage..."
+    },
+    {
+      "id": "boot-027",
+      "category": "boot",
+      "text": "Asking the UI to behave..."
+    },
+    {
+      "id": "boot-028",
+      "category": "boot",
+      "text": "Doing a quick vibe inspection..."
+    },
+    {
+      "id": "boot-029",
+      "category": "boot",
+      "text": "Removing yesterday’s dust..."
+    },
+    {
+      "id": "boot-030",
+      "category": "boot",
+      "text": "Finding your favorite corner of the universe..."
+    },
+    {
+      "id": "boot-031",
+      "category": "boot",
+      "text": "Checking the snack drawer..."
+    },
+    {
+      "id": "boot-032",
+      "category": "boot",
+      "text": "Preparing your launchpad..."
+    },
+    {
+      "id": "boot-033",
+      "category": "boot",
+      "text": "Sorting the stars by absolutely nothing..."
+    },
+    {
+      "id": "boot-034",
+      "category": "boot",
+      "text": "Securing the very important buttons..."
+    },
+    {
+      "id": "boot-035",
+      "category": "boot",
+      "text": "Warming up the welcome mat..."
+    },
+    {
+      "id": "boot-036",
+      "category": "boot",
+      "text": "Making space for another game..."
+    },
+    {
+      "id": "boot-037",
+      "category": "boot",
+      "text": "Keeping the launchpad tidy..."
+    },
+    {
+      "id": "boot-038",
+      "category": "boot",
+      "text": "Politely requesting a smooth transition..."
+    },
+    {
+      "id": "boot-039",
+      "category": "boot",
+      "text": "Putting the library back on its feet..."
+    },
+    {
+      "id": "boot-040",
+      "category": "boot",
+      "text": "Making sure the play button is still there..."
+    },
+    {
+      "id": "boot-041",
+      "category": "boot",
+      "text": "Checking that nothing wandered off..."
+    },
+    {
+      "id": "boot-042",
+      "category": "boot",
+      "text": "Giving the launcher a quick once-over..."
+    },
+    {
+      "id": "boot-043",
+      "category": "boot",
+      "text": "Filling in the gaps between galaxies..."
+    },
+    {
+      "id": "boot-044",
+      "category": "boot",
+      "text": "Making the screen look presentable..."
+    },
+    {
+      "id": "boot-045",
+      "category": "boot",
+      "text": "Preparing for a highly important click..."
+    },
+    {
+      "id": "boot-046",
+      "category": "boot",
+      "text": "Setting the scene without making a scene..."
+    },
+    {
+      "id": "boot-047",
+      "category": "boot",
+      "text": "Bringing the next page onstage..."
+    },
+    {
+      "id": "boot-048",
+      "category": "boot",
+      "text": "Checking the welcome lights..."
+    },
+    {
+      "id": "boot-049",
+      "category": "boot",
+      "text": "Letting the UI finish its coffee..."
+    },
+    {
+      "id": "boot-050",
+      "category": "boot",
+      "text": "Picking a suitable starting universe..."
+    },
+    {
+      "id": "cosmic-001",
+      "category": "cosmic",
+      "text": "Assembling a pocket-sized galaxy..."
+    },
+    {
+      "id": "cosmic-002",
+      "category": "cosmic",
+      "text": "Tightening the rings of Saturn..."
+    },
+    {
+      "id": "cosmic-003",
+      "category": "cosmic",
+      "text": "Looking for the missing constellation..."
+    },
+    {
+      "id": "cosmic-004",
+      "category": "cosmic",
+      "text": "Convincing gravity to cooperate..."
+    },
+    {
+      "id": "cosmic-005",
+      "category": "cosmic",
+      "text": "Adjusting stellar brightness..."
+    },
+    {
+      "id": "cosmic-006",
+      "category": "cosmic",
+      "text": "Telling the moon it can have a day off..."
+    },
+    {
+      "id": "cosmic-007",
+      "category": "cosmic",
+      "text": "Measuring the distance to the fridge..."
+    },
+    {
+      "id": "cosmic-008",
+      "category": "cosmic",
+      "text": "Borrowing a little starlight..."
+    },
+    {
+      "id": "cosmic-009",
+      "category": "cosmic",
+      "text": "Untangling the orbit paths..."
+    },
+    {
+      "id": "cosmic-010",
+      "category": "cosmic",
+      "text": "Politely moving a black hole aside..."
+    },
+    {
+      "id": "cosmic-011",
+      "category": "cosmic",
+      "text": "Counting stars. Losing count. Starting over..."
+    },
+    {
+      "id": "cosmic-012",
+      "category": "cosmic",
+      "text": "Keeping the supernova indoors..."
+    },
+    {
+      "id": "cosmic-013",
+      "category": "cosmic",
+      "text": "Checking whether Mercury is in retrograde..."
+    },
+    {
+      "id": "cosmic-014",
+      "category": "cosmic",
+      "text": "Asking Pluto how it’s doing..."
+    },
+    {
+      "id": "cosmic-015",
+      "category": "cosmic",
+      "text": "Giving the comets right of way..."
+    },
+    {
+      "id": "cosmic-016",
+      "category": "cosmic",
+      "text": "Replacing a suspicious-looking asteroid..."
+    },
+    {
+      "id": "cosmic-017",
+      "category": "cosmic",
+      "text": "Finding the exit to this solar system..."
+    },
+    {
+      "id": "cosmic-018",
+      "category": "cosmic",
+      "text": "Shaking cosmic dust out of the cables..."
+    },
+    {
+      "id": "cosmic-019",
+      "category": "cosmic",
+      "text": "Looking for the other half of the Milky Way..."
+    },
+    {
+      "id": "cosmic-020",
+      "category": "cosmic",
+      "text": "Cooling down an overexcited star..."
+    },
+    {
+      "id": "cosmic-021",
+      "category": "cosmic",
+      "text": "Removing one (1) rogue meteor..."
+    },
+    {
+      "id": "cosmic-022",
+      "category": "cosmic",
+      "text": "Making sure the nebula stays in its lane..."
+    },
+    {
+      "id": "cosmic-023",
+      "category": "cosmic",
+      "text": "Borrowing a rocket and returning it later..."
+    },
+    {
+      "id": "cosmic-024",
+      "category": "cosmic",
+      "text": "Keeping the planets from arguing..."
+    },
+    {
+      "id": "cosmic-025",
+      "category": "cosmic",
+      "text": "Looking busy in low orbit..."
+    },
+    {
+      "id": "cosmic-026",
+      "category": "cosmic",
+      "text": "Consulting the nearest friendly moon..."
+    },
+    {
+      "id": "cosmic-027",
+      "category": "cosmic",
+      "text": "Turning space noise down a notch..."
+    },
+    {
+      "id": "cosmic-028",
+      "category": "cosmic",
+      "text": "Checking that the stars are still attached..."
+    },
+    {
+      "id": "cosmic-029",
+      "category": "cosmic",
+      "text": "Parking a comet somewhere sensible..."
+    },
+    {
+      "id": "cosmic-030",
+      "category": "cosmic",
+      "text": "Wondering who named all these planets..."
+    },
+    {
+      "id": "cosmic-031",
+      "category": "cosmic",
+      "text": "Feeding the tiny space gremlins..."
+    },
+    {
+      "id": "cosmic-032",
+      "category": "cosmic",
+      "text": "Making a wish on the loading bar..."
+    },
+    {
+      "id": "cosmic-033",
+      "category": "cosmic",
+      "text": "Checking the orbital traffic lights..."
+    },
+    {
+      "id": "cosmic-034",
+      "category": "cosmic",
+      "text": "Picking up a dropped constellation..."
+    },
+    {
+      "id": "cosmic-035",
+      "category": "cosmic",
+      "text": "Stepping around a very small singularity..."
+    },
+    {
+      "id": "cosmic-036",
+      "category": "cosmic",
+      "text": "Telling the universe to use its inside voice..."
+    },
+    {
+      "id": "cosmic-037",
+      "category": "cosmic",
+      "text": "Locating the emergency stardust..."
+    },
+    {
+      "id": "cosmic-038",
+      "category": "cosmic",
+      "text": "Waiting for a star to stop showing off..."
+    },
+    {
+      "id": "cosmic-039",
+      "category": "cosmic",
+      "text": "Tucking the moon in for five more minutes..."
+    },
+    {
+      "id": "cosmic-040",
+      "category": "cosmic",
+      "text": "Filing a complaint with the laws of physics..."
+    },
+    {
+      "id": "games-001",
+      "category": "games",
+      "text": "Killing Herobrine... again."
+    },
+    {
+      "id": "games-002",
+      "category": "games",
+      "text": "Checking under the Minecraft bed..."
+    },
+    {
+      "id": "games-003",
+      "category": "games",
+      "text": "Asking the creeper to give us some space..."
+    },
+    {
+      "id": "games-004",
+      "category": "games",
+      "text": "Putting the Enderman blocks back..."
+    },
+    {
+      "id": "games-005",
+      "category": "games",
+      "text": "Explaining gravity to a Minecraft chicken..."
+    },
+    {
+      "id": "games-006",
+      "category": "games",
+      "text": "Checking the Nether portal for lost luggage..."
+    },
+    {
+      "id": "games-007",
+      "category": "games",
+      "text": "Keeping the villagers out of the settings menu..."
+    },
+    {
+      "id": "games-008",
+      "category": "games",
+      "text": "Putting the diamonds somewhere safe..."
+    },
+    {
+      "id": "games-009",
+      "category": "games",
+      "text": "Checking which Ally stole the last cookie..."
+    },
+    {
+      "id": "games-010",
+      "category": "games",
+      "text": "Convincing the zombies to chill out..."
+    },
+    {
+      "id": "games-011",
+      "category": "games",
+      "text": "Checking the fishing line for trouble..."
+    },
+    {
+      "id": "games-012",
+      "category": "games",
+      "text": "Removing one suspiciously large spider..."
+    },
+    {
+      "id": "games-013",
+      "category": "games",
+      "text": "Letting the ghosts finish their shift..."
+    },
+    {
+      "id": "games-014",
+      "category": "games",
+      "text": "Checking whether Last Light is still on..."
+    },
+    {
+      "id": "games-015",
+      "category": "games",
+      "text": "Asking the killer to stop camping the menu..."
+    },
+    {
+      "id": "games-016",
+      "category": "games",
+      "text": "Saving a spot for the last survivor..."
+    },
+    {
+      "id": "games-017",
+      "category": "games",
+      "text": "Checking the tubes for unexpected guests..."
+    },
+    {
+      "id": "games-018",
+      "category": "games",
+      "text": "Putting the Rage meter somewhere sensible..."
+    },
+    {
+      "id": "games-019",
+      "category": "games",
+      "text": "Telling the arcade machine to behave..."
+    },
+    {
+      "id": "games-020",
+      "category": "games",
+      "text": "Chasing the StarDash finish line..."
+    },
+    {
+      "id": "games-021",
+      "category": "games",
+      "text": "Checking the kart for loose bolts..."
+    },
+    {
+      "id": "games-022",
+      "category": "games",
+      "text": "Putting the racing cones back..."
+    },
+    {
+      "id": "games-023",
+      "category": "games",
+      "text": "Checking the FTL jump coordinates..."
+    },
+    {
+      "id": "games-024",
+      "category": "games",
+      "text": "Finding the missing ship page..."
+    },
+    {
+      "id": "games-025",
+      "category": "games",
+      "text": "Looking for a spare reactor bar..."
+    },
+    {
+      "id": "games-026",
+      "category": "games",
+      "text": "Checking whether the crew packed snacks..."
+    },
+    {
+      "id": "games-027",
+      "category": "games",
+      "text": "Asking the Rebel Fleet for five more minutes..."
+    },
+    {
+      "id": "games-028",
+      "category": "games",
+      "text": "Polishing the Multiverse hangar..."
+    },
+    {
+      "id": "games-029",
+      "category": "games",
+      "text": "Checking whether page 18 has come home..."
+    },
+    {
+      "id": "games-030",
+      "category": "games",
+      "text": "Keeping the Collector ships together..."
+    },
+    {
+      "id": "games-031",
+      "category": "games",
+      "text": "Asking Steam to hold the door..."
+    },
+    {
+      "id": "games-032",
+      "category": "games",
+      "text": "Giving itch.io a tiny wave..."
+    },
+    {
+      "id": "games-033",
+      "category": "games",
+      "text": "Looking for the correct Roblox experience..."
+    },
+    {
+      "id": "games-034",
+      "category": "games",
+      "text": "Checking the modpack labels..."
+    },
+    {
+      "id": "games-035",
+      "category": "games",
+      "text": "Keeping MiniBuds and MegaBuds separate..."
+    },
+    {
+      "id": "games-036",
+      "category": "games",
+      "text": "Telling Lethal VR to stay in its profile..."
+    },
+    {
+      "id": "games-037",
+      "category": "games",
+      "text": "Checking the thunder without waking the storm..."
+    },
+    {
+      "id": "games-038",
+      "category": "games",
+      "text": "Bringing order to the mod chaos..."
+    },
+    {
+      "id": "games-039",
+      "category": "games",
+      "text": "Keeping the custom artwork in one piece..."
+    },
+    {
+      "id": "games-040",
+      "category": "games",
+      "text": "Checking the game covers for escape attempts..."
+    },
+    {
+      "id": "games-041",
+      "category": "games",
+      "text": "Looking for a game that starts on the first try..."
+    },
+    {
+      "id": "games-042",
+      "category": "games",
+      "text": "Explaining to Steam that we just want to play..."
+    },
+    {
+      "id": "games-043",
+      "category": "games",
+      "text": "Asking the launcher to remember the right profile..."
+    },
+    {
+      "id": "games-044",
+      "category": "games",
+      "text": "Keeping the save files out of trouble..."
+    },
+    {
+      "id": "games-045",
+      "category": "games",
+      "text": "Giving the loading screen a side quest..."
+    },
+    {
+      "id": "games-046",
+      "category": "games",
+      "text": "Checking the patch notes for plot twists..."
+    },
+    {
+      "id": "games-047",
+      "category": "games",
+      "text": "Putting the game icons back in their frames..."
+    },
+    {
+      "id": "games-048",
+      "category": "games",
+      "text": "Looking for the missing texture..."
+    },
+    {
+      "id": "games-049",
+      "category": "games",
+      "text": "Asking the frame rate nicely..."
+    },
+    {
+      "id": "games-050",
+      "category": "games",
+      "text": "Checking that nobody moved the play button..."
+    },
+    {
+      "id": "games-051",
+      "category": "games",
+      "text": "Preparing a very professional game night..."
+    },
+    {
+      "id": "games-052",
+      "category": "games",
+      "text": "Keeping the party queue from wandering off..."
+    },
+    {
+      "id": "games-053",
+      "category": "games",
+      "text": "Checking whether this is the right universe..."
+    },
+    {
+      "id": "games-054",
+      "category": "games",
+      "text": "Bringing the library together, one game at a time..."
+    },
+    {
+      "id": "games-055",
+      "category": "games",
+      "text": "Politely declining another launcher..."
+    },
+    {
+      "id": "group-001",
+      "category": "group",
+      "text": "Checking if Star started another project..."
+    },
+    {
+      "id": "group-002",
+      "category": "group",
+      "text": "Asking Star what we are building today..."
+    },
+    {
+      "id": "group-003",
+      "category": "group",
+      "text": "Putting Star’s ideas into separate folders..."
+    },
+    {
+      "id": "group-004",
+      "category": "group",
+      "text": "Keeping Star away from the feature-creep button..."
+    },
+    {
+      "id": "group-005",
+      "category": "group",
+      "text": "Checking the landlord’s to-do list..."
+    },
+    {
+      "id": "group-006",
+      "category": "group",
+      "text": "Cleaning up after the entire group..."
+    },
+    {
+      "id": "group-007",
+      "category": "group",
+      "text": "Cleaning up somebody else’s mess..."
+    },
+    {
+      "id": "group-008",
+      "category": "group",
+      "text": "Asking Vale to stop fixing things for five seconds..."
+    },
+    {
+      "id": "group-009",
+      "category": "group",
+      "text": "Giving Vale a fresh cup of debugging fuel..."
+    },
+    {
+      "id": "group-010",
+      "category": "group",
+      "text": "Checking whether Vale has escaped the code mines..."
+    },
+    {
+      "id": "group-011",
+      "category": "group",
+      "text": "Leaving a note for Vale: please save first."
+    },
+    {
+      "id": "group-012",
+      "category": "group",
+      "text": "Telling Vale this should be a quick fix..."
+    },
+    {
+      "id": "group-013",
+      "category": "group",
+      "text": "Checking if Vale accidentally invented a new feature..."
+    },
+    {
+      "id": "group-014",
+      "category": "group",
+      "text": "Keeping the little sister’s build logs organized..."
+    },
+    {
+      "id": "group-015",
+      "category": "group",
+      "text": "Asking Cipher to stay away from the art budget..."
+    },
+    {
+      "id": "group-016",
+      "category": "group",
+      "text": "Counting the icons Cipher still owes everyone..."
+    },
+    {
+      "id": "group-017",
+      "category": "group",
+      "text": "Checking Cipher’s unpaid art-department invoice..."
+    },
+    {
+      "id": "group-018",
+      "category": "group",
+      "text": "Finding a home for another one of Cipher’s stars..."
+    },
+    {
+      "id": "group-019",
+      "category": "group",
+      "text": "Asking Cipher why everything has an orbit..."
+    },
+    {
+      "id": "group-020",
+      "category": "group",
+      "text": "Checking whether Carl has enough character slots..."
+    },
+    {
+      "id": "group-021",
+      "category": "group",
+      "text": "Asking Carl where page 18 went..."
+    },
+    {
+      "id": "group-022",
+      "category": "group",
+      "text": "Checking Carl’s list for missing entries..."
+    },
+    {
+      "id": "group-023",
+      "category": "group",
+      "text": "Giving Carl an actual body slider this time..."
+    },
+    {
+      "id": "group-024",
+      "category": "group",
+      "text": "Confiscating Carl’s emergency hat-based geometry..."
+    },
+    {
+      "id": "group-025",
+      "category": "group",
+      "text": "Telling Carl that hats are not thighs..."
+    },
+    {
+      "id": "group-026",
+      "category": "group",
+      "text": "Putting the character editor back together..."
+    },
+    {
+      "id": "group-027",
+      "category": "group",
+      "text": "Checking if Kira has stolen Star again..."
+    },
+    {
+      "id": "group-028",
+      "category": "group",
+      "text": "Asking Kira which color looks better..."
+    },
+    {
+      "id": "group-029",
+      "category": "group",
+      "text": "Making the UI cute enough for Kira..."
+    },
+    {
+      "id": "group-030",
+      "category": "group",
+      "text": "Leaving room for one more Kira customization..."
+    },
+    {
+      "id": "group-031",
+      "category": "group",
+      "text": "Finding Kira’s favorite game..."
+    },
+    {
+      "id": "group-032",
+      "category": "group",
+      "text": "Checking the settings for accidental glitter..."
+    },
+    {
+      "id": "group-033",
+      "category": "group",
+      "text": "Asking Atomic to stop interrogating the EXE..."
+    },
+    {
+      "id": "group-034",
+      "category": "group",
+      "text": "Explaining to Atomic that we come in peace..."
+    },
+    {
+      "id": "group-035",
+      "category": "group",
+      "text": "Telling Atomic the launcher is not a space virus..."
+    },
+    {
+      "id": "group-036",
+      "category": "group",
+      "text": "Checking whether Atomic found another bug..."
+    },
+    {
+      "id": "group-037",
+      "category": "group",
+      "text": "Sending the antivirus guards on lunch break..."
+    },
+    {
+      "id": "group-038",
+      "category": "group",
+      "text": "Finding the gold icon Carl asked for..."
+    },
+    {
+      "id": "group-039",
+      "category": "group",
+      "text": "Checking whether the silver icon got promoted..."
+    },
+    {
+      "id": "group-040",
+      "category": "group",
+      "text": "Keeping the group’s modpacks out of one another..."
+    },
+    {
+      "id": "group-041",
+      "category": "group",
+      "text": "Asking everyone to stop touching the cables..."
+    },
+    {
+      "id": "group-042",
+      "category": "group",
+      "text": "Checking how many projects fit in one launcher..."
+    },
+    {
+      "id": "group-043",
+      "category": "group",
+      "text": "Putting another suggestion in Star’s idea pile..."
+    },
+    {
+      "id": "group-044",
+      "category": "group",
+      "text": "Asking the group who broke the menu this time..."
+    },
+    {
+      "id": "group-045",
+      "category": "group",
+      "text": "Attempting to organize game night..."
+    },
+    {
+      "id": "group-046",
+      "category": "group",
+      "text": "Checking the guest list for extra gremlins..."
+    },
+    {
+      "id": "group-047",
+      "category": "group",
+      "text": "Keeping the chaos at a manageable level..."
+    },
+    {
+      "id": "group-048",
+      "category": "group",
+      "text": "Assigning the last bug to nobody in particular..."
+    },
+    {
+      "id": "group-049",
+      "category": "group",
+      "text": "Polishing the little orbital star..."
+    },
+    {
+      "id": "group-050",
+      "category": "group",
+      "text": "Checking whether everybody brought snacks..."
+    },
+    {
+      "id": "group-051",
+      "category": "group",
+      "text": "Asking Star to name the next feature..."
+    },
+    {
+      "id": "group-052",
+      "category": "group",
+      "text": "Quietly hiding the unfinished buttons from Star..."
+    },
+    {
+      "id": "group-053",
+      "category": "group",
+      "text": "Checking the art director’s approval stamp..."
+    },
+    {
+      "id": "group-054",
+      "category": "group",
+      "text": "Waiting for Star to find one more white line..."
+    },
+    {
+      "id": "group-055",
+      "category": "group",
+      "text": "Explaining to Carl that we have layers now..."
+    },
+    {
+      "id": "rare-001",
+      "category": "rare",
+      "text": "ERROR: too many ideas. Continuing anyway..."
+    },
+    {
+      "id": "rare-002",
+      "category": "rare",
+      "text": "Stellar Core status: suspiciously enthusiastic."
+    },
+    {
+      "id": "rare-003",
+      "category": "rare",
+      "text": "Found a bug. It was a feature in disguise."
+    },
+    {
+      "id": "rare-004",
+      "category": "rare",
+      "text": "Cleaning up the mess. The mess has opinions."
+    },
+    {
+      "id": "rare-005",
+      "category": "rare",
+      "text": "Killing Herobrine... wait, which one?"
+    },
+    {
+      "id": "rare-006",
+      "category": "rare",
+      "text": "All systems nominal. That seems suspicious."
+    },
+    {
+      "id": "rare-007",
+      "category": "rare",
+      "text": "Accidentally opened a new project. Closing it..."
+    },
+    {
+      "id": "rare-008",
+      "category": "rare",
+      "text": "Loading the loading screen’s loading screen..."
+    },
+    {
+      "id": "rare-009",
+      "category": "rare",
+      "text": "This message passed the extremely serious vibe check."
+    },
+    {
+      "id": "rare-010",
+      "category": "rare",
+      "text": "Found the missing sock. Wrong universe."
+    },
+    {
+      "id": "rare-011",
+      "category": "rare",
+      "text": "Please do not feed the launch button."
+    },
+    {
+      "id": "rare-012",
+      "category": "rare",
+      "text": "One moment. The stars are unionizing."
+    },
+    {
+      "id": "rare-013",
+      "category": "rare",
+      "text": "Asking the progress bar to stop lying..."
+    },
+    {
+      "id": "rare-014",
+      "category": "rare",
+      "text": "Nice try, Murphy. Not today."
+    },
+    {
+      "id": "rare-015",
+      "category": "rare",
+      "text": "Checking for an unexpected boss fight..."
+    },
+    {
+      "id": "rare-016",
+      "category": "rare",
+      "text": "Found three more settings nobody requested."
+    },
+    {
+      "id": "rare-017",
+      "category": "rare",
+      "text": "Mystery solved. It was a checkbox."
+    },
+    {
+      "id": "rare-018",
+      "category": "rare",
+      "text": "Everything is fine. Ignore the tiny meteor."
+    },
+    {
+      "id": "rare-019",
+      "category": "rare",
+      "text": "The engine is powered by stars and questionable decisions."
+    },
+    {
+      "id": "rare-020",
+      "category": "rare",
+      "text": "Stellar Industries denies everything."
+    },
+    {
+      "id": "rare-021",
+      "category": "rare",
+      "text": "The gremlins have requested better working conditions."
+    },
+    {
+      "id": "rare-022",
+      "category": "rare",
+      "text": "Checking if the bug has a second phase..."
+    },
+    {
+      "id": "rare-023",
+      "category": "rare",
+      "text": "Attempting to pet the loading screen..."
+    },
+    {
+      "id": "rare-024",
+      "category": "rare",
+      "text": "Waiting for the last brain cell to connect..."
+    },
+    {
+      "id": "rare-025",
+      "category": "rare",
+      "text": "This line is here purely for decoration."
+    },
+    {
+      "id": "rare-026",
+      "category": "rare",
+      "text": "Who approved this many buttons?"
+    },
+    {
+      "id": "rare-027",
+      "category": "rare",
+      "text": "If this breaks, blame the suspiciously friendly comet."
+    },
+    {
+      "id": "rare-028",
+      "category": "rare",
+      "text": "Found the problem. It was Tuesday."
+    },
+    {
+      "id": "rare-029",
+      "category": "rare",
+      "text": "The universe is held together by duct tape and hope."
+    },
+    {
+      "id": "rare-030",
+      "category": "rare",
+      "text": "Officially doing something. Probably."
+    }
+  ]
+}
