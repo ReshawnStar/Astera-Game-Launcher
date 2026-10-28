@@ -6,11 +6,11 @@ using System.Windows.Forms;
 namespace Astera {
 sealed class GameTransition:Panel {
     Bitmap previous,incoming;readonly Timer clock=new Timer{Interval=15};readonly Stopwatch elapsed=new Stopwatch();readonly Action finished;
-    internal GameTransition(Bitmap old,Action done){previous=old;finished=done;SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.Opaque,true);Dock=DockStyle.Fill;clock.Tick+=delegate{if(elapsed.ElapsedMilliseconds>=240){clock.Stop();if(finished!=null)finished();}else Invalidate();};}
+    internal GameTransition(Bitmap old,Action done){previous=old;finished=done;SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.Opaque,true);Dock=DockStyle.Fill;clock.Tick+=delegate{if(elapsed.ElapsedMilliseconds>=260){clock.Stop();if(finished!=null)finished();}else Invalidate();};}
     internal void Start(Bitmap next){incoming=next;elapsed.Restart();clock.Start();Invalidate();}
     internal static Bitmap CaptureFrame(Control content){var image=new Bitmap(content.Width,content.Height);try{using(var g=Graphics.FromImage(image))g.Clear(content.BackColor);content.DrawToBitmap(image,content.ClientRectangle);return image;}catch{image.Dispose();throw;}}
     protected override void OnPaintBackground(PaintEventArgs e){}
-    protected override void OnPaint(PaintEventArgs e){e.Graphics.Clear(Parent==null?Color.FromArgb(12,17,33):Parent.BackColor);double t=Math.Min(1,elapsed.ElapsedMilliseconds/240.0),ease=incoming==null?0:1-Math.Pow(1-t,3);DrawFrame(e.Graphics,previous,0,1);if(incoming!=null)DrawFrame(e.Graphics,incoming,(int)(24*(1-ease)),1);}
+    protected override void OnPaint(PaintEventArgs e){e.Graphics.Clear(Parent==null?Color.FromArgb(12,17,33):Parent.BackColor);double t=Math.Min(1,elapsed.ElapsedMilliseconds/260.0),ease=incoming==null?0:1-Math.Pow(1-t,3);DrawFrame(e.Graphics,previous,0,1);if(incoming!=null)DrawFrame(e.Graphics,incoming,(int)Math.Round(16*(1-ease)),(float)ease);}
     static void DrawFrame(Graphics g,Image frame,int y,float alpha){if(frame==null)return;using(var attributes=new ImageAttributes()){var matrix=new ColorMatrix();matrix.Matrix33=alpha;attributes.SetColorMatrix(matrix);attributes.SetWrapMode(System.Drawing.Drawing2D.WrapMode.TileFlipXY);g.DrawImage(frame,new Rectangle(0,y,frame.Width,frame.Height),0,0,frame.Width,frame.Height,GraphicsUnit.Pixel,attributes);}}
     protected override void Dispose(bool disposing){if(disposing){clock.Dispose();if(previous!=null)previous.Dispose();if(incoming!=null)incoming.Dispose();previous=incoming=null;}base.Dispose(disposing);}
 }

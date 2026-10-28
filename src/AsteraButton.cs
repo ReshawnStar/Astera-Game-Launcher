@@ -12,7 +12,7 @@ public enum ButtonRole { Primary, Secondary, Quiet }
 public enum ButtonSymbol { None, Play, Refresh, Settings, Exit, Download, Install, Restore, Cancel, More, Overview, Updates, Backgrounds, Folder, AddArtwork, Drive, Verified, Warning, Previous, Next, Pause, Retry, WindowMinimize, WindowMaximize, WindowRestore }
 
 // Standard Button input/accessibility; only its drawing is customised.
-public sealed class AsteraButton:Button {
+public sealed partial class AsteraButton:Button {
     bool hover,pressed;
     ButtonRole role=ButtonRole.Secondary;
     ButtonSymbol symbol;
@@ -20,22 +20,22 @@ public sealed class AsteraButton:Button {
     static readonly System.Diagnostics.Stopwatch GlowClock=System.Diagnostics.Stopwatch.StartNew();
     bool orbitGlow,releasingGlow;Form glowOwner;PointF[] glowPoints;
     public bool OrbitGlow {get{return orbitGlow;}set{orbitGlow=value;UpdateGlowTimer();Invalidate();}}
-    public ButtonRole Role {get{return role;}set{role=value;Invalidate();}}
+    public ButtonRole Role {get{return role;}set{if(role==value)return;role=value;if(role==ButtonRole.Primary)StartFeedback();Invalidate();}}
     public ButtonSymbol Symbol {get{return symbol;}set{symbol=value;Invalidate();PerformLayout();}}
-    void EffectsChanged(object sender,EventArgs e){UpdateGlowTimer();Invalidate();}public AsteraButton(){UiEffects.Changed+=EffectsChanged;
+    void EffectsChanged(object sender,EventArgs e){if(!UiEffects.Enabled)StopFeedback();UpdateGlowTimer();Invalidate();}public AsteraButton(){UiEffects.Changed+=EffectsChanged;
         SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw|ControlStyles.SupportsTransparentBackColor|ControlStyles.Opaque,true);
         FlatStyle=FlatStyle.Flat;FlatAppearance.BorderSize=0;UseVisualStyleBackColor=false;
         BackColor=Color.Transparent;ForeColor=Color.FromArgb(237,241,255);Font=UiTheme.Button();
         Padding=new Padding(15,8,15,8);Margin=new Padding(0,0,10,0);MinimumSize=new Size(80,40);AutoSize=true;Cursor=Cursors.Hand;
-        glowTimer.Interval=33;glowTimer.Tick+=delegate{Invalidate();};
+        InitializeFeedback();glowTimer.Interval=33;glowTimer.Tick+=delegate{Invalidate();};
     }
     public override Size GetPreferredSize(Size proposedSize){
         Size text=String.IsNullOrEmpty(Text)?Size.Empty:TextRenderer.MeasureText(Text,Font,new Size(Int32.MaxValue,Int32.MaxValue),TextFormatFlags.SingleLine|TextFormatFlags.NoPadding);
         return new Size(Math.Max(MinimumSize.Width,text.Width+Padding.Horizontal+(Symbol==ButtonSymbol.None?0:SymbolSize+(text.Width==0?0:8))+4),Math.Max(MinimumSize.Height,Math.Max(text.Height,Symbol==ButtonSymbol.None?0:SymbolSize)+Padding.Vertical+2));
     }
-    protected override void OnMouseEnter(EventArgs e){hover=true;base.OnMouseEnter(e);Invalidate();}
+    protected override void OnMouseEnter(EventArgs e){hover=true;StartHover();base.OnMouseEnter(e);Invalidate();}
 
-    protected override void OnMouseLeave(EventArgs e){hover=false;base.OnMouseLeave(e);Invalidate();}
+    protected override void OnMouseLeave(EventArgs e){hover=false;StartHover();base.OnMouseLeave(e);Invalidate();}
     protected override void OnMouseDown(MouseEventArgs e){if(e.Button==MouseButtons.Left)pressed=true;base.OnMouseDown(e);Invalidate();}
     protected override void OnMouseUp(MouseEventArgs e){pressed=false;base.OnMouseUp(e);Invalidate();}
     protected override void OnMouseCaptureChanged(EventArgs e){if(!Capture)pressed=false;base.OnMouseCaptureChanged(e);Invalidate();}
@@ -43,15 +43,15 @@ public sealed class AsteraButton:Button {
     protected override void OnKeyUp(KeyEventArgs e){pressed=false;base.OnKeyUp(e);Invalidate();}
     protected override void OnGotFocus(EventArgs e){base.OnGotFocus(e);Invalidate();}
     protected override void OnLostFocus(EventArgs e){pressed=false;base.OnLostFocus(e);Invalidate();}
-    protected override void OnEnabledChanged(EventArgs e){pressed=false;hover=false;Cursor=Enabled?Cursors.Hand:Cursors.Default;base.OnEnabledChanged(e);UpdateGlowTimer();Invalidate();}
-    protected override void OnVisibleChanged(EventArgs e){base.OnVisibleChanged(e);UpdateGlowTimer();}
+    protected override void OnEnabledChanged(EventArgs e){StopFeedback();pressed=false;hover=false;Cursor=Enabled?Cursors.Hand:Cursors.Default;base.OnEnabledChanged(e);UpdateGlowTimer();Invalidate();}
+    protected override void OnVisibleChanged(EventArgs e){base.OnVisibleChanged(e);if(!Visible)StopFeedback();UpdateGlowTimer();}
     protected override void OnSizeChanged(EventArgs e){glowPoints=null;base.OnSizeChanged(e);}
     protected override void OnHandleCreated(EventArgs e){base.OnHandleCreated(e);glowOwner=FindForm();if(glowOwner!=null){glowOwner.Resize+=GlowOwnerChanged;glowOwner.VisibleChanged+=GlowOwnerChanged;}UpdateGlowTimer();}
     protected override void OnHandleDestroyed(EventArgs e){DetachGlowOwner();if(!releasingGlow)glowTimer.Stop();base.OnHandleDestroyed(e);}
-    void GlowOwnerChanged(object sender,EventArgs e){UpdateGlowTimer();}
+    void GlowOwnerChanged(object sender,EventArgs e){if(glowOwner!=null&&(!glowOwner.Visible||glowOwner.WindowState==FormWindowState.Minimized))StopFeedback();UpdateGlowTimer();}
     void UpdateGlowTimer(){if(glowTimer==null||releasingGlow)return;glowTimer.Enabled=UiEffects.Enabled&&orbitGlow&&Enabled&&Visible&&IsHandleCreated&&!IsDisposed&&(glowOwner==null||glowOwner.Visible&&glowOwner.WindowState!=FormWindowState.Minimized);}
     void DetachGlowOwner(){if(glowOwner!=null){glowOwner.Resize-=GlowOwnerChanged;glowOwner.VisibleChanged-=GlowOwnerChanged;glowOwner=null;}}
-    protected override void Dispose(bool disposing){if(disposing&&!releasingGlow){releasingGlow=true;UiEffects.Changed-=EffectsChanged;DetachGlowOwner();glowTimer.Dispose();}base.Dispose(disposing);}
+    protected override void Dispose(bool disposing){if(disposing&&!releasingGlow){releasingGlow=true;UiEffects.Changed-=EffectsChanged;DetachGlowOwner();glowTimer.Dispose();feedbackTimer.Dispose();}base.Dispose(disposing);}
     protected override void OnPaintBackground(PaintEventArgs e){}
     void PaintBackdrop(PaintEventArgs e){
         // Alpha artwork must start on a fresh parent scene on EVERY repaint.
@@ -66,7 +66,7 @@ public sealed class AsteraButton:Button {
         if(Width<4||Height<4)return;
         PaintBackdrop(e);
         var g=e.Graphics;g.SmoothingMode=SmoothingMode.AntiAlias;
-        Rectangle bounds=new Rectangle(1,1,Width-3,Height-3);
+        int lift=FeedbackLift;Rectangle bounds=new Rectangle(1,1+lift,Width-3,Height-3);
         string state=!Enabled?"disabled":pressed?"pressed":hover?"hover":"normal";
         if(!ButtonAtlas.Draw(g,bounds,Role,state)){
         Color top,bottom,border;
@@ -80,11 +80,11 @@ public sealed class AsteraButton:Button {
         bool exact;Image art=ButtonArt.Get(Role,state,out exact);
         if(art!=null)ButtonArt.Draw(g,art,bounds,(!Enabled&&!exact) ? .42F : 1F);
         }
-        if(UiEffects.Enabled&&OrbitGlow&&Enabled)DrawOrbitGlow(g);
+        DrawHover(g,bounds);if(UiEffects.Enabled&&OrbitGlow&&Enabled){var save=g.Save();g.TranslateTransform(0,lift);DrawOrbitGlow(g);g.Restore(save);}
         Color caption=Enabled?(Role==ButtonRole.Primary?ButtonAtlas.AccentTextColor:ForeColor):Color.FromArgb(151,162,188);
         Size text=String.IsNullOrEmpty(Text)?Size.Empty:TextRenderer.MeasureText(Text,Font,new Size(Int32.MaxValue,Int32.MaxValue),TextFormatFlags.SingleLine|TextFormatFlags.NoPadding);
         int iconWidth=Symbol==ButtonSymbol.None?0:SymbolSize+(text.Width==0?0:8),total=text.Width+iconWidth;
-        int x=(Width-total)/2,y=(Height-text.Height)/2+(pressed&&Enabled?1:0);
+        int x=(Width-total)/2,y=(Height-text.Height)/2+(pressed&&Enabled?1:0)+lift;
         if(Symbol!=ButtonSymbol.None)DrawSymbol(g,Symbol,new Rectangle(x,y+(text.Height-SymbolSize)/2,SymbolSize,SymbolSize),caption);
         TextRenderer.DrawText(g,Text,Font,new Point(x+iconWidth,y),caption,TextFormatFlags.SingleLine|TextFormatFlags.NoPadding|(ShowKeyboardCues?0:TextFormatFlags.HidePrefix));
         if(Focused&&ShowFocusCues){var focus=new Rectangle(5,5,Width-11,Height-11);using(var p=Round(focus,6))using(var pen=new Pen(Color.FromArgb(230,233,255),1)){pen.DashStyle=DashStyle.Dot;g.DrawPath(pen,p);}}

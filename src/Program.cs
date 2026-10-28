@@ -18,6 +18,7 @@ static class Program {
         if(args.Length==2&&args[0]=="--youtube-audit")return YouTubeAudit.Run(args[1],false);
         if(args.Length==2&&args[0]=="--youtube-live-audit")return YouTubeAudit.Run(args[1],true);
         if(args.Length==2&&args[0]=="--self-update-health-audit")return SelfUpdate.AuditHealthRead(args[1]);
+        if(args.Length==2&&args[0]=="--motion-audit")return MotionAudit.Run(args[1]);
         if(args.Length==2&&args[0]=="--display-polish-audit")return LibraryForm.AuditDisplayPolish(args[1],false);
         if(args.Length==2&&args[0]=="--roblox-gallery-live-audit")return LibraryForm.AuditDisplayPolish(args[1],true);
         if(args.Length==2&&args[0]=="--library-wheel-audit")return LibraryForm.AuditLibraryWheel(args[1]);

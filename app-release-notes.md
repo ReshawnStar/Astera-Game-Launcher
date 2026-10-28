@@ -1,14 +1,7 @@
-# Astera 0.1.27
+# Astera 0.1.28
 
-- Added optional ship breakup effects for FTL: Multiverse through Generated Gibs.
-- Astera checks that the selected Multiverse version, debris images and ship layout changes were installed correctly.
-- Fixed selected game names disappearing after scrolling away and back.
-- Fixed old panel borders remaining visible after resizing the window.
-- Improved FTL troubleshooting reports with installed-version and graphics-setting details.
+- Smoother slide and fade when switching games.
+- Softer button highlights and a small bounce when selecting or pressing a button.
+- Decorative feedback stops when finished, hidden, or disabled in Appearance.
 
-Ship breakup effects can be changed in FTL: Multiverse settings. The extra download is about 67 MiB and increases the game's loading time and memory use.
-
-## Known issue
-
-One tester reported Windows Defender detecting Astera 0.1.19 as Program:Win32/Contebrew.A!ml.
-We believe the detection is incorrect; Microsoft has not reviewed it yet.
+Your games, saves, and settings stay in place.
