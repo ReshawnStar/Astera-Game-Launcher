@@ -10,10 +10,10 @@ namespace Astera {
 sealed partial class Banner:Panel {
     Bitmap backdropBuffer,frameBuffer;bool frameDirty=true;
     public string Game="Minecraft²";
-    bool rigDisposed;SkinRig liveRig;string liveRigPath="";readonly System.Windows.Forms.Timer rigClock=new System.Windows.Forms.Timer{Interval=10};readonly System.Diagnostics.Stopwatch rigTime=new System.Diagnostics.Stopwatch();Form rigOwner;
+    bool transitionPaused;internal void PauseTransition(bool paused){transitionPaused=paused;if(paused)rigTime.Stop();else rigTime.Start();UpdateRigClock();}bool rigDisposed;SkinRig liveRig;string liveRigPath="";readonly System.Windows.Forms.Timer rigClock=new System.Windows.Forms.Timer{Interval=10};readonly System.Diagnostics.Stopwatch rigTime=new System.Diagnostics.Stopwatch();Form rigOwner;
     internal bool LiveSkinActive {get{return liveRig!=null;}}
-    internal void LiveSkin(string pose){pose=pose??"";if(pose==liveRigPath)return;if(liveRig!=null)liveRig.Dispose();liveRig=null;liveRigPath=pose;if(pose.Length>0)try{liveRig=new SkinRig(pose);}catch(IOException){}catch(ArgumentException){}rigTime.Restart();UpdateRigClock();frameDirty=true;Invalidate();}
-    void UpdateRigClock(){if(rigDisposed||rigClock==null||IsDisposed)return;var owner=FindForm();rigClock.Enabled=UiEffects.Enabled&&(liveRig!=null||HasAnimatedArtwork)&&IsHandleCreated&&Visible&&owner!=null&&owner.Visible&&owner.WindowState!=FormWindowState.Minimized;SetArtworkPlayback(rigClock.Enabled);rigClock.Interval=liveRig==null?ArtworkFrameDelay:10;AnimationTiming(rigClock.Enabled);}
+    internal void LiveSkin(string pose){pose=pose??"";if(pose==liveRigPath)return;if(liveRig!=null)liveRig.Dispose();liveRig=null;liveRigPath=pose;if(pose.Length>0)try{liveRig=new SkinRig(pose);}catch(IOException){}catch(ArgumentException){}rigTime.Restart();if(transitionPaused)rigTime.Stop();UpdateRigClock();frameDirty=true;Invalidate();}
+    void UpdateRigClock(){if(rigDisposed||rigClock==null||IsDisposed)return;var owner=FindForm();rigClock.Enabled=!transitionPaused&&UiEffects.Enabled&&(liveRig!=null||HasAnimatedArtwork)&&IsHandleCreated&&Visible&&owner!=null&&owner.Visible&&owner.WindowState!=FormWindowState.Minimized;SetArtworkPlayback(rigClock.Enabled);rigClock.Interval=liveRig==null?ArtworkFrameDelay:10;AnimationTiming(rigClock.Enabled);}
     void RigOwnerChanged(object sender,EventArgs e){UpdateRigClock();}
     protected override void OnHandleCreated(EventArgs e){base.OnHandleCreated(e);rigOwner=FindForm();if(rigOwner!=null){rigOwner.Resize+=RigOwnerChanged;rigOwner.VisibleChanged+=RigOwnerChanged;}UpdateRigClock();}
     protected override void OnHandleDestroyed(EventArgs e){rigClock.Stop();SetArtworkPlayback(false);AnimationTiming(false);if(rigOwner!=null){rigOwner.Resize-=RigOwnerChanged;rigOwner.VisibleChanged-=RigOwnerChanged;rigOwner=null;}base.OnHandleDestroyed(e);}
@@ -117,7 +117,7 @@ sealed partial class LibraryForm {
         games.Dock=DockStyle.Fill;games.BorderStyle=BorderStyle.None;games.BackColor=sidebar.BackColor;games.ForeColor=Color.White;games.Font=UiTheme.Text(15);games.ItemHeight=76;games.DrawMode=DrawMode.OwnerDrawFixed;ReloadGames(null);games.DrawItem+=DrawGame;games.SelectedIndexChanged+=delegate{if(!reloadingLibrary&&games.SelectedItem!=null){activeLibraryEntry=(LibraryEntry)games.SelectedItem;SwitchGame();}};BuildLibraryViewport(sidebar);
         BuildVersionFooter(sidebar);var addGame=Button("+ Add game",delegate{AddCustomGame();});addGame.Dock=DockStyle.Bottom;sidebar.Controls.Add(addGame);addGame.BringToFront();
 
-        var viewport=new Panel{Dock=DockStyle.Fill};gameViewport=viewport;viewport.Resize+=delegate{CancelGameTransition();};
+        var viewport=new Panel{Dock=DockStyle.Fill};gameViewport=viewport;viewport.Resize+=delegate{if(gameTransition!=null)gameTransition.Restage();};
         var body=new TableLayoutPanel{Dock=DockStyle.Fill,ColumnCount=1,RowCount=4,Padding=new Padding(24,0,24,12)};
         gameBody=body;body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
         body.RowStyles.Add(new RowStyle(SizeType.Absolute,330));body.RowStyles.Add(new RowStyle(SizeType.Absolute,54));body.RowStyles.Add(new RowStyle(SizeType.Percent,100));body.RowStyles.Add(new RowStyle(SizeType.Absolute,28));

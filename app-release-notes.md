@@ -1,7 +1,7 @@
-# Astera 0.1.28
+# Astera 0.1.29
 
-- Smoother slide and fade when switching games.
-- Softer button highlights and a small bounce when selecting or pressing a button.
-- Decorative feedback stops when finished, hidden, or disabled in Appearance.
+- Game changes now fade out, prepare behind a covered page, then fade in with a gentle upward slide.
+- The page stays covered while its artwork and update notes are loading.
+- Removed the overlapping pages that made transitions look blurry.
 
 Your games, saves, and settings stay in place.

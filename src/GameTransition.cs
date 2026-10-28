@@ -1,28 +1,47 @@
 using System;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Windows.Forms;
 namespace Astera {
+// An opaque sibling owns presentation until preparation has actually completed.
+// Old and new pages are never composited over each other.
 sealed class GameTransition:Panel {
-    Bitmap previous,incoming;readonly Timer clock=new Timer{Interval=15};readonly Stopwatch elapsed=new Stopwatch();readonly Action finished;
-    internal GameTransition(Bitmap old,Action done){previous=old;finished=done;SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.Opaque,true);Dock=DockStyle.Fill;clock.Tick+=delegate{if(elapsed.ElapsedMilliseconds>=260){clock.Stop();if(finished!=null)finished();}else Invalidate();};}
-    internal void Start(Bitmap next){incoming=next;elapsed.Restart();clock.Start();Invalidate();}
-    internal static Bitmap CaptureFrame(Control content){var image=new Bitmap(content.Width,content.Height);try{using(var g=Graphics.FromImage(image))g.Clear(content.BackColor);content.DrawToBitmap(image,content.ClientRectangle);return image;}catch{image.Dispose();throw;}}
+    Bitmap previous,incoming;readonly Timer clock=new Timer{Interval=15};readonly Stopwatch elapsed=new Stopwatch(),entrance=new Stopwatch();readonly Action finished;
+    Action prepare;Func<Bitmap> ready;bool preparing,completed;long nextProbe;
+    internal const int FadeOutMilliseconds=220,MinimumCoverMilliseconds=1000,EntranceMilliseconds=380;
+    internal bool RevealStarted;internal long PaintCount,PaintTicks,MaxPaintTicks;internal bool Preparing {get{return preparing&&incoming==null;}}
+    internal GameTransition(Bitmap old,Action done){previous=old;finished=done;SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.Opaque,true);Dock=DockStyle.Fill;clock.Tick+=Tick;}
+    internal void Start(Bitmap next){Start(null,delegate{return next;});}
+    internal void Start(Action begin,Func<Bitmap> whenReady){prepare=begin;ready=whenReady;elapsed.Restart();clock.Start();Invalidate();}
+    void Tick(object sender,EventArgs e){
+        if(!preparing&&elapsed.ElapsedMilliseconds>=FadeOutMilliseconds){preparing=true;clock.Interval=50;Invalidate();Update();if(prepare!=null)prepare();if(IsDisposed)return;}
+        if(preparing&&incoming==null&&elapsed.ElapsedMilliseconds>=MinimumCoverMilliseconds&&elapsed.ElapsedMilliseconds>=nextProbe){nextProbe=elapsed.ElapsedMilliseconds+40;var next=ready==null?null:ready();if(IsDisposed){if(next!=null)next.Dispose();return;}if(next!=null){incoming=next;RevealStarted=true;clock.Interval=15;entrance.Restart();}}
+        if(incoming!=null&&entrance.ElapsedMilliseconds>=EntranceMilliseconds){clock.Stop();completed=true;Invalidate();Update();if(finished!=null)finished();return;}if(!preparing||incoming!=null)Invalidate();
+    }
+    internal void Restage(){if(!preparing)return;if(incoming!=null){incoming.Dispose();incoming=null;}entrance.Reset();nextProbe=elapsed.ElapsedMilliseconds+80;Invalidate();}
+    internal static Bitmap CaptureFrame(Control content){var image=new Bitmap(content.Width,content.Height,PixelFormat.Format32bppPArgb);try{using(var g=Graphics.FromImage(image))g.Clear(content.BackColor);content.DrawToBitmap(image,content.ClientRectangle);return image;}catch{image.Dispose();throw;}}
     protected override void OnPaintBackground(PaintEventArgs e){}
-    protected override void OnPaint(PaintEventArgs e){e.Graphics.Clear(Parent==null?Color.FromArgb(12,17,33):Parent.BackColor);double t=Math.Min(1,elapsed.ElapsedMilliseconds/260.0),ease=incoming==null?0:1-Math.Pow(1-t,3);DrawFrame(e.Graphics,previous,0,1);if(incoming!=null)DrawFrame(e.Graphics,incoming,(int)Math.Round(16*(1-ease)),(float)ease);}
-    static void DrawFrame(Graphics g,Image frame,int y,float alpha){if(frame==null)return;using(var attributes=new ImageAttributes()){var matrix=new ColorMatrix();matrix.Matrix33=alpha;attributes.SetColorMatrix(matrix);attributes.SetWrapMode(System.Drawing.Drawing2D.WrapMode.TileFlipXY);g.DrawImage(frame,new Rectangle(0,y,frame.Width,frame.Height),0,0,frame.Width,frame.Height,GraphicsUnit.Pixel,attributes);}}
-    protected override void Dispose(bool disposing){if(disposing){clock.Dispose();if(previous!=null)previous.Dispose();if(incoming!=null)incoming.Dispose();previous=incoming=null;}base.Dispose(disposing);}
+    protected override void OnPaint(PaintEventArgs e){long start=Stopwatch.GetTimestamp();DrawSurface(e.Graphics,preparing?1:0,incoming==null?0:completed?1:entrance.Elapsed.TotalMilliseconds/EntranceMilliseconds,elapsed.Elapsed.TotalMilliseconds/FadeOutMilliseconds);long ticks=Stopwatch.GetTimestamp()-start;PaintTicks+=ticks;PaintCount++;MaxPaintTicks=Math.Max(MaxPaintTicks,ticks);}
+    internal void DrawSurface(Graphics g,int phase,double reveal,double fade){Color flat=Parent==null?Color.FromArgb(12,17,33):Parent.BackColor;g.Clear(flat);if(phase==0){if(previous!=null)g.DrawImageUnscaled(previous,0,0);Shade(g,flat,AsteraButton.Ease(fade));return;}if(incoming!=null){double ease=AsteraButton.Ease(reveal);g.DrawImageUnscaled(incoming,0,(int)Math.Round(48*(1-ease)));Shade(g,flat,1-ease);}}
+    void Shade(Graphics g,Color flat,double opacity){int alpha=(int)Math.Round(Math.Max(0,Math.Min(1,opacity))*255);if(alpha==0)return;using(var brush=new SolidBrush(Color.FromArgb(alpha,flat)))g.FillRectangle(brush,ClientRectangle);}
+    protected override void Dispose(bool disposing){if(disposing){clock.Dispose();if(previous!=null)previous.Dispose();if(incoming!=null)incoming.Dispose();previous=incoming=null;prepare=null;ready=null;}base.Dispose(disposing);}
 }
 sealed partial class LibraryForm {
     Panel gameViewport;TableLayoutPanel gameBody;GameTransition gameTransition;
-    void CancelGameTransition(){var old=gameTransition;gameTransition=null;if(old!=null){old.Parent=null;old.Dispose();}if(gameBody!=null)gameBody.Invalidate(true);}
+    void CancelGameTransition(){var old=gameTransition;gameTransition=null;if(old!=null){old.Parent=null;old.Dispose();}banner.PauseTransition(false);if(gameBody!=null)gameBody.Invalidate(true);}
+    bool PageResourcesPending(){if(!IsCustomGame)return GameKind==0&&loadingMinecraftSkin;var game=CurrentCustom;if(game==null)return false;var art=CustomSteam(game);return steamArtPending.Contains(game.Executable)||itchPending.Contains(game.Executable)||robloxDetailsPending.Contains(game.Id)||(art!=null&&(publicSteamPending.Contains(art.AppId)||newsPending.Contains(art.AppId)));}
     void SwitchGame(){UpdateRobloxSlidePlayback();UpdatePublicArtworkSelection();if(!UiEffects.Enabled){CancelGameTransition();RefreshView();return;}
         if(gameViewport==null||gameBody==null||!Visible||!IsHandleCreated||gameBody.Width<2||gameBody.Height<2){RefreshView();return;}
         Bitmap before=null;try{
             before=GameTransition.CaptureFrame(gameTransition==null?(Control)gameBody:gameTransition);
-            GameTransition cover=null;cover=new GameTransition(before,delegate{if(gameTransition==cover)CancelGameTransition();});before=null;gameViewport.Controls.Add(cover);cover.BringToFront();cover.Refresh();CancelGameTransition();gameTransition=cover;
-            using(new PageRedraw(gameBody)){RefreshView();gameBody.PerformLayout();}cover.Start(GameTransition.CaptureFrame(gameBody));
+            var prior=gameTransition;GameTransition cover=null;int stable=0;
+            cover=new GameTransition(before,delegate{if(gameTransition==cover)CancelGameTransition();});before=null;gameTransition=cover;gameViewport.Controls.Add(cover);cover.BringToFront();cover.Refresh();if(prior!=null){prior.Parent=null;prior.Dispose();}banner.PauseTransition(true);
+            cover.Start(delegate{if(gameTransition!=cover)return;try{using(new PageRedraw(gameBody)){RefreshView();if(GameKind==0)RefreshMinecraftSkin();gameBody.PerformLayout();}}catch(Exception error){AsteraDiagnostics.Write("Page preparation unavailable",error);CancelGameTransition();}},delegate{
+                if(gameTransition!=cover)return null;if(PageResourcesPending()){stable=0;return null;}if(++stable<2)return null;
+                try{using(new PageRedraw(gameBody)){gameBody.PerformLayout();}return GameTransition.CaptureFrame(gameBody);}catch(Exception error){AsteraDiagnostics.Write("Prepared page capture unavailable",error);CancelGameTransition();return null;}
+            });
         }catch(Exception error){if(before!=null)before.Dispose();CancelGameTransition();RefreshView();AsteraDiagnostics.Write("Game transition fallback",error);}
     }
 }
