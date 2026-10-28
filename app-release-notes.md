@@ -1,7 +1,8 @@
-# Astera 0.1.34 — About your Roblox experiences
+# Astera 0.1.35 — Smoother updates
 
-- Roblox pages now show the experience's own description instead of generic launcher text.
-- Descriptions are cached for offline browsing and existing library entries refresh automatically when opened.
-- A clear fallback appears if Roblox has no description available.
+- Improved how Astera installs updates and restarts afterward.
+- Added a compact update window with download progress and verification status.
+- Astera checks for launcher updates when it opens; this can be changed in Settings.
+- If an update cannot finish, Astera keeps a recovery record and protects your games and settings.
 
-- Smoothed and restyled the Working indicator, with a rounded track and softer moving highlight. Conflicting idle status stays hidden during work.
+Windows Defender detections remain under investigation. This release is not a confirmed resolution of every detection.
