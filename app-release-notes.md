@@ -1,8 +1,6 @@
-# Astera 0.1.31 — Your library, your way
+# Astera 0.1.32 — Straight into your game
 
-- Added Favorites, personal library folders and a separate Hidden view. Right-click a game to organize it.
-- Added estimated playtime for games launched through Astera, including Roblox. Totals stay on your PC; tracking can be turned off in Settings.
-- Playtime counts while Astera is open, including in the tray. Roblox follows the experience launched here; changes made inside Roblox cannot be identified.
-- Clicking the selected game keeps its page in place. Double-click a ready game to play.
-- Added an Astera startup screen with the logo, six-dot loader and rotating messages while the library and startup update checks get ready.
-- Playful loading messages can be turned off in Settings.
+- Installed itch.io games now launch their detected Windows application directly, instead of opening the download chooser.
+- If an installation has several game applications, choose once and Astera remembers it.
+- Moved estimated playtime beside the Play button and added Last played.
+- Existing playtime totals are preserved. Last played starts recording with this update.

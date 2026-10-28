@@ -17,9 +17,9 @@ static class PlatformLibraries {
     internal static string Folder(CustomGame game){return game.Platform=="roblox"?"":String.IsNullOrEmpty(game.Platform)?Path.GetDirectoryName(game.Executable):game.Executable;}
     internal static bool Available(CustomGame game){if(game.Platform=="roblox"){long place;return RobloxSupport.Positive(game.PlatformId,out place);}return String.IsNullOrEmpty(game.Platform)?File.Exists(game.Executable):Directory.Exists(game.Executable);}
     internal static SteamGameArt SteamArt(CustomGame game){if(game.Platform=="itch"||game.Platform=="roblox")return null;var art=SteamArtwork.Find(game.Platform=="steam"?Path.Combine(game.Executable,".astera-metadata-probe"):game.Executable,SteamArtwork.Roots());return game.Platform=="steam"&&(art==null||art.AppId!=game.PlatformId)?null:art;}
-    internal static ProcessStartInfo Start(CustomGame game){if(!Id(game.PlatformId))throw new IOException("Invalid installed game ID");return game.Platform=="steam"?SteamArtwork.Launch(game.PlatformId):new ProcessStartInfo("itch://install?game_id="+game.PlatformId+"&launch"){UseShellExecute=true};}
+    internal static ProcessStartInfo Start(CustomGame game){if(!Id(game.PlatformId))throw new IOException("Invalid installed game ID");return game.Platform=="steam"?SteamArtwork.Launch(game.PlatformId):new ProcessStartInfo("itch://games/"+game.PlatformId){UseShellExecute=true};}
 }
-public sealed class ItchReceipt {public ItchReceiptGame game;}
+public sealed class ItchReceipt {public ItchReceiptGame game;public ItchUpload upload;public string[] files;}
 public sealed class ItchReceiptGame {public long id;public string title,coverUrl,cover_url,stillCoverUrl,still_cover_url;}
 sealed partial class LibraryForm {
     ContextMenuStrip addSourceMenu;

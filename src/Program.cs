@@ -19,6 +19,8 @@ static class Program {
         if(args.Length==2&&args[0]=="--youtube-live-audit")return YouTubeAudit.Run(args[1],true);
         if(args.Length==2&&args[0]=="--self-update-health-audit")return SelfUpdate.AuditHealthRead(args[1]);
         if(args.Length==2&&args[0]=="--library-organization-audit")return LibraryForm.AuditLibraryOrganization(args[1]);
+        if(args.Length==3&&args[0]=="--itch-launch-check")return LibraryForm.AuditItchLaunch(args[1],args[2]);
+        if(args.Length==2&&args[0]=="--itch-launch-audit")return LibraryForm.AuditItchLaunch(args[1]);
         if(args.Length==2&&args[0]=="--startup-audit")return LibraryForm.AuditStartup(args[1]);
         if(args.Length==2&&args[0]=="--motion-audit")return MotionAudit.Run(args[1]);
         if(args.Length==2&&args[0]=="--display-polish-audit")return LibraryForm.AuditDisplayPolish(args[1],false);

@@ -138,7 +138,7 @@ sealed partial class LibraryForm {
         moreMenu=AsteraMenuRenderer.Create(menuComponents);moreMenu.Items.Add("Open game folder",null,delegate{OpenGameFolder();});moreMenu.Items.Add("Game settings",null,delegate{Configure();});moreMenu.Items.Add("Update activity",null,delegate{SelectLibraryTab(1);});moreMenu.Items.Add("Open Astera logs",null,delegate{OpenDiagnostics();});moreMenu.Items.Add("Collect game logs",null,delegate{CollectGameLogs();});
         moreMenu.Items.Add("Astera changelog",null,delegate{AppChangelog.Show(this);});moreMenu.Items.Add("Capture UI snapshot",null,delegate{CaptureUiFromMenu();});
         var more=Button("",delegate(object sender,EventArgs e){var button=(Control)sender;moreMenu.Show(button,new Point(0,button.Height));});more.MinimumSize=new Size(48,48);((AsteraButton)more).Symbol=ButtonSymbol.More;more.AccessibleName="More options";
-        action.Controls.AddRange(new Control[]{play,check,more});banner.Controls.Add(action);
+        action.Controls.AddRange(new Control[]{play,check,more});BuildPlaytimeStats(action);banner.Controls.Add(action);
         banner.Resize+=delegate{LayoutHeroContent();};
 
         tabs.Dock=DockStyle.Fill;tabs.Padding=new Padding(0,7,0,4);tabs.WrapContents=false;tabs.Margin=Padding.Empty;
@@ -165,7 +165,7 @@ sealed partial class LibraryForm {
         artLabel.Text="Default starfield\nBackground + separate character layer";artLabel.Dock=DockStyle.Bottom;artLabel.Height=46;artLabel.ForeColor=Muted;artLabel.Padding=new Padding(0,6,0,0);background.Controls.Add(artLabel);previewScene.Dock=DockStyle.Fill;background.Controls.Add(previewScene);previewScene.BringToFront();
         var installation=new Card{Dock=DockStyle.Fill,Margin=Padding.Empty};rightLayout.Controls.Add(installation,0,1);installation.Resize+=delegate{installation.Padding=new Padding(installation.ClientSize.Height<145?10:16);};
         openFolder.Text="Open folder";Style(openFolder);((AsteraButton)openFolder).Symbol=ButtonSymbol.Folder;openFolder.Dock=DockStyle.Bottom;openFolder.Click+=delegate{OpenGameFolder();};
-        installationPath.Dock=DockStyle.Fill;installationPath.ForeColor=Muted;installationPath.AutoEllipsis=true;installationPath.Padding=new Padding(0,4,0,0);installation.Controls.Add(installationPath);installation.Controls.Add(playtimeLabel);installation.Controls.Add(openFolder);installation.Controls.Add(new Label{Text="Installation",Font=UiTheme.Text(17,true),Dock=DockStyle.Top,Height=28});
+        installationPath.Dock=DockStyle.Fill;installationPath.ForeColor=Muted;installationPath.AutoEllipsis=true;installationPath.Padding=new Padding(0,4,0,0);installation.Controls.Add(installationPath);installation.Controls.Add(openFolder);installation.Controls.Add(new Label{Text="Installation",Font=UiTheme.Text(17,true),Dock=DockStyle.Top,Height=28});
         activityCard.Dock=DockStyle.Fill;activityCard.Margin=Padding.Empty;ConfigureReadOnly(log,activityCard.BackColor);activityCard.Controls.Add(log);activityCard.Controls.Add(new Label{Text="Update activity",Dock=DockStyle.Top,Height=34,Font=UiTheme.Text(17,true)});
         AddDiagnosticButtons();BuildArtworkPage();BuildPreferencesPage();
         releaseLabel.Dock=DockStyle.Fill;releaseLabel.ForeColor=Muted;releaseLabel.Font=UiTheme.Text(12);releaseLabel.TextAlign=ContentAlignment.MiddleLeft;BuildWorkProgress(body);
