@@ -1,10 +1,7 @@
-# Astera 0.1.38 — A smoother Discover
+# Astera 0.1.39 — Gacha installation repair
 
-- Added loading transitions between Library, Discover and Arcade, and within Discover project pages.
-- Pages now prepare behind the loading cover before fading and sliding into view.
-- Added Last Light's new banner.
-- Improved Discover card artwork sizing, search styling and carousel controls.
-- Click anywhere on a project card to explore it, with a smaller Install or Manage action.
-- Removed the stray Working strip from game banners and dark selection outlines.
+- Shortened temporary installation paths for Gacha Nebula + to fix Windows path-length failures.
+- Temporary-file cleanup now retries brief file locks and preserves the original error if cleanup is blocked.
+- Added clearer guidance for permission and path-length errors.
 
-Windows Defender detection reports remain under investigation.
+If Windows reports that a game path is too long, choose a short local folder such as C:\Games.

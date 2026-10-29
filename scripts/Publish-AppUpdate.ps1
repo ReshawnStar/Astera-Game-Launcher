@@ -7,6 +7,7 @@ param(
  [string]$OutputRoot='D:/vale/StarsAllies-Storage/releases/Astera',
  [string]$Repository='ReshawnStar/Astera-Game-Launcher', [string]$Branch='main',
  [string]$GitHubCli='D:/vale/StarsAllies-Storage/tools/github-cli/v2.103.2/bin/gh.exe',
+ [switch]$AllowUnavailableScreenCapture,
  [switch]$Publish
 )
 $ErrorActionPreference='Stop'
@@ -19,7 +20,14 @@ if($file.Attributes -band [IO.FileAttributes]::ReparsePoint -or $file.VersionInf
 $hash=(Get-FileHash -LiteralPath $Executable).Hash
 $test=Get-Content -LiteralPath $TestReceipt -Raw|ConvertFrom-Json
 $self=Get-Content -LiteralPath $SelfUpdateReceipt -Raw|ConvertFrom-Json
-if(!$test.Passed -or !$self.Passed -or $test.AppSha256 -ne $hash -or $self.CandidateSha256 -ne $hash){throw 'Both test receipts must pass for this exact executable'}
+if(!$self.Passed -or $test.AppSha256 -ne $hash -or $self.CandidateSha256 -ne $hash){throw 'Test receipts must match this exact executable and updater checks must pass'}
+if($AllowUnavailableScreenCapture){
+ # Explicit user-approved testing publication only. Never rewrite Passed=false.
+ $unresolved=@($test.UnresolvedChecks)
+ if($test.Passed -or !$test.NonScreenChecksPassed -or $test.CompleteRegressionSuite -or $unresolved.Count -ne 2 -or
+    @($unresolved|Where-Object {$_ -notmatch '^(library-paint: native screen frames turn solid black|motion: native covered-page sample failed while capture was unavailable)$'}).Count -or
+    @($test.Tests).Count -lt 27){throw 'Testing exception is restricted to the two recorded unavailable screen-capture groups'}
+}elseif(!$test.Passed){throw 'Both test receipts must pass for this exact executable'}
 $notes=Get-Content -LiteralPath $NotesFile -Raw;if($notes.Length -gt 16000){throw 'App release notes exceed limit'}
 $tag='astera-v'+$version;$out=Join-Path $OutputRoot $tag
 if(Test-Path -LiteralPath $out){throw 'Immutable app release staging folder already exists'}
@@ -50,7 +58,8 @@ try{
  $notice=Join-Path $out 'astera.json';$envelope|ConvertTo-Json -Compress|Set-Content -LiteralPath $notice -Encoding utf8
  $verify=Start-Process -FilePath $Executable -ArgumentList @('--verify-app-candidate',('"'+$notice+'"'),('"'+(Join-Path $out 'Astera.exe')+'"')) -WindowStyle Hidden -PassThru -Wait;if($verify.ExitCode -ne 0){throw 'The actual app rejected its prepared release'}
  if($Publish){
-  & $GitHubCli release create $tag (Join-Path $out 'Astera.exe') --repo $Repository --target $Branch --title ('Astera '+$version) --notes-file $NotesFile --latest
+  $visibility=if($AllowUnavailableScreenCapture){'--prerelease'}else{'--latest'}
+  & $GitHubCli release create $tag (Join-Path $out 'Astera.exe') --repo $Repository --target $Branch --title ('Astera '+$version) --notes-file $NotesFile $visibility
   if($LASTEXITCODE -ne 0){throw 'App upload failed; channel unchanged'}
   $verifyDir=Join-Path $out 'download-verification';New-Item -ItemType Directory -Path $verifyDir|Out-Null
   & $GitHubCli release download $tag --repo $Repository --pattern Astera.exe --dir $verifyDir
@@ -61,6 +70,6 @@ try{
   & $GitHubCli api $api --method PUT --input $requestFile > $null
   if($LASTEXITCODE -ne 0){throw 'App uploaded, but channel promotion conflicted or failed. Inspect before retrying.'}
  }
- @{Version=$version;Sha256=$hash;Sequence=$sequence;Published=[bool]$Publish;DownloadVerified=[bool]$Publish;TestReceipt=$TestReceipt;SelfUpdateReceipt=$SelfUpdateReceipt}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $out 'receipt.json')
+ @{TestingScreenCaptureWaiver=[bool]$AllowUnavailableScreenCapture;UnverifiedVisualChecks=@($test.UnresolvedChecks);Version=$version;Sha256=$hash;Sequence=$sequence;Published=[bool]$Publish;DownloadVerified=[bool]$Publish;TestReceipt=$TestReceipt;SelfUpdateReceipt=$SelfUpdateReceipt}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $out 'receipt.json')
  Write-Output ("Prepared app release: "+$out+"; published="+[bool]$Publish)
 }finally{$rsa.Dispose()}
