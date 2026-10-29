@@ -12,6 +12,7 @@ if($FeedUrl){$uri=[Uri]$FeedUrl;if(!$uri.IsAbsoluteUri -or $uri.Scheme -ne 'http
 $public=Get-Content -Raw -LiteralPath $PublicKeyFile
 if($public -match '<D>|<P>|<Q>|<DP>|<DQ>|<InverseQ>'){throw 'Refusing to embed a private key'}
 $version=(Get-Content -LiteralPath (Join-Path $root 'VERSION') -Raw).Trim();if($version -notmatch '^\d+\.\d+\.\d+$'){throw 'VERSION must be major.minor.patch'};if(!$OutputDirectory){$OutputDirectory='D:/vale/StarsAllies-Storage/builds/Astera/'+$version};$out=[IO.Path]::GetFullPath($OutputDirectory)
+$existing=Join-Path $out 'Astera.exe';if(Test-Path -LiteralPath $existing){try{$handle=[IO.File]::Open($existing,[IO.FileMode]::Open,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None);$handle.Dispose()}catch{throw 'The output EXE is in use or blocked. Close that test process or choose a fresh output directory.'}}
 New-Item -ItemType Directory -Path $out -Force|Out-Null
 $channel=Join-Path $out 'channel.json'
 @{FeedUrl=$FeedUrl;AppFeedUrl=(Get-Content -LiteralPath (Join-Path $root 'channel-settings.json') -Raw|ConvertFrom-Json).AppFeedUrl;PublicKeyXml=$public}|ConvertTo-Json|Set-Content -LiteralPath $channel -Encoding utf8
@@ -67,6 +68,17 @@ $webview=Join-Path $root 'assets/vendor/webview2'
 $provenance=Get-Content -LiteralPath (Join-Path $webview 'provenance.json') -Raw|ConvertFrom-Json
 foreach($file in $provenance.Files){$path=Join-Path $webview $file.Name;if((Get-FileHash -LiteralPath $path).Hash -ne $file.Sha256){throw 'WebView2 component differs from its pinned package'};$art+=('/resource:'+$path+',Astera.WebView2.'+$file.Name)}
 $art+=('/resource:'+(Join-Path $webview 'LICENSE.txt')+',Astera.WebView2.LICENSE.txt');$art+=('/r:'+(Join-Path $webview 'Microsoft.Web.WebView2.Core.dll'));$art+=('/r:'+(Join-Path $webview 'Microsoft.Web.WebView2.WinForms.dll'));$art+=('/win32manifest:'+(Join-Path $root 'app.manifest'))
+$yaml=Join-Path $root 'assets/vendor/yamldotnet'
+$yamlInfo=Get-Content -Raw -LiteralPath (Join-Path $yaml 'provenance.json')|ConvertFrom-Json
+$yamlDll=Join-Path $yaml 'YamlDotNet.dll'
+if((Get-FileHash -LiteralPath $yamlDll).Hash -ne $yamlInfo.DllSha256){throw 'YAML dependency differs from pinned package'}
+$yamlIdentity=Join-Path $out 'yaml-identity.g.cs'
+[IO.File]::WriteAllText($yamlIdentity,('namespace Astera { static class ThunderYamlIdentity { internal const string Sha256="'+$yamlInfo.DllSha256+'"; } }'))
+$sources+=$yamlIdentity
+$art+=('/r:'+$yamlDll)
+$art+=('/resource:'+$yamlDll+',Astera.YamlDotNet')
+$art+=('/resource:'+(Join-Path $yaml 'LICENSE.txt')+',Astera.YamlDotNet.LICENSE')
+$art+=('/resource:'+(Join-Path $root 'assets/thunderstore-games.json')+',Astera.Thunderstore.Games')
 $helper=Join-Path $out 'Astera.Updater.exe'
 & $compiler /nologo /codepage:65001 /define:ASTERA_UPDATER /target:winexe /platform:x64 /optimize+ /r:System.Windows.Forms.dll /r:System.Web.Extensions.dll "/out:$helper" "/resource:$channel,Astera.Channel" ('/win32manifest:'+(Join-Path $root 'app.manifest')) (Join-Path $root 'updater/UpdaterEntry.cs') (Join-Path $root 'src/SelfUpdate.cs') (Join-Path $root 'src/SelfUpdateFiles.cs') $versionSource
 if($LASTEXITCODE -ne 0){throw 'Dedicated updater compilation failed'}

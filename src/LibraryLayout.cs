@@ -132,7 +132,7 @@ sealed partial class LibraryForm {
         profileLabel.Dock=DockStyle.Fill;profileLabel.ForeColor=Muted;profileLabel.AutoEllipsis=true;profileLabel.Font=UiTheme.Text(12);
         heroText.Controls.Add(heroTitle,0,0);heroText.Controls.Add(heroSubtitle,0,1);heroText.Controls.Add(heroTagline,0,2);heroText.Controls.Add(status,0,3);heroText.Controls.Add(profileLabel,0,4);banner.Controls.Add(heroText);
         var action=new FlowLayoutPanel{BackColor=Color.Transparent,Location=new Point(24,258),Height=58,WrapContents=false};
-        heroActions=action;
+        heroActions=action;BuildModProfileStrip();
         play.Text="PLAY";Style(play);((AsteraButton)play).Role=ButtonRole.Primary;((AsteraButton)play).Symbol=ButtonSymbol.Play;((AsteraButton)play).OrbitGlow=true;play.Font=UiTheme.Button();play.MinimumSize=new Size(170,48);play.Click+=delegate{PrimaryGameAction();};
         check.Text="Check for updates";Style(check);((AsteraButton)check).Symbol=ButtonSymbol.Refresh;check.MinimumSize=new Size(195,48);check.Click+=async delegate{await Check(false);};
         moreMenu=AsteraMenuRenderer.Create(menuComponents);moreMenu.Items.Add("Open game folder",null,delegate{OpenGameFolder();});moreMenu.Items.Add("Game settings",null,delegate{Configure();});moreMenu.Items.Add("Update activity",null,delegate{SelectLibraryTab(1);});moreMenu.Items.Add("Open Astera logs",null,delegate{OpenDiagnostics();});moreMenu.Items.Add("Collect game logs",null,delegate{CollectGameLogs();});

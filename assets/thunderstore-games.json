@@ -1,0 +1,3685 @@
+{
+  "Loaders": [
+    {
+      "packageId": "bbepis-BepInExPack",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "xiaoxiao921-BepInExPack",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "xiaoye97-BepInEx",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "denikson-BepInExPack_Valheim",
+      "rootFolder": "BepInExPack_Valheim",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "1F31A-BepInEx_Valheim_Full",
+      "rootFolder": "BepInEx_Valheim_Full",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_GTFO",
+      "rootFolder": "BepInExPack_GTFO",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Outward",
+      "rootFolder": "BepInExPack_Outward",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "bbepisTaleSpire-BepInExPack",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_H3VR",
+      "rootFolder": "BepInExPack_H3VR",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_ROUNDS",
+      "rootFolder": "BepInExPack_ROUNDS",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "Zinal001-BepInExPack_MECHANICA",
+      "rootFolder": "BepInExPack_MECHANICA",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Muck",
+      "rootFolder": "BepInExPack_Muck",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Mycopunk",
+      "rootFolder": "BepInExPack_Mycopunk",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_LLBlaze",
+      "rootFolder": "BepInExPack_LLBlaze",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Timberborn",
+      "rootFolder": "BepInExPack_Timberborn",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_TABS",
+      "rootFolder": "BepInExPack_TABS",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_NASB",
+      "rootFolder": "BepInExPack_NASB",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Inscryption",
+      "rootFolder": "BepInExPack_Inscryption",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Starsand",
+      "rootFolder": "BepInExPack_Starsand",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_CaLABP",
+      "rootFolder": "BepInExPack_CaLABP",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_PotionCraft",
+      "rootFolder": "BepInExPack_PotionCraft",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_NearlyDead",
+      "rootFolder": "BepInExPack_NearlyDead",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_AGAINST",
+      "rootFolder": "BepInExPack_AGAINST",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "bbepis-BepInEx_Rogue_Tower",
+      "rootFolder": "",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_HOTDS",
+      "rootFolder": "BepInExPack_HOTDS",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_ForTheKing",
+      "rootFolder": "BepInExPack_ForTheKing",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "Subnautica_Modding-BepInExPack_Subnautica",
+      "rootFolder": "BepInExPack_Subnautica",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "Subnautica_Modding-BepInExPack_Subnautica_Experimental",
+      "rootFolder": "BepInExPack_Subnautica_Experimental",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "Subnautica_Modding-BepInExPack_BelowZero",
+      "rootFolder": "BepInExPack_BelowZero",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "Subnautica_Modding-BepInExPack",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Core_Keeper",
+      "rootFolder": "BepInExPack_Core-Keeper",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "northstar-Northstar",
+      "rootFolder": "Northstar",
+      "loader": "northstar"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Peglin",
+      "rootFolder": "BepInExPack_Peglin",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_V_Rising",
+      "rootFolder": "BepInExPack_V_Rising",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "PCVR_Modders-BepInExPack_GHVR",
+      "rootFolder": "BepInExPack_GHVR",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInExPackMTD-BepInExPack_20MTD",
+      "rootFolder": "BepInExPack_20MTD",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_VTOL_VR",
+      "rootFolder": "BepInExPack_VTOL_VR",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Stacklands",
+      "rootFolder": "BepInExPack_Stacklands",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_EtG",
+      "rootFolder": "BepInExPack_EtG",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Ravenfield",
+      "rootFolder": "BepInExPack_Ravenfield",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Aloft",
+      "rootFolder": "BepInExPack_Aloft",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_CultOfTheLamb",
+      "rootFolder": "BepInExPack_CultOfTheLamb",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Chrono_Ark",
+      "rootFolder": "BepInExPack_Chrono_Ark",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_TromboneChamp",
+      "rootFolder": "BepInExPack_TromboneChamp",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_RogueGenesia",
+      "rootFolder": "BepInExPack_RogueGenesia",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_AcrossTheObelisk",
+      "rootFolder": "BepInExPack_AcrossTheObelisk",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "GodotModding-GodotModLoader",
+      "rootFolder": "",
+      "loader": "godotml"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Skul",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_IL2CPP",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_x86",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "Modding_Council-BepInExPack_of_Legend",
+      "rootFolder": "BepInExPack_of_Legend",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Thronefall",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_WizardWithAGun",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "SunkenlandModding-BepInExPack_Sunkenland",
+      "rootFolder": "BepInExPack_Sunkenland",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx_Wormtown-BepInExPack",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "0xFFF7-votv_shimloader",
+      "rootFolder": "",
+      "loader": "shimloader"
+    },
+    {
+      "packageId": "Thunderstore-unreal_shimloader",
+      "rootFolder": "",
+      "loader": "shimloader"
+    },
+    {
+      "packageId": "Thunderstore-lovely",
+      "rootFolder": "",
+      "loader": "lovely"
+    },
+    {
+      "packageId": "ReturnOfModding-ReturnOfModding",
+      "rootFolder": "ReturnOfModdingPack",
+      "loader": "return-of-modding"
+    },
+    {
+      "packageId": "Hell2Modding-Hell2Modding",
+      "rootFolder": "ReturnOfModdingPack",
+      "loader": "return-of-modding"
+    },
+    {
+      "packageId": "NotNet-GDWeave",
+      "rootFolder": "",
+      "loader": "gdweave"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_AmongUs",
+      "rootFolder": "BepInExPack_AmongUs",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Magicite",
+      "rootFolder": "BepInExPack_Magicite",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_HumanFallFlat",
+      "rootFolder": "BepInExPack_HumanFallFlat",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "LavaGang-MelonLoader",
+      "rootFolder": "",
+      "loader": "recursive-melonloader"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_PEAK",
+      "rootFolder": "BepInExPack_PEAK",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_LensIsland",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Ostranauts",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Patapon",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Silksong",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "silksong_modding-BepInExPack_Silksong",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "ResoniteModding-BepisLoader",
+      "rootFolder": "BepInExPack",
+      "loader": "bepisloader"
+    },
+    {
+      "packageId": "ResoniteModding-BepInExRenderer",
+      "rootFolder": "BepInExPack",
+      "loader": "bepisloader"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_SlashersKeep",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_BadNorth",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_LostSkies",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_FootballManager26",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Aeruta",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Necropolis",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "UMM-UMM",
+      "rootFolder": "UMM",
+      "loader": "umm"
+    },
+    {
+      "packageId": "ReDoIngMods-Rivet",
+      "rootFolder": "Rivet",
+      "loader": "rivet"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_CrabGame",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_InSilence",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "grime_modding-BepInExPack_Grime",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "GoblinCleanupModding-BepInExPack_GoblinCleanup",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "Romestead_Modding-BepInExPack_Romestead",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "ADOFAI_Modding-UMM_ADOFAI",
+      "rootFolder": "UMM",
+      "loader": "umm"
+    },
+    {
+      "packageId": "HomeSafetyHotline_Modding-MelonLoader_HomeSafetyHotline",
+      "rootFolder": "",
+      "loader": "recursive-melonloader"
+    },
+    {
+      "packageId": "SlipSkid_Modding-BepInExPack_SlipSkid",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "SHMCD_Modding-MelonLoader_SHMCD",
+      "rootFolder": "",
+      "loader": "recursive-melonloader"
+    },
+    {
+      "packageId": "SFTG_Modding-BepInExPack_SFTG",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "Nucleares_Modding-BepInExPack_Nucleares",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BOMBANANA_Modding-BepInExPack_BOMBANANA",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "CultOfPiN_Modding-BepInExPack_CultOfPiN",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "TheSexyBrutale_Modding-BepInExPack_TheSexyBrutale",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "HoldfastModding-BepInExPack_Holdfast",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "BepInEx-BepInExPack_Sineus",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    },
+    {
+      "packageId": "ApproximatelyUp_Modding-BepInExPack_ApproximatelyUp",
+      "rootFolder": "BepInExPack",
+      "loader": "bepinex"
+    }
+  ],
+  "Version": "1.124.2",
+  "Source": "https://github.com/thunderstore-io/ecosystem-schema",
+  "Games": [
+    {
+      "Name": "20 Minutes Till Dawn",
+      "Slug": "20-minutes-till-dawn",
+      "Loader": "bepinex",
+      "SteamId": "1966900",
+      "Folder": "20MinutesTillDawn",
+      "Executables": [
+        "MinutesTillDawn.exe"
+      ]
+    },
+    {
+      "Name": "9 Kings",
+      "Slug": "9-kings",
+      "Loader": "bepinex",
+      "SteamId": "2784470",
+      "Folder": "9Kings",
+      "Executables": [
+        "9Kings.exe"
+      ]
+    },
+    {
+      "Name": "Across the Obelisk",
+      "Slug": "across-the-obelisk",
+      "Loader": "bepinex",
+      "SteamId": "1385380",
+      "Folder": "AcrossTheObelisk",
+      "Executables": [
+        "AcrossTheObelisk.exe"
+      ]
+    },
+    {
+      "Name": "Against the Storm",
+      "Slug": "against-the-storm",
+      "Loader": "bepinex",
+      "SteamId": "1336490",
+      "Folder": "AgainstTheStorm",
+      "Executables": [
+        "Against the Storm.exe"
+      ]
+    },
+    {
+      "Name": "AGAINST",
+      "Slug": "against",
+      "Loader": "bepinex",
+      "SteamId": "1584840",
+      "Folder": "AGAINST",
+      "Executables": [
+        "AGAINST.exe"
+      ]
+    },
+    {
+      "Name": "Ale & Tale Tavern",
+      "Slug": "ale-and-tale-tavern",
+      "Loader": "bepinex",
+      "SteamId": "2683150",
+      "Folder": "AleAndTaleTavern",
+      "Executables": [
+        "Ale and Tale Tavern.exe"
+      ]
+    },
+    {
+      "Name": "Aloft",
+      "Slug": "aloft",
+      "Loader": "bepinex",
+      "SteamId": "1660080",
+      "Folder": "Aloft",
+      "Executables": [
+        "Aloft.exe"
+      ]
+    },
+    {
+      "Name": "Among Us",
+      "Slug": "among-us",
+      "Loader": "bepinex",
+      "SteamId": "945360",
+      "Folder": "AmongUs",
+      "Executables": [
+        "Among Us.exe"
+      ]
+    },
+    {
+      "Name": "Ancient Dungeon VR",
+      "Slug": "ancient-dungeon-vr",
+      "Loader": "none",
+      "SteamId": "1125240",
+      "Folder": "AncientDungeonVR",
+      "Executables": [
+        "Ancient_Dungeon.exe"
+      ]
+    },
+    {
+      "Name": "ANEURISM IV",
+      "Slug": "aneurism-iv",
+      "Loader": "bepinex",
+      "SteamId": "2773280",
+      "Folder": "ANEURISMIV",
+      "Executables": [
+        "ANEURISM IV.exe"
+      ]
+    },
+    {
+      "Name": "Another Crab's Treasure",
+      "Slug": "another-crabs-treasure",
+      "Loader": "bepinex",
+      "SteamId": "1887840",
+      "Folder": "AnotherCrabsTreasure",
+      "Executables": [
+        "AnotherCrabsTreasure.exe"
+      ]
+    },
+    {
+      "Name": "Arcus Chroma",
+      "Slug": "arcus-chroma",
+      "Loader": "bepinex",
+      "SteamId": "1447350",
+      "Folder": "ArcusChroma",
+      "Executables": [
+        "Arcus Chroma.exe"
+      ]
+    },
+    {
+      "Name": "ASKA",
+      "Slug": "aska",
+      "Loader": "bepinex",
+      "SteamId": "1898300",
+      "Folder": "ASKA",
+      "Executables": [
+        "Aska.exe"
+      ]
+    },
+    {
+      "Name": "ATLYSS",
+      "Slug": "atlyss",
+      "Loader": "bepinex",
+      "SteamId": "2768430",
+      "Folder": "ATLYSS",
+      "Executables": [
+        "ATLYSS.exe"
+      ]
+    },
+    {
+      "Name": "Atomicrops",
+      "Slug": "atomicrops",
+      "Loader": "bepinex",
+      "SteamId": "757320",
+      "Folder": "Atomicrops",
+      "Executables": [
+        "Atomicrops.exe"
+      ]
+    },
+    {
+      "Name": "Atrio: The Dark Wild",
+      "Slug": "atrio-the-dark-wild",
+      "Loader": "bepinex",
+      "SteamId": "1125390",
+      "Folder": "AtrioTheDarkWild",
+      "Executables": [
+        "Atrio.exe"
+      ]
+    },
+    {
+      "Name": "Back to the Dawn",
+      "Slug": "back-to-the-dawn",
+      "Loader": "bepinex",
+      "SteamId": "1735700",
+      "Folder": "BacktotheDawn",
+      "Executables": [
+        "Back To The Dawn.exe"
+      ]
+    },
+    {
+      "Name": "Backpack Hero",
+      "Slug": "backpack-hero",
+      "Loader": "melonloader",
+      "SteamId": "1970580",
+      "Folder": "BackpackHero",
+      "Executables": [
+        "Backpack Hero.exe",
+        "linux.x86_64"
+      ]
+    },
+    {
+      "Name": "Balatro",
+      "Slug": "balatro",
+      "Loader": "lovely",
+      "SteamId": "2379780",
+      "Folder": "Balatro",
+      "Executables": [
+        "Balatro.exe"
+      ]
+    },
+    {
+      "Name": "Below the Stone",
+      "Slug": "below-the-stone",
+      "Loader": "bepinex",
+      "SteamId": "1170230",
+      "Folder": "BelowTheStone",
+      "Executables": [
+        "Below The Stone.exe"
+      ]
+    },
+    {
+      "Name": "Betrayal Beach",
+      "Slug": "betrayal-beach",
+      "Loader": "bepinex",
+      "SteamId": "2643810",
+      "Folder": "BetrayalBeach",
+      "Executables": [
+        "Betrayal Beach.exe"
+      ]
+    },
+    {
+      "Name": "Bomb Rush Cyberfunk",
+      "Slug": "bomb-rush-cyberfunk",
+      "Loader": "bepinex",
+      "SteamId": "1353230",
+      "Folder": "BombRushCyberfunk",
+      "Executables": [
+        "Bomb Rush Cyberfunk.exe"
+      ]
+    },
+    {
+      "Name": "BONELAB",
+      "Slug": "bonelab",
+      "Loader": "melonloader",
+      "SteamId": "1592190",
+      "Folder": "BONELAB",
+      "Executables": [
+        "BONELAB_Steam_Windows64.exe",
+        "BONELAB_Oculus_Windows64.exe"
+      ]
+    },
+    {
+      "Name": "BONEWORKS",
+      "Slug": "boneworks",
+      "Loader": "melonloader",
+      "SteamId": "823500",
+      "Folder": "BONEWORKS",
+      "Executables": [
+        "BONEWORKS.exe",
+        "Boneworks_Oculus_Windows64.exe"
+      ]
+    },
+    {
+      "Name": "Bopl Battle",
+      "Slug": "bopl-battle",
+      "Loader": "bepinex",
+      "SteamId": "1686940",
+      "Folder": "BoplBattle",
+      "Executables": [
+        "BoplBattle.exe"
+      ]
+    },
+    {
+      "Name": "Brotato",
+      "Slug": "brotato",
+      "Loader": "godotml",
+      "SteamId": "1942280",
+      "Folder": "Brotato",
+      "Executables": [
+        "Brotato.exe"
+      ]
+    },
+    {
+      "Name": "Cats are Liquid - A Better Place",
+      "Slug": "cats-are-liquid",
+      "Loader": "bepinex",
+      "SteamId": "1188080",
+      "Folder": "CatsAreLiquidABP",
+      "Executables": [
+        "CaL-ABP-Windows.exe",
+        "CaL-ABP-Linux.x86_64",
+        "CaL-ABP-macOS.app"
+      ]
+    },
+    {
+      "Name": "Chrono Ark",
+      "Slug": "chrono-ark",
+      "Loader": "bepinex",
+      "SteamId": "1188930",
+      "Folder": "ChronoArk",
+      "Executables": [
+        "ChronoArk.exe"
+      ]
+    },
+    {
+      "Name": "Cities: Skylines II",
+      "Slug": "cities-skylines-ii",
+      "Loader": "bepinex",
+      "SteamId": "949230",
+      "Folder": "CitiesSkylines2",
+      "Executables": [
+        "Cities2.exe"
+      ]
+    },
+    {
+      "Name": "Content Warning",
+      "Slug": "content-warning",
+      "Loader": "bepinex",
+      "SteamId": "2881650",
+      "Folder": "ContentWarning",
+      "Executables": [
+        "Content Warning.exe"
+      ]
+    },
+    {
+      "Name": "Core Keeper",
+      "Slug": "core-keeper",
+      "Loader": "bepinex",
+      "SteamId": "1621690",
+      "Folder": "CoreKeeper",
+      "Executables": [
+        "CoreKeeper.exe"
+      ]
+    },
+    {
+      "Name": "Cult of the Lamb",
+      "Slug": "cult-of-the-lamb",
+      "Loader": "bepinex",
+      "SteamId": "1313140",
+      "Folder": "COTL",
+      "Executables": [
+        "Cult Of The Lamb.exe"
+      ]
+    },
+    {
+      "Name": "Dale & Dawson Stationery Supplies",
+      "Slug": "dale-dawson-stationery-supplies",
+      "Loader": "recursive-melonloader",
+      "SteamId": "2920570",
+      "Folder": "DaleAndDawson",
+      "Executables": [
+        "DDSS.exe"
+      ]
+    },
+    {
+      "Name": "Deep Rock Galactic: Survivor",
+      "Slug": "deep-rock-galactic-survivor",
+      "Loader": "bepinex",
+      "SteamId": "2321470",
+      "Folder": "DeepRockGalacticSurvivor",
+      "Executables": [
+        "DRG Survivor.exe"
+      ]
+    },
+    {
+      "Name": "DEPO : Death Epileptic Pixel Origins",
+      "Slug": "depo",
+      "Loader": "bepinex",
+      "SteamId": "1091320",
+      "Folder": "DEPO",
+      "Executables": [
+        "DEPO.exe"
+      ]
+    },
+    {
+      "Name": "Disco Elysium",
+      "Slug": "disco-elysium",
+      "Loader": "bepinex",
+      "SteamId": "632470",
+      "Folder": "DiscoElysium",
+      "Executables": [
+        "disco.exe"
+      ]
+    },
+    {
+      "Name": "Distance",
+      "Slug": "distance",
+      "Loader": "bepinex",
+      "SteamId": "233610",
+      "Folder": "Distance",
+      "Executables": [
+        "Distance.exe"
+      ]
+    },
+    {
+      "Name": "Dome Keeper",
+      "Slug": "dome-keeper",
+      "Loader": "godotml",
+      "SteamId": "1637320",
+      "Folder": "DomeKeeper",
+      "Executables": [
+        "domekeeper.exe"
+      ]
+    },
+    {
+      "Name": "Dredge",
+      "Slug": "dredge",
+      "Loader": "bepinex",
+      "SteamId": "1562430",
+      "Folder": "Dredge",
+      "Executables": [
+        "DREDGE.exe"
+      ]
+    },
+    {
+      "Name": "DUSK",
+      "Slug": "dusk",
+      "Loader": "bepinex",
+      "SteamId": "519860",
+      "Folder": "DUSK",
+      "Executables": [
+        "Dusk.exe"
+      ]
+    },
+    {
+      "Name": "Dyson Sphere Program",
+      "Slug": "dyson-sphere-program",
+      "Loader": "bepinex",
+      "SteamId": "1366540",
+      "Folder": "DysonSphereProgram",
+      "Executables": [
+        "DSPGAME.exe"
+      ]
+    },
+    {
+      "Name": "ENA: Dream BBQ",
+      "Slug": "ena-dream-bbq",
+      "Loader": "bepinex",
+      "SteamId": "2134320",
+      "Folder": "ENADreamBBQ",
+      "Executables": [
+        "ENA-4-DreamBBQ.exe"
+      ]
+    },
+    {
+      "Name": "Enter the Gungeon",
+      "Slug": "enter-the-gungeon",
+      "Loader": "bepinex",
+      "SteamId": "311690",
+      "Folder": "ETG",
+      "Executables": [
+        "EtG.exe"
+      ]
+    },
+    {
+      "Name": "Erenshor",
+      "Slug": "erenshor",
+      "Loader": "bepinex",
+      "SteamId": "2382520",
+      "Folder": "Erenshor",
+      "Executables": [
+        "Erenshor.exe"
+      ]
+    },
+    {
+      "Name": "For The King",
+      "Slug": "for-the-king",
+      "Loader": "bepinex",
+      "SteamId": "527230",
+      "Folder": "ForTheKing",
+      "Executables": [
+        "FTK.exe"
+      ]
+    },
+    {
+      "Name": "Gang Beasts",
+      "Slug": "gang-beasts",
+      "Loader": "recursive-melonloader",
+      "SteamId": "285900",
+      "Folder": "GangBeasts",
+      "Executables": [
+        "Gang Beasts.exe"
+      ]
+    },
+    {
+      "Name": "Garfield Kart - Furious Racing",
+      "Slug": "garfield-kart-furious-racing",
+      "Loader": "bepinex",
+      "SteamId": "1085510",
+      "Folder": "GarfieldKartFuriousRacing",
+      "Executables": [
+        "Garfield Kart Furious Racing.exe"
+      ]
+    },
+    {
+      "Name": "Gatekeeper",
+      "Slug": "gatekeeper",
+      "Loader": "bepinex",
+      "SteamId": "2106670",
+      "Folder": "Gatekeeper",
+      "Executables": [
+        "Gatekeeper.exe"
+      ]
+    },
+    {
+      "Name": "Gladio Mori",
+      "Slug": "gladio-mori",
+      "Loader": "bepinex",
+      "SteamId": "2689120",
+      "Folder": "GladioMori",
+      "Executables": [
+        "Gladio Mori.exe"
+      ]
+    },
+    {
+      "Name": "Gloomwood",
+      "Slug": "gloomwood",
+      "Loader": "bepinex",
+      "SteamId": "1150760",
+      "Folder": "Gloomwood",
+      "Executables": [
+        "Gloomwood.exe"
+      ]
+    },
+    {
+      "Name": "Goodbye Volcano High",
+      "Slug": "goodbye-volcano-high",
+      "Loader": "bepinex",
+      "SteamId": "1310330",
+      "Folder": "GoodbyeVolcanoHigh",
+      "Executables": [
+        "Goodbye Volcano High.exe"
+      ]
+    },
+    {
+      "Name": "GoreBox",
+      "Slug": "gorebox",
+      "Loader": "bepinex",
+      "SteamId": "2027330",
+      "Folder": "GoreBox",
+      "Executables": [
+        "GoreBox.exe"
+      ]
+    },
+    {
+      "Name": "Green Hell VR",
+      "Slug": "green-hell-vr",
+      "Loader": "bepinex",
+      "SteamId": "1782330",
+      "Folder": "GreenHellVR",
+      "Executables": [
+        "GHVR.exe"
+      ]
+    },
+    {
+      "Name": "GTFO",
+      "Slug": "gtfo",
+      "Loader": "bepinex",
+      "SteamId": "493520",
+      "Folder": "GTFO",
+      "Executables": [
+        "GTFO.exe"
+      ]
+    },
+    {
+      "Name": "Guilty as Sock!",
+      "Slug": "guilty-as-sock",
+      "Loader": "bepinex",
+      "SteamId": "3400930",
+      "Folder": "GuiltyasSock",
+      "Executables": [
+        "StandaloneWindows64.exe"
+      ]
+    },
+    {
+      "Name": "H3VR",
+      "Slug": "h3vr",
+      "Loader": "bepinex",
+      "SteamId": "450540",
+      "Folder": "H3VR",
+      "Executables": [
+        "h3vr.exe"
+      ]
+    },
+    {
+      "Name": "Hades 2",
+      "Slug": "hades-ii",
+      "Loader": "return-of-modding",
+      "SteamId": "1145350",
+      "Folder": "HadesII",
+      "Executables": [
+        "Hades2.exe"
+      ]
+    },
+    {
+      "Name": "Hard Bullet",
+      "Slug": "hard-bullet",
+      "Loader": "melonloader",
+      "SteamId": "1294760",
+      "Folder": "HardBullet",
+      "Executables": [
+        "Hard Bullet.exe"
+      ]
+    },
+    {
+      "Name": "Hard Time III",
+      "Slug": "hard-time-3",
+      "Loader": "bepinex",
+      "SteamId": "3009850",
+      "Folder": "HardTime3",
+      "Executables": [
+        "Hard Time III.exe"
+      ]
+    },
+    {
+      "Name": "House of the Dying Sun",
+      "Slug": "hotds",
+      "Loader": "bepinex",
+      "SteamId": "283160",
+      "Folder": "HOTDS",
+      "Executables": [
+        "dyingsun.exe"
+      ]
+    },
+    {
+      "Name": "Human Fall Flat",
+      "Slug": "human-fall-flat",
+      "Loader": "bepinex",
+      "SteamId": "477160",
+      "Folder": "HumanFallFlat",
+      "Executables": [
+        "Human.exe"
+      ]
+    },
+    {
+      "Name": "I Am Your Beast",
+      "Slug": "i-am-your-beast",
+      "Loader": "bepinex",
+      "SteamId": "1876590",
+      "Folder": "IAmYourBeast",
+      "Executables": [
+        "I Am Your Beast.exe"
+      ]
+    },
+    {
+      "Name": "Inscryption",
+      "Slug": "inscryption",
+      "Loader": "bepinex",
+      "SteamId": "1092790",
+      "Folder": "Inscryption",
+      "Executables": [
+        "Inscryption.exe"
+      ]
+    },
+    {
+      "Name": "Labyrinthine",
+      "Slug": "labyrinthine",
+      "Loader": "recursive-melonloader",
+      "SteamId": "1302240",
+      "Folder": "Labyrinthine",
+      "Executables": [
+        "Labyrinthine.exe"
+      ]
+    },
+    {
+      "Name": "Last Train Outta' Wormtown",
+      "Slug": "last-train-outta-wormtown",
+      "Loader": "bepinex",
+      "SteamId": "2318480",
+      "Folder": "LastTrainOuttaWormtown",
+      "Executables": [
+        "Last Train Out Of WormTown.exe"
+      ]
+    },
+    {
+      "Name": "Lethal Company",
+      "Slug": "lethal-company",
+      "Loader": "bepinex",
+      "SteamId": "1966720",
+      "Folder": "LethalCompany",
+      "Executables": [
+        "Lethal Company.exe"
+      ]
+    },
+    {
+      "Name": "Lethal League Blaze",
+      "Slug": "lethal-league-blaze",
+      "Loader": "bepinex",
+      "SteamId": "553310",
+      "Folder": "LethalLeagueBlaze",
+      "Executables": [
+        "LLBlaze.exe",
+        "LLBlaze.x86_64",
+        "LLBlaze.x86",
+        "LLBlaze.app"
+      ]
+    },
+    {
+      "Name": "Lost Skies",
+      "Slug": "lost-skies",
+      "Loader": "bepinex",
+      "SteamId": "1931180",
+      "Folder": "LostSkies",
+      "Executables": [
+        "LostSkies.exe"
+      ]
+    },
+    {
+      "Name": "Lycans",
+      "Slug": "lycans",
+      "Loader": "bepinex",
+      "SteamId": "2596100",
+      "Folder": "Lycans",
+      "Executables": [
+        "Lycans.exe"
+      ]
+    },
+    {
+      "Name": "Magicite",
+      "Slug": "magicite",
+      "Loader": "bepinex",
+      "SteamId": "268750",
+      "Folder": "Magicite",
+      "Executables": [
+        "Magicite.exe"
+      ]
+    },
+    {
+      "Name": "Magicraft",
+      "Slug": "magicraft",
+      "Loader": "bepinex",
+      "SteamId": "2103140",
+      "Folder": "Magicraft",
+      "Executables": [
+        "Magicraft.exe"
+      ]
+    },
+    {
+      "Name": "Mechanica",
+      "Slug": "mechanica",
+      "Loader": "bepinex",
+      "SteamId": "1226990",
+      "Folder": "Mechanica",
+      "Executables": [
+        "Mechanica.exe"
+      ]
+    },
+    {
+      "Name": "Meeple Station",
+      "Slug": "meeple-station",
+      "Loader": "bepinex",
+      "SteamId": "900010",
+      "Folder": "MeepleStation",
+      "Executables": [
+        "Meeple Station.exe"
+      ]
+    },
+    {
+      "Name": "MiSide",
+      "Slug": "miside",
+      "Loader": "bepinex",
+      "SteamId": "2527500",
+      "Folder": "MiSide",
+      "Executables": [
+        "MiSideFull.exe"
+      ]
+    },
+    {
+      "Name": "Monster Train 2",
+      "Slug": "monster-train-2",
+      "Loader": "bepinex",
+      "SteamId": "2742830",
+      "Folder": "MonsterTrain2",
+      "Executables": [
+        "MonsterTrain2.exe"
+      ]
+    },
+    {
+      "Name": "Muck",
+      "Slug": "muck",
+      "Loader": "bepinex",
+      "SteamId": "1625450",
+      "Folder": "Muck",
+      "Executables": [
+        "Muck.exe",
+        "Muck.x86_64"
+      ]
+    },
+    {
+      "Name": "My Dream Setup",
+      "Slug": "my-dream-setup",
+      "Loader": "bepinex",
+      "SteamId": "2200780",
+      "Folder": "MyDreamSetup",
+      "Executables": [
+        "MDS.exe"
+      ]
+    },
+    {
+      "Name": "Nickelodeon All‑Star Brawl",
+      "Slug": "nasb",
+      "Loader": "bepinex",
+      "SteamId": "1414850",
+      "Folder": "NASB",
+      "Executables": [
+        "Nickelodeon All-Star Brawl.exe"
+      ]
+    },
+    {
+      "Name": "Nearly Dead",
+      "Slug": "nearly-dead",
+      "Loader": "bepinex",
+      "SteamId": "1268900",
+      "Folder": "NearlyDead",
+      "Executables": [
+        "Nearly Dead.exe"
+      ]
+    },
+    {
+      "Name": "Nine Sols",
+      "Slug": "nine-sols",
+      "Loader": "bepinex",
+      "SteamId": "1809540",
+      "Folder": "NineSols",
+      "Executables": [
+        "NineSols.exe"
+      ]
+    },
+    {
+      "Name": "Titanfall 2",
+      "Slug": "northstar",
+      "Loader": "northstar",
+      "SteamId": "1237970",
+      "Folder": "Titanfall2",
+      "Executables": [
+        "NorthstarLauncher.exe",
+        "Titanfall2.exe"
+      ]
+    },
+    {
+      "Name": "Odd Remedy",
+      "Slug": "odd-remedy",
+      "Loader": "bepinex",
+      "SteamId": "1745680",
+      "Folder": "OddRemedy",
+      "Executables": [
+        "OddRemedy.exe"
+      ]
+    },
+    {
+      "Name": "Old Market Simulator",
+      "Slug": "old-market-simulator",
+      "Loader": "bepinex",
+      "SteamId": "2878420",
+      "Folder": "OldMarketSimulator",
+      "Executables": [
+        "Old Market Simulator.exe"
+      ]
+    },
+    {
+      "Name": "Outward",
+      "Slug": "outward",
+      "Loader": "bepinex",
+      "SteamId": "794260",
+      "Folder": "Outward",
+      "Executables": [
+        "Outward.exe"
+      ]
+    },
+    {
+      "Name": "Outward",
+      "Slug": "outward",
+      "Loader": "bepinex",
+      "SteamId": "1758860",
+      "Folder": "OutwardDe",
+      "Executables": [
+        "Outward Definitive Edition.exe"
+      ]
+    },
+    {
+      "Name": "Painting VR",
+      "Slug": "painting-vr",
+      "Loader": "recursive-melonloader",
+      "SteamId": "1905940",
+      "Folder": "PaintingVr",
+      "Executables": [
+        "PaintingVr.exe"
+      ]
+    },
+    {
+      "Name": "Palworld",
+      "Slug": "palworld",
+      "Loader": "shimloader",
+      "SteamId": "1623730",
+      "Folder": "Palworld",
+      "Executables": [
+        "Palworld.exe"
+      ]
+    },
+    {
+      "Name": "Panicore",
+      "Slug": "panicore",
+      "Loader": "shimloader",
+      "SteamId": "2695940",
+      "Folder": "Panicore",
+      "Executables": [
+        "Panicore.exe"
+      ]
+    },
+    {
+      "Name": "Paquerette Down the Bunburrows",
+      "Slug": "paquerette-down-the-bunburrows",
+      "Loader": "bepinex",
+      "SteamId": "1628610",
+      "Folder": "PaqueretteDownTheBunburrows",
+      "Executables": [
+        "Paquerette Down the Bunburrows.exe"
+      ]
+    },
+    {
+      "Name": "Patch Quest",
+      "Slug": "patch-quest",
+      "Loader": "melonloader",
+      "SteamId": "1347970",
+      "Folder": "PatchQuest",
+      "Executables": [
+        "Patch Quest.exe"
+      ]
+    },
+    {
+      "Name": "PEAK",
+      "Slug": "peak",
+      "Loader": "bepinex",
+      "SteamId": "3527290",
+      "Folder": "PEAK",
+      "Executables": [
+        "PEAK.exe"
+      ]
+    },
+    {
+      "Name": "Peaks of Yore",
+      "Slug": "peaks-of-yore",
+      "Loader": "bepinex",
+      "SteamId": "2236070",
+      "Folder": "PeaksOfYore",
+      "Executables": [
+        "Peaks of Yore.exe"
+      ]
+    },
+    {
+      "Name": "Peglin",
+      "Slug": "peglin",
+      "Loader": "bepinex",
+      "SteamId": "1296610",
+      "Folder": "Peglin",
+      "Executables": [
+        "Peglin.exe"
+      ]
+    },
+    {
+      "Name": "Plasma",
+      "Slug": "plasma",
+      "Loader": "bepinex",
+      "SteamId": "1409160",
+      "Folder": "Plasma",
+      "Executables": [
+        "Plasma.exe"
+      ]
+    },
+    {
+      "Name": "Potion Craft",
+      "Slug": "potion-craft",
+      "Loader": "bepinex",
+      "SteamId": "1210320",
+      "Folder": "PotionCraft",
+      "Executables": [
+        "Potion Craft.exe"
+      ]
+    },
+    {
+      "Name": "Pulsar: Lost Colony",
+      "Slug": "pulsar-lost-colony",
+      "Loader": "bepinex",
+      "SteamId": "252870",
+      "Folder": "PulsarLostColony",
+      "Executables": [
+        "PULSAR_LostColony.exe"
+      ]
+    },
+    {
+      "Name": "Ravenfield",
+      "Slug": "ravenfield",
+      "Loader": "bepinex",
+      "SteamId": "636480",
+      "Folder": "Ravenfield",
+      "Executables": [
+        "ravenfield.exe"
+      ]
+    },
+    {
+      "Name": "Receiver 2",
+      "Slug": "receiver-2",
+      "Loader": "bepinex",
+      "SteamId": "1129310",
+      "Folder": "Receiver2",
+      "Executables": [
+        "Receiver2.exe"
+      ]
+    },
+    {
+      "Name": "R.E.P.O.",
+      "Slug": "repo",
+      "Loader": "bepinex",
+      "SteamId": "3241660",
+      "Folder": "REPO",
+      "Executables": [
+        "REPO.exe"
+      ]
+    },
+    {
+      "Name": "Return of the Obra Dinn",
+      "Slug": "return-of-the-obra-dinn",
+      "Loader": "bepinex",
+      "SteamId": "653530",
+      "Folder": "ObraDinn",
+      "Executables": [
+        "ObraDinn.exe"
+      ]
+    },
+    {
+      "Name": "Risk of Rain Returns",
+      "Slug": "risk-of-rain-returns",
+      "Loader": "return-of-modding",
+      "SteamId": "1337520",
+      "Folder": "RiskofRainReturns",
+      "Executables": [
+        "Risk of Rain Returns.exe"
+      ]
+    },
+    {
+      "Name": "Risk of Rain 2",
+      "Slug": "riskofrain2",
+      "Loader": "bepinex",
+      "SteamId": "632360",
+      "Folder": "RiskOfRain2",
+      "Executables": [
+        "Risk of Rain 2.exe"
+      ]
+    },
+    {
+      "Name": "Rogue : Genesia",
+      "Slug": "rogue-genesia",
+      "Loader": "bepinex",
+      "SteamId": "2067920",
+      "Folder": "RogueGenesia",
+      "Executables": [
+        "Rogue Genesia.exe"
+      ]
+    },
+    {
+      "Name": "Rogue Tower",
+      "Slug": "rogue-tower",
+      "Loader": "bepinex",
+      "SteamId": "1843760",
+      "Folder": "RogueTower",
+      "Executables": [
+        "Rogue Tower.exe"
+      ]
+    },
+    {
+      "Name": "ROUNDS",
+      "Slug": "rounds",
+      "Loader": "bepinex",
+      "SteamId": "1557740",
+      "Folder": "ROUNDS",
+      "Executables": [
+        "Rounds.exe"
+      ]
+    },
+    {
+      "Name": "RUMBLE",
+      "Slug": "rumble",
+      "Loader": "melonloader",
+      "SteamId": "890550",
+      "Folder": "RUMBLE",
+      "Executables": [
+        "RUMBLE.exe"
+      ]
+    },
+    {
+      "Name": "Sailwind",
+      "Slug": "sailwind",
+      "Loader": "bepinex",
+      "SteamId": "1764530",
+      "Folder": "Sailwind",
+      "Executables": [
+        "Sailwind.exe"
+      ]
+    },
+    {
+      "Name": "Schedule I",
+      "Slug": "schedule-i",
+      "Loader": "recursive-melonloader",
+      "SteamId": "3164500",
+      "Folder": "ScheduleI",
+      "Executables": [
+        "Schedule I.exe"
+      ]
+    },
+    {
+      "Name": "Screw Drivers",
+      "Slug": "screw-drivers",
+      "Loader": "bepinex",
+      "SteamId": "1279510",
+      "Folder": "ScrewDrivers",
+      "Executables": [
+        "Screw Drivers.exe"
+      ]
+    },
+    {
+      "Name": "Shadows of Doubt",
+      "Slug": "shadows-of-doubt",
+      "Loader": "bepinex",
+      "SteamId": "986130",
+      "Folder": "ShadowsofDoubt",
+      "Executables": [
+        "Shadows of Doubt.exe"
+      ]
+    },
+    {
+      "Name": "Shadows Over Loathing",
+      "Slug": "shadows-over-loathing",
+      "Loader": "bepinex",
+      "SteamId": "1939160",
+      "Folder": "ShadowsOverLoathing",
+      "Executables": [
+        "Shadows Over Loathing.exe"
+      ]
+    },
+    {
+      "Name": "Shapez 2",
+      "Slug": "shapez-2",
+      "Loader": "bepinex",
+      "SteamId": "2162800",
+      "Folder": "Shapez2",
+      "Executables": [
+        "shapez 2.exe"
+      ]
+    },
+    {
+      "Name": "Skul: The Hero Slayer",
+      "Slug": "skul-the-hero-slayer",
+      "Loader": "bepinex",
+      "SteamId": "1147560",
+      "Folder": "SkulTheHeroSlayer",
+      "Executables": [
+        "Skul.exe"
+      ]
+    },
+    {
+      "Name": "Slipstream: Rogue Space",
+      "Slug": "slipstream-rogue-space",
+      "Loader": "bepinex",
+      "SteamId": "2765860",
+      "Folder": "SlipstreamRogueSpace",
+      "Executables": [
+        "Slipstream_Win.exe"
+      ]
+    },
+    {
+      "Name": "Songs of Conquest",
+      "Slug": "songs-of-conquest",
+      "Loader": "bepinex",
+      "SteamId": "867210",
+      "Folder": "SongsOfConquest",
+      "Executables": [
+        "SongsOfConquest.exe"
+      ]
+    },
+    {
+      "Name": "Sons Of The Forest",
+      "Slug": "sons-of-the-forest",
+      "Loader": "bepinex",
+      "SteamId": "1326470",
+      "Folder": "SonsOfTheForest",
+      "Executables": [
+        "SonsOfTheForest.exe"
+      ]
+    },
+    {
+      "Name": "Stacklands",
+      "Slug": "stacklands",
+      "Loader": "bepinex",
+      "SteamId": "1948280",
+      "Folder": "Stacklands",
+      "Executables": [
+        "Stacklands.exe"
+      ]
+    },
+    {
+      "Name": "Starsand",
+      "Slug": "starsand",
+      "Loader": "bepinex",
+      "SteamId": "1380220",
+      "Folder": "Starsand",
+      "Executables": [
+        "Starsand.exe"
+      ]
+    },
+    {
+      "Name": "STRAFTAT",
+      "Slug": "straftat",
+      "Loader": "bepinex",
+      "SteamId": "2386720",
+      "Folder": "STRAFTAT",
+      "Executables": [
+        "STRAFTAT.exe"
+      ]
+    },
+    {
+      "Name": "Subnautica: Below Zero",
+      "Slug": "subnautica-below-zero",
+      "Loader": "bepinex",
+      "SteamId": "848450",
+      "Folder": "SubnauticaBZ",
+      "Executables": [
+        "SubnauticaZero.exe"
+      ]
+    },
+    {
+      "Name": "Subnautica",
+      "Slug": "subnautica",
+      "Loader": "bepinex",
+      "SteamId": "264710",
+      "Folder": "Subnautica",
+      "Executables": [
+        "Subnautica.exe"
+      ]
+    },
+    {
+      "Name": "Subterranauts",
+      "Slug": "subterranauts",
+      "Loader": "bepinex",
+      "SteamId": "3075800",
+      "Folder": "Subterranauts",
+      "Executables": [
+        "Subterranauts.exe"
+      ]
+    },
+    {
+      "Name": "Subterror",
+      "Slug": "subterror",
+      "Loader": "bepinex",
+      "SteamId": "2846060",
+      "Folder": "Subterror",
+      "Executables": [
+        "Subterror.exe"
+      ]
+    },
+    {
+      "Name": "SULFUR",
+      "Slug": "sulfur",
+      "Loader": "bepinex",
+      "SteamId": "2124120",
+      "Folder": "SULFUR",
+      "Executables": [
+        "Sulfur.exe"
+      ]
+    },
+    {
+      "Name": "Sun Haven",
+      "Slug": "sun-haven",
+      "Loader": "bepinex",
+      "SteamId": "1432860",
+      "Folder": "SunHaven",
+      "Executables": [
+        "Sun Haven.exe"
+      ]
+    },
+    {
+      "Name": "Sunkenland",
+      "Slug": "sunkenland",
+      "Loader": "bepinex",
+      "SteamId": "2080690",
+      "Folder": "Sunkenland",
+      "Executables": [
+        "Sunkenland.exe"
+      ]
+    },
+    {
+      "Name": "Supermarket Together",
+      "Slug": "supermarket-together",
+      "Loader": "bepinex",
+      "SteamId": "2709570",
+      "Folder": "SupermarketTogether",
+      "Executables": [
+        "Supermarket Together.exe"
+      ]
+    },
+    {
+      "Name": "TaleSpire",
+      "Slug": "talespire",
+      "Loader": "bepinex",
+      "SteamId": "720620",
+      "Folder": "TaleSpire",
+      "Executables": [
+        "TaleSpire.exe"
+      ]
+    },
+    {
+      "Name": "Tank Team",
+      "Slug": "tank-team",
+      "Loader": "bepinex",
+      "SteamId": "2587450",
+      "Folder": "TankTeam",
+      "Executables": [
+        "Tank Team.exe"
+      ]
+    },
+    {
+      "Name": "TCG Card Shop Simulator",
+      "Slug": "tcg-card-shop-simulator",
+      "Loader": "bepinex",
+      "SteamId": "3070070",
+      "Folder": "TCGCardShopSimulator",
+      "Executables": [
+        "Card Shop Simulator.exe"
+      ]
+    },
+    {
+      "Name": "Techtonica",
+      "Slug": "techtonica",
+      "Loader": "bepinex",
+      "SteamId": "1457320",
+      "Folder": "Techtonica",
+      "Executables": [
+        "Techtonica.exe"
+      ]
+    },
+    {
+      "Name": "The Ouroboros King",
+      "Slug": "the-ouroboros-king",
+      "Loader": "bepinex",
+      "SteamId": "2096510",
+      "Folder": "TheOuroborosKing",
+      "Executables": [
+        "The Ouroboros King.exe"
+      ]
+    },
+    {
+      "Name": "The Planet Crafter",
+      "Slug": "the-planet-crafter",
+      "Loader": "bepinex",
+      "SteamId": "1284190",
+      "Folder": "ThePlanetCrafter",
+      "Executables": [
+        "Planet Crafter.exe"
+      ]
+    },
+    {
+      "Name": "Thronefall",
+      "Slug": "thronefall",
+      "Loader": "bepinex",
+      "SteamId": "2239150",
+      "Folder": "Thronefall",
+      "Executables": [
+        "Thronefall.exe"
+      ]
+    },
+    {
+      "Name": "Timberborn",
+      "Slug": "timberborn",
+      "Loader": "bepinex",
+      "SteamId": "1062090",
+      "Folder": "Timberborn",
+      "Executables": [
+        "Timberborn.exe"
+      ]
+    },
+    {
+      "Name": "TABS",
+      "Slug": "totally-accurate-battle-simulator",
+      "Loader": "bepinex",
+      "SteamId": "508440",
+      "Folder": "TABS",
+      "Executables": [
+        "TotallyAccurateBattleSimulator.exe"
+      ]
+    },
+    {
+      "Name": "Touhou: Lost Branch of Legend",
+      "Slug": "touhou-lost-branch-of-legend",
+      "Loader": "bepinex",
+      "SteamId": "1140150",
+      "Folder": "TouhouLostBranchOfLegend",
+      "Executables": [
+        "LBoL.exe"
+      ]
+    },
+    {
+      "Name": "Trombone Champ",
+      "Slug": "trombone-champ",
+      "Loader": "bepinex",
+      "SteamId": "1059990",
+      "Folder": "TromboneChamp",
+      "Executables": [
+        "TromboneChamp.exe"
+      ]
+    },
+    {
+      "Name": "Ultimate Chicken Horse",
+      "Slug": "ultimate-chicken-horse",
+      "Loader": "bepinex",
+      "SteamId": "386940",
+      "Folder": "UltimateChickenHorse",
+      "Executables": [
+        "UltimateChickenHorse.exe"
+      ]
+    },
+    {
+      "Name": "ULTRAKILL",
+      "Slug": "ultrakill",
+      "Loader": "bepinex",
+      "SteamId": "1229490",
+      "Folder": "ULTRAKILL",
+      "Executables": [
+        "ULTRAKILL.exe"
+      ]
+    },
+    {
+      "Name": "V Rising",
+      "Slug": "v-rising",
+      "Loader": "bepinex",
+      "SteamId": "1604030",
+      "Folder": "VRising",
+      "Executables": [
+        "VRising.exe"
+      ]
+    },
+    {
+      "Name": "Valheim",
+      "Slug": "valheim",
+      "Loader": "bepinex",
+      "SteamId": "892970",
+      "Folder": "Valheim",
+      "Executables": [
+        "valheim.exe",
+        "valheim.x86_64"
+      ]
+    },
+    {
+      "Name": "Vertigo 2",
+      "Slug": "vertigo-2",
+      "Loader": "bepinex",
+      "SteamId": "843390",
+      "Folder": "Vertigo2",
+      "Executables": [
+        "vertigo2.exe"
+      ]
+    },
+    {
+      "Name": "Void Crew",
+      "Slug": "void-crew",
+      "Loader": "bepinex",
+      "SteamId": "1063420",
+      "Folder": "VoidCrew",
+      "Executables": [
+        "Void Crew.exe"
+      ]
+    },
+    {
+      "Name": "VTOL VR",
+      "Slug": "vtol-vr",
+      "Loader": "bepinex",
+      "SteamId": "667970",
+      "Folder": "VTOL_VR",
+      "Executables": [
+        "VTOLVR.exe"
+      ]
+    },
+    {
+      "Name": "We Love Katamari REROLL+ Royal Reverie",
+      "Slug": "we-love-katamari-reroll-royal-reverie",
+      "Loader": "bepinex",
+      "SteamId": "1730700",
+      "Folder": "WeLoveKatamariRerollRoyalReverie",
+      "Executables": [
+        "WLKRR.exe"
+      ]
+    },
+    {
+      "Name": "WEBFISHING",
+      "Slug": "webfishing",
+      "Loader": "gdweave",
+      "SteamId": "3146520",
+      "Folder": "WEBFISHING",
+      "Executables": [
+        "webfishing.exe"
+      ]
+    },
+    {
+      "Name": "West of Loathing",
+      "Slug": "west-of-loathing",
+      "Loader": "bepinex",
+      "SteamId": "597220",
+      "Folder": "WestofLoathing",
+      "Executables": [
+        "West of Loathing.exe"
+      ]
+    },
+    {
+      "Name": "White Knuckle",
+      "Slug": "white-knuckle",
+      "Loader": "bepinex",
+      "SteamId": "3195790",
+      "Folder": "WhiteKnuckle",
+      "Executables": [
+        "White Knuckle.exe"
+      ]
+    },
+    {
+      "Name": "Wildfrost",
+      "Slug": "wildfrost",
+      "Loader": "bepinex",
+      "SteamId": "1811990",
+      "Folder": "Wildfrost",
+      "Executables": [
+        "Wildfrost.exe"
+      ]
+    },
+    {
+      "Name": "Wizard of Legend",
+      "Slug": "wizard-of-legend",
+      "Loader": "bepinex",
+      "SteamId": "445980",
+      "Folder": "WizardOfLegend",
+      "Executables": [
+        "WizardOfLegend.exe"
+      ]
+    },
+    {
+      "Name": "Wizard with a Gun",
+      "Slug": "wizard-with-a-gun",
+      "Loader": "bepinex",
+      "SteamId": "1150530",
+      "Folder": "WizardWithAGun",
+      "Executables": [
+        "wizardwithagun.exe"
+      ]
+    },
+    {
+      "Name": "Wrestling Empire",
+      "Slug": "wrestling-empire",
+      "Loader": "bepinex",
+      "SteamId": "1620340",
+      "Folder": "WrestlingEmpire",
+      "Executables": [
+        "Wrestling Empire.exe"
+      ]
+    },
+    {
+      "Name": "Zort",
+      "Slug": "zort",
+      "Loader": "bepinex",
+      "SteamId": "3121110",
+      "Folder": "Zort",
+      "Executables": [
+        "Zort.exe"
+      ]
+    },
+    {
+      "Name": "A Dance of Fire and Ice",
+      "Slug": "a-dance-of-fire-and-ice",
+      "Loader": "umm",
+      "SteamId": "977950",
+      "Folder": "AdanceOfFireAndIce",
+      "Executables": [
+        "A Dance of Fire and Ice.exe"
+      ]
+    },
+    {
+      "Name": "A Gentlemen's Dispute",
+      "Slug": "a-gentlemens-dispute",
+      "Loader": "bepinex",
+      "SteamId": "2820700",
+      "Folder": "AgentlemensDispute",
+      "Executables": [
+        "A Gentlemen's Dispute.exe",
+        "AGentlemensDispute.app"
+      ]
+    },
+    {
+      "Name": "Aeruta",
+      "Slug": "aeruta",
+      "Loader": "bepinex",
+      "SteamId": "2286780",
+      "Folder": "Aeruta",
+      "Executables": [
+        "Aeruta.exe"
+      ]
+    },
+    {
+      "Name": "An Unfinished Game",
+      "Slug": "an-unfinished-game",
+      "Loader": "recursive-melonloader",
+      "SteamId": "2919990",
+      "Folder": "AnUnfinishedGame",
+      "Executables": [
+        "UnfinishedGame.exe"
+      ]
+    },
+    {
+      "Name": "Angry Birds VR: Isle of Pigs",
+      "Slug": "angry-birds-vr-isle-of-pigs",
+      "Loader": "recursive-melonloader",
+      "SteamId": "1001140",
+      "Folder": "AngryBirdsVrIsleOfPigs",
+      "Executables": [
+        "angry-birds-vr-isle-of-pigs.exe"
+      ]
+    },
+    {
+      "Name": "Astroneer",
+      "Slug": "astroneer",
+      "Loader": "shimloader",
+      "SteamId": "361420",
+      "Folder": "Astroneer",
+      "Executables": [
+        "Astro.exe"
+      ]
+    },
+    {
+      "Name": "Baby Steps",
+      "Slug": "baby-steps",
+      "Loader": "recursive-melonloader",
+      "SteamId": "1281040",
+      "Folder": "BabySteps",
+      "Executables": [
+        "BabySteps.exe"
+      ]
+    },
+    {
+      "Name": "Bad North",
+      "Slug": "bad-north",
+      "Loader": "bepinex",
+      "SteamId": "688420",
+      "Folder": "BadNorth",
+      "Executables": [
+        "BadNorth.exe"
+      ]
+    },
+    {
+      "Name": "Beetleball",
+      "Slug": "beetleball",
+      "Loader": "recursive-melonloader",
+      "SteamId": "4231580",
+      "Folder": "Beetleball",
+      "Executables": [
+        "Beetleball.exe"
+      ]
+    },
+    {
+      "Name": "Bendy and the Ink Machine",
+      "Slug": "bendy-and-the-ink-machine",
+      "Loader": "bepinex",
+      "SteamId": "622650",
+      "Folder": "BendyAndTheInkMachine",
+      "Executables": [
+        "Bendy and the Ink Machine.exe"
+      ]
+    },
+    {
+      "Name": "BETON BRUTAL",
+      "Slug": "beton-brutal",
+      "Loader": "recursive-melonloader",
+      "SteamId": "2330500",
+      "Folder": "BetonBrutal",
+      "Executables": [
+        "BetonBrutal.exe"
+      ]
+    },
+    {
+      "Name": "Big Ambitions",
+      "Slug": "big-ambitions",
+      "Loader": "recursive-melonloader",
+      "SteamId": "1331550",
+      "Folder": "BigAmbitions",
+      "Executables": [
+        "Big Ambitions.exe",
+        "Big Ambitions.app"
+      ]
+    },
+    {
+      "Name": "Big Walk",
+      "Slug": "big-walk",
+      "Loader": "bepinex",
+      "SteamId": "1478500",
+      "Folder": "BigWalk",
+      "Executables": [
+        "Big Walk.exe",
+        "Big Walk.app"
+      ]
+    },
+    {
+      "Name": "Block Story",
+      "Slug": "block-story",
+      "Loader": "bepinex",
+      "SteamId": "270110",
+      "Folder": "BlockStory",
+      "Executables": [
+        "Block Story.exe"
+      ]
+    },
+    {
+      "Name": "Bloons TD 6",
+      "Slug": "bloons-td-6",
+      "Loader": "recursive-melonloader",
+      "SteamId": "960090",
+      "Folder": "BloonsTD6",
+      "Executables": [
+        "BloonsTD6.exe"
+      ]
+    },
+    {
+      "Name": "Blue Prince",
+      "Slug": "blue-prince",
+      "Loader": "bepinex",
+      "SteamId": "1569580",
+      "Folder": "BluePrince",
+      "Executables": [
+        "BLUE PRINCE.exe",
+        "BLUE PRINCE.app"
+      ]
+    },
+    {
+      "Name": "Book of Travels",
+      "Slug": "book-of-travels",
+      "Loader": "bepinex",
+      "SteamId": "1152340",
+      "Folder": "BookOfTravels",
+      "Executables": [
+        "BookOfTravels.exe",
+        "BookOfTravels.app",
+        "BookOfTravels.x86_64"
+      ]
+    },
+    {
+      "Name": "Broforce",
+      "Slug": "broforce",
+      "Loader": "umm",
+      "SteamId": "274190",
+      "Folder": "Broforce",
+      "Executables": [
+        "Broforce_beta.exe"
+      ]
+    },
+    {
+      "Name": "BRUTALISTICK VR",
+      "Slug": "brutalistick-vr",
+      "Loader": "recursive-melonloader",
+      "SteamId": "2669380",
+      "Folder": "BrutalistickVr",
+      "Executables": [
+        "BrutalistickVR.exe"
+      ]
+    },
+    {
+      "Name": "Burglin' Gnomes",
+      "Slug": "burglin-gnomes",
+      "Loader": "bepinex",
+      "SteamId": "3844970",
+      "Folder": "BurglinGnomes",
+      "Executables": [
+        "Gnomium.exe"
+      ]
+    },
+    {
+      "Name": "Cairn",
+      "Slug": "cairn",
+      "Loader": "recursive-melonloader",
+      "SteamId": "1588550",
+      "Folder": "Cairn",
+      "Executables": [
+        "Cairn.exe"
+      ]
+    },
+    {
+      "Name": "Carrier Deck",
+      "Slug": "carrier-deck",
+      "Loader": "bepinex",
+      "SteamId": "580720",
+      "Folder": "CarrierDeck",
+      "Executables": [
+        "CD.exe"
+      ]
+    },
+    {
+      "Name": "Cave Crawlers",
+      "Slug": "cave-crawlers",
+      "Loader": "bepinex",
+      "SteamId": "2143030",
+      "Folder": "CaveCrawlers",
+      "Executables": [
+        "Cave Crawlers.exe"
+      ]
+    },
+    {
+      "Name": "Chill with You : Lo-Fi Story",
+      "Slug": "chill-with-you",
+      "Loader": "bepinex",
+      "SteamId": "3548580",
+      "Folder": "ChillWithYouLoFiStory",
+      "Executables": [
+        "Chill With You.exe"
+      ]
+    },
+    {
+      "Name": "CloverPit",
+      "Slug": "clover-pit",
+      "Loader": "bepinex",
+      "SteamId": "3314790",
+      "Folder": "CloverPit",
+      "Executables": [
+        "CloverPit.exe"
+      ]
+    },
+    {
+      "Name": "Crab Game",
+      "Slug": "crab-game",
+      "Loader": "bepinex",
+      "SteamId": "1782210",
+      "Folder": "CrabGame",
+      "Executables": [
+        "Crab Game.exe",
+        "Crab Game.x86_64"
+      ]
+    },
+    {
+      "Name": "Crashout Crew",
+      "Slug": "crashout-crew",
+      "Loader": "bepinex",
+      "SteamId": "3583210",
+      "Folder": "CrashoutCrew",
+      "Executables": [
+        "CrashoutCrew.exe"
+      ]
+    },
+    {
+      "Name": "Crawlspace 2",
+      "Slug": "crawlspace-2",
+      "Loader": "bepinex",
+      "SteamId": "2258670",
+      "Folder": "Crawlspace2",
+      "Executables": [
+        "VRFighter.exe"
+      ]
+    },
+    {
+      "Name": "Crawlspace",
+      "Slug": "crawlspace",
+      "Loader": "bepinex",
+      "SteamId": "1787860",
+      "Folder": "Crawlspace",
+      "Executables": [
+        "Crawlspace.exe"
+      ]
+    },
+    {
+      "Name": "Crime Simulator",
+      "Slug": "crime-simulator",
+      "Loader": "bepinex",
+      "SteamId": "2737070",
+      "Folder": "CrimeSimulator",
+      "Executables": [
+        "Crime Simulator.exe"
+      ]
+    },
+    {
+      "Name": "CRYO",
+      "Slug": "cryo",
+      "Loader": "recursive-melonloader",
+      "SteamId": "2564910",
+      "Folder": "Cryo",
+      "Executables": [
+        "Cryo.exe"
+      ]
+    },
+    {
+      "Name": "Cursed Words",
+      "Slug": "cursed-words",
+      "Loader": "recursive-melonloader",
+      "SteamId": "3856460",
+      "Folder": "CursedWords",
+      "Executables": [
+        "Cursed Words.exe"
+      ]
+    },
+    {
+      "Name": "Darkwater",
+      "Slug": "darkwater",
+      "Loader": "bepinex",
+      "SteamId": "619540",
+      "Folder": "Darkwater",
+      "Executables": [
+        "Darkwater.exe"
+      ]
+    },
+    {
+      "Name": "Deadly Delivery",
+      "Slug": "deadly-delivery",
+      "Loader": "bepinex",
+      "SteamId": "3743090",
+      "Folder": "DeadlyDelivery",
+      "Executables": [
+        "Deadly Delivery.exe"
+      ]
+    },
+    {
+      "Name": "Ducks Can Drive",
+      "Slug": "ducks-can-drive",
+      "Loader": "recursive-melonloader",
+      "SteamId": "2472840",
+      "Folder": "DucksCanDrive",
+      "Executables": [
+        "Ducks Can Drive.exe",
+        "DuckDrive.x86_64",
+        "Ducks Can Drive.app"
+      ]
+    },
+    {
+      "Name": "Easy Delivery Co",
+      "Slug": "easy-delivery-co",
+      "Loader": "bepinex",
+      "SteamId": "3293010",
+      "Folder": "EasyDeliveryCo",
+      "Executables": [
+        "EasyDeliveryCo.exe"
+      ]
+    },
+    {
+      "Name": "Everything is Crab",
+      "Slug": "everything-is-crab",
+      "Loader": "bepinex",
+      "SteamId": "3526710",
+      "Folder": "EverythingIsCrab",
+      "Executables": [
+        "Everything is Crab.exe"
+      ]
+    },
+    {
+      "Name": "Factory Planner",
+      "Slug": "factory-planner",
+      "Loader": "bepinex",
+      "SteamId": "3679930",
+      "Folder": "FactoryPlanner",
+      "Executables": [
+        "Factory Planner.exe"
+      ]
+    },
+    {
+      "Name": "Five Nights at Freddy's: Into the Pit",
+      "Slug": "five-nights-at-freddys-into-the-pit",
+      "Loader": "bepinex",
+      "SteamId": "2638370",
+      "Folder": "FiveNightsAtFreddysIntoThePit",
+      "Executables": [
+        "Five Nights at Freddy's Into the Pit.exe",
+        "FNaFIntoThePit.exe"
+      ]
+    },
+    {
+      "Name": "Football Manager 26",
+      "Slug": "football-manager-26",
+      "Loader": "bepinex",
+      "SteamId": "3551340",
+      "Folder": "FootballManager26",
+      "Executables": [
+        "fm.exe"
+      ]
+    },
+    {
+      "Name": "Forsaken Frontiers",
+      "Slug": "forsaken-frontiers",
+      "Loader": "recursive-melonloader",
+      "SteamId": "2810780",
+      "Folder": "ForsakenFrontiers",
+      "Executables": [
+        "Forsaken Frontiers.exe"
+      ]
+    },
+    {
+      "Name": "Gamble With Your Friends",
+      "Slug": "gamble-with-your-friends",
+      "Loader": "bepinex",
+      "SteamId": "3892270",
+      "Folder": "GambleWithYourFriends",
+      "Executables": [
+        "Gamble With Your Friends.exe"
+      ]
+    },
+    {
+      "Name": "Getting Over It with Bennett Foddy",
+      "Slug": "getting-over-it",
+      "Loader": "bepinex",
+      "SteamId": "240720",
+      "Folder": "GettingOverItWithBennettFoddy",
+      "Executables": [
+        "GettingOverIt.exe",
+        "GettingOverIt.app",
+        "GettingOverIt.x86_64"
+      ]
+    },
+    {
+      "Name": "Goblin Buster: Incremental Tower Defense",
+      "Slug": "goblin-buster",
+      "Loader": "bepinex",
+      "SteamId": "2482250",
+      "Folder": "GoblinBusterIncrementalTowerDefense",
+      "Executables": [
+        "Goblin Buster.exe"
+      ]
+    },
+    {
+      "Name": "Goblin Cleanup",
+      "Slug": "goblin-cleanup",
+      "Loader": "bepinex",
+      "SteamId": "2748340",
+      "Folder": "GoblinCleanup",
+      "Executables": [
+        "Goblin Cleanup.exe"
+      ]
+    },
+    {
+      "Name": "Gorilla Tag",
+      "Slug": "gorilla-tag",
+      "Loader": "recursive-melonloader",
+      "SteamId": "1533390",
+      "Folder": "GorillaTag",
+      "Executables": [
+        "Gorilla Tag.exe"
+      ]
+    },
+    {
+      "Name": "Grain Rot",
+      "Slug": "grain-rot",
+      "Loader": "shimloader",
+      "SteamId": "4450620",
+      "Folder": "GrainRot",
+      "Executables": [
+        "Helden.exe"
+      ]
+    },
+    {
+      "Name": "Granny: Chapter Two",
+      "Slug": "granny-chapter-two",
+      "Loader": "bepinex",
+      "SteamId": "1205040",
+      "Folder": "GrannyChapterTwo",
+      "Executables": [
+        "Granny Chapter Two.exe"
+      ]
+    },
+    {
+      "Name": "Grey Hack",
+      "Slug": "grey-hack",
+      "Loader": "bepinex",
+      "SteamId": "605230",
+      "Folder": "GreyHack",
+      "Executables": [
+        "Grey Hack.exe"
+      ]
+    },
+    {
+      "Name": "GRIME",
+      "Slug": "grime",
+      "Loader": "bepinex",
+      "SteamId": "1123050",
+      "Folder": "Grime",
+      "Executables": [
+        "GRIME.exe",
+        "GRIME.app"
+      ]
+    },
+    {
+      "Name": "Hollow Knight: Silksong",
+      "Slug": "hollow-knight-silksong",
+      "Loader": "bepinex",
+      "SteamId": "1030300",
+      "Folder": "HollowKnightSilksong",
+      "Executables": [
+        "Hollow Knight Silksong.exe",
+        "Hollow Knight Silksong.app",
+        "Hollow Knight Silksong"
+      ]
+    },
+    {
+      "Name": "Home Safety Hotline",
+      "Slug": "home-safety-hotline",
+      "Loader": "recursive-melonloader",
+      "SteamId": "2357910",
+      "Folder": "HomeSafetyHotline",
+      "Executables": [
+        "Home Safety Hotline.exe"
+      ]
+    },
+    {
+      "Name": "Hot Lava",
+      "Slug": "hot-lava",
+      "Loader": "bepinex",
+      "SteamId": "382560",
+      "Folder": "HotLava",
+      "Executables": [
+        "hotlava.exe"
+      ]
+    },
+    {
+      "Name": "House of Legacy",
+      "Slug": "house-of-legacy",
+      "Loader": "bepinex",
+      "SteamId": "2503770",
+      "Folder": "HouseOfLegacy",
+      "Executables": [
+        "House of Legacy.exe"
+      ]
+    },
+    {
+      "Name": "Inside The Backrooms",
+      "Slug": "inside-the-backrooms",
+      "Loader": "recursive-melonloader",
+      "SteamId": "1987080",
+      "Folder": "InsideTheBackrooms",
+      "Executables": [
+        "Inside the Backrooms.exe"
+      ]
+    },
+    {
+      "Name": "IRON NEST: Heavy Turret Simulator",
+      "Slug": "iron-nest",
+      "Loader": "recursive-melonloader",
+      "SteamId": "2950790",
+      "Folder": "IronNestHeavyTurretSimulator",
+      "Executables": [
+        "Iron Nest Heavy Turret Simulator.exe"
+      ]
+    },
+    {
+      "Name": "Island Market Simulator",
+      "Slug": "island-market-simulator",
+      "Loader": "bepinex",
+      "SteamId": "3391510",
+      "Folder": "IslandMarketSimulator",
+      "Executables": [
+        "Island Market Simulator.exe",
+        "IslandMarketSimulator.x86_64"
+      ]
+    },
+    {
+      "Name": "Spooky's Jump Scare Mansion: HD Renovation",
+      "Slug": "jump-scare-mansion",
+      "Loader": "bepinex",
+      "SteamId": "577690",
+      "Folder": "SpookysJumpScareMansionHdRenovation",
+      "Executables": [
+        "SpookyUnity.exe",
+        "SpookyUnity.app"
+      ]
+    },
+    {
+      "Name": "Jump Space",
+      "Slug": "jump-space",
+      "Loader": "recursive-melonloader",
+      "SteamId": "1757300",
+      "Folder": "JumpSpace",
+      "Executables": [
+        "Jump Space.exe"
+      ]
+    },
+    {
+      "Name": "KeyWe",
+      "Slug": "keywe",
+      "Loader": "bepinex",
+      "SteamId": "1242980",
+      "Folder": "KeyWe",
+      "Executables": [
+        "KeyWe.exe"
+      ]
+    },
+    {
+      "Name": "Len's Island",
+      "Slug": "lens-island",
+      "Loader": "bepinex",
+      "SteamId": "1335830",
+      "Folder": "LensIsland",
+      "Executables": [
+        "Len's Island.exe"
+      ]
+    },
+    {
+      "Name": "Logic World",
+      "Slug": "logic-world",
+      "Loader": "bepinex",
+      "SteamId": "1054340",
+      "Folder": "LogicWorld",
+      "Executables": [
+        "Logic_World.exe"
+      ]
+    },
+    {
+      "Name": "Lootun",
+      "Slug": "lootun",
+      "Loader": "bepinex",
+      "SteamId": "1960270",
+      "Folder": "Lootun",
+      "Executables": [
+        "Lootun.exe"
+      ]
+    },
+    {
+      "Name": "Lost Skies Island Creator",
+      "Slug": "lost-skies-ic",
+      "Loader": "bepinex",
+      "SteamId": "2102670",
+      "Folder": "LostSkiesIslandCreator",
+      "Executables": [
+        "IslandCreator.exe"
+      ]
+    },
+    {
+      "Name": "Lucky Shot",
+      "Slug": "lucky-shot",
+      "Loader": "bepinex",
+      "SteamId": "4092940",
+      "Folder": "LuckyShot",
+      "Executables": [
+        "LuckyShot.exe",
+        "LuckyShot.app"
+      ]
+    },
+    {
+      "Name": "LumenTale: Memories of Trey",
+      "Slug": "lumentale-memories-of-trey",
+      "Loader": "bepinex",
+      "SteamId": "2261430",
+      "Folder": "LumenTaleMemoriesOfTrey",
+      "Executables": [
+        "LumenTale Memories of Trey.exe"
+      ]
+    },
+    {
+      "Name": "Mage Arena",
+      "Slug": "mage-arena",
+      "Loader": "bepinex",
+      "SteamId": "3716600",
+      "Folder": "MageArena",
+      "Executables": [
+        "MageArena.exe"
+      ]
+    },
+    {
+      "Name": "Maltese's Fluffy Onsen",
+      "Slug": "malteses-fluffy-onsen",
+      "Loader": "bepinex",
+      "SteamId": "3404470",
+      "Folder": "MaltesesFluffyOnsen",
+      "Executables": [
+        "AnimalSpa.exe"
+      ]
+    },
+    {
+      "Name": "MECCHA CHAMELEON",
+      "Slug": "meccha-chameleon",
+      "Loader": "shimloader",
+      "SteamId": "4704690",
+      "Folder": "MecchaChameleon",
+      "Executables": [
+        "PenguinHotel.exe"
+      ]
+    },
+    {
+      "Name": "Megabonk",
+      "Slug": "megabonk",
+      "Loader": "bepinex",
+      "SteamId": "3405340",
+      "Folder": "Megabonk",
+      "Executables": [
+        "Megabonk.exe",
+        "Megabonk.x86_64"
+      ]
+    },
+    {
+      "Name": "Mimesis",
+      "Slug": "mimesis",
+      "Loader": "recursive-melonloader",
+      "SteamId": "2827200",
+      "Folder": "Mimesis",
+      "Executables": [
+        "MIMESIS.exe"
+      ]
+    },
+    {
+      "Name": "MineMogul",
+      "Slug": "mine-mogul",
+      "Loader": "bepinex",
+      "SteamId": "3846120",
+      "Folder": "MineMogul",
+      "Executables": [
+        "MineMogul.exe"
+      ]
+    },
+    {
+      "Name": "MINOS",
+      "Slug": "minos",
+      "Loader": "shimloader",
+      "SteamId": "3181650",
+      "Folder": "Minos",
+      "Executables": [
+        "Minos.exe"
+      ]
+    },
+    {
+      "Name": "Modulus: Factory Automation",
+      "Slug": "modulus-factory-automation",
+      "Loader": "bepinex",
+      "SteamId": "2779120",
+      "Folder": "ModulusFactoryAutomation",
+      "Executables": [
+        "Modulus.exe"
+      ]
+    },
+    {
+      "Name": "Mycopunk",
+      "Slug": "mycopunk",
+      "Loader": "bepinex",
+      "SteamId": "3247750",
+      "Folder": "Mycopunk",
+      "Executables": [
+        "Mycopunk.exe"
+      ]
+    },
+    {
+      "Name": "Necropolis",
+      "Slug": "necropolis",
+      "Loader": "bepinex",
+      "SteamId": "384490",
+      "Folder": "Necropolis",
+      "Executables": [
+        "Necropolis.exe"
+      ]
+    },
+    {
+      "Name": "Nuclear Option",
+      "Slug": "nuclear-option",
+      "Loader": "bepinex",
+      "SteamId": "2168680",
+      "Folder": "NuclearOption",
+      "Executables": [
+        "NuclearOption.exe"
+      ]
+    },
+    {
+      "Name": "On-Together: Virtual Co-Working",
+      "Slug": "on-together",
+      "Loader": "bepinex",
+      "SteamId": "3707400",
+      "Folder": "OnTogetherVirtualCoWorking",
+      "Executables": [
+        "On-Together.exe",
+        "OnTogether.exe"
+      ]
+    },
+    {
+      "Name": "Ostranauts",
+      "Slug": "ostranauts",
+      "Loader": "bepinex",
+      "SteamId": "1022980",
+      "Folder": "Ostranauts",
+      "Executables": [
+        "Ostranauts.exe"
+      ]
+    },
+    {
+      "Name": "PAC-MAN WORLD Re-PAC",
+      "Slug": "pac-man-world-re-pac",
+      "Loader": "bepinex",
+      "SteamId": "1859470",
+      "Folder": "PacManWorldRePac",
+      "Executables": [
+        "PAC-MAN WORLD Re-PAC.exe"
+      ]
+    },
+    {
+      "Name": "Pair A Dice",
+      "Slug": "pair-a-dice",
+      "Loader": "godotml",
+      "SteamId": "2842150",
+      "Folder": "PairADice",
+      "Executables": [
+        "PairADice.exe"
+      ]
+    },
+    {
+      "Name": "Paper Animal Adventure",
+      "Slug": "paper-animal-adventure",
+      "Loader": "bepinex",
+      "SteamId": "1982120",
+      "Folder": "PaperAnimalAdventure",
+      "Executables": [
+        "Paper Animal Adventure.exe"
+      ]
+    },
+    {
+      "Name": "Paralives",
+      "Slug": "paralives",
+      "Loader": "bepinex",
+      "SteamId": "1118520",
+      "Folder": "Paralives",
+      "Executables": [
+        "Paralives.exe",
+        "Paralives.app"
+      ]
+    },
+    {
+      "Name": "PATAPON 1+2 REPLAY",
+      "Slug": "patapon-1-2-replay",
+      "Loader": "bepinex",
+      "SteamId": "2383200",
+      "Folder": "Patapon12Replay",
+      "Executables": [
+        "PATAPON12_REPLAY.exe"
+      ]
+    },
+    {
+      "Name": "PIGFACE",
+      "Slug": "pigface",
+      "Loader": "bepinex",
+      "SteamId": "3341650",
+      "Folder": "PIGFACE",
+      "Executables": [
+        "Pigface.exe"
+      ]
+    },
+    {
+      "Name": "Pikuniku",
+      "Slug": "pikuniku",
+      "Loader": "bepinex",
+      "SteamId": "572890",
+      "Folder": "Pikuniku",
+      "Executables": [
+        "Pikuniku.exe",
+        "Pikuniku.app",
+        "Pikuniku.x86_64",
+        "Pikuniku.x86"
+      ]
+    },
+    {
+      "Name": "Pit of Goblin",
+      "Slug": "pit-of-goblin",
+      "Loader": "recursive-melonloader",
+      "SteamId": "3253530",
+      "Folder": "PitOfGoblin",
+      "Executables": [
+        "Pit of Goblin.exe"
+      ]
+    },
+    {
+      "Name": "Afterbeat",
+      "Slug": "project-arrhythmia",
+      "Loader": "bepinex",
+      "SteamId": "440310",
+      "Folder": "ProjectArrhythmia",
+      "Executables": [
+        "Project Arrhythmia.exe"
+      ]
+    },
+    {
+      "Name": "Project Gorgon",
+      "Slug": "project-gorgon",
+      "Loader": "bepinex",
+      "SteamId": "342940",
+      "Folder": "ProjectGorgon",
+      "Executables": [
+        "WindowsPlayer.exe",
+        "ProjectGorgon"
+      ]
+    },
+    {
+      "Name": "Pushing it! Together - Sisyphus Co-op",
+      "Slug": "pushing-it-together-sisyphus",
+      "Loader": "bepinex",
+      "SteamId": "3298460",
+      "Folder": "PushingItTogetherSisyphusCoOp",
+      "Executables": [
+        "Pushing it! Together.exe"
+      ]
+    },
+    {
+      "Name": "Puttler",
+      "Slug": "puttler",
+      "Loader": "recursive-melonloader",
+      "SteamId": "3198680",
+      "Folder": "Puttler",
+      "Executables": [
+        "Puttler.exe"
+      ]
+    },
+    {
+      "Name": "RAM: Random Access Mayhem",
+      "Slug": "random-access-mayhem",
+      "Loader": "godotml",
+      "SteamId": "2256450",
+      "Folder": "RamRandomAccessMayhem",
+      "Executables": [
+        "RAM.exe"
+      ]
+    },
+    {
+      "Name": "Resonite",
+      "Slug": "resonite",
+      "Loader": "bepisloader",
+      "SteamId": "2519830",
+      "Folder": "Resonite",
+      "Executables": [
+        "Resonite.exe"
+      ]
+    },
+    {
+      "Name": "Return From Core",
+      "Slug": "return-from-core",
+      "Loader": "bepinex",
+      "SteamId": "2171630",
+      "Folder": "ReturnFromCore",
+      "Executables": [
+        "Return From Core.exe"
+      ]
+    },
+    {
+      "Name": "Roadside Research",
+      "Slug": "roadside-research",
+      "Loader": "bepinex",
+      "SteamId": "3643170",
+      "Folder": "RoadsideResearch",
+      "Executables": [
+        "Roadside Research.exe"
+      ]
+    },
+    {
+      "Name": "Romestead",
+      "Slug": "romestead",
+      "Loader": "bepinex",
+      "SteamId": "1805320",
+      "Folder": "Romestead",
+      "Executables": [
+        "Romestead.exe"
+      ]
+    },
+    {
+      "Name": "RV There Yet?",
+      "Slug": "rv-there-yet",
+      "Loader": "shimloader",
+      "SteamId": "3949040",
+      "Folder": "RvThereYet",
+      "Executables": [
+        "Ride.exe"
+      ]
+    },
+    {
+      "Name": "Scrap Mechanic",
+      "Slug": "scrap-mechanic",
+      "Loader": "rivet",
+      "SteamId": "387990",
+      "Folder": "ScrapMechanic",
+      "Executables": [
+        "ScrapMechanic.exe"
+      ]
+    },
+    {
+      "Name": "Shift At Midnight",
+      "Slug": "shift-at-midnight",
+      "Loader": "bepinex",
+      "SteamId": "3722330",
+      "Folder": "ShiftAtMidnight",
+      "Executables": [
+        "ShiftAtMidnight.exe"
+      ]
+    },
+    {
+      "Name": "SIDE EFFECTS",
+      "Slug": "side-effects",
+      "Loader": "bepinex",
+      "SteamId": "3799100",
+      "Folder": "SideEffects",
+      "Executables": [
+        "Side Effects.exe"
+      ]
+    },
+    {
+      "Name": "Sineus Arena Survivors",
+      "Slug": "sineus-arena-survivors",
+      "Loader": "bepinex",
+      "SteamId": "4227400",
+      "Folder": "SineusArenaSurvivors",
+      "Executables": [
+        "SineusArena.exe"
+      ]
+    },
+    {
+      "Name": "Slasher's Keep",
+      "Slug": "slashers-keep",
+      "Loader": "bepinex",
+      "SteamId": "598060",
+      "Folder": "SlashersKeep",
+      "Executables": [
+        "SlashersKeep.exe"
+      ]
+    },
+    {
+      "Name": "Sledding Game",
+      "Slug": "sledding-game",
+      "Loader": "recursive-melonloader",
+      "SteamId": "3438850",
+      "Folder": "SleddingGame",
+      "Executables": [
+        "Sledding Game.exe"
+      ]
+    },
+    {
+      "Name": "Slip & Skid",
+      "Slug": "slip-skid",
+      "Loader": "bepinex",
+      "SteamId": "2651350",
+      "Folder": "SlipSkid",
+      "Executables": [
+        "Slip & Skid.exe",
+        "Slip & Skid"
+      ]
+    },
+    {
+      "Name": "Smushi Come Home",
+      "Slug": "smushi-come-home",
+      "Loader": "bepinex",
+      "SteamId": "1740300",
+      "Folder": "SmushiComeHome",
+      "Executables": [
+        "Smushi Come Home.exe"
+      ]
+    },
+    {
+      "Name": "SOULCALIBUR VI",
+      "Slug": "soulcalibur-vi",
+      "Loader": "shimloader",
+      "SteamId": "544750",
+      "Folder": "SoulcaliburVi",
+      "Executables": [
+        "SoulcaliburVI.exe"
+      ]
+    },
+    {
+      "Name": "Stick Fight: The Game",
+      "Slug": "stick-fight-the-game",
+      "Loader": "bepinex",
+      "SteamId": "674940",
+      "Folder": "StickFightTheGame",
+      "Executables": [
+        "StickFight.exe"
+      ]
+    },
+    {
+      "Name": "Stolen Realm",
+      "Slug": "stolen-realm",
+      "Loader": "bepinex",
+      "SteamId": "1330000",
+      "Folder": "StolenRealm",
+      "Executables": [
+        "Stolen Realm.exe"
+      ]
+    },
+    {
+      "Name": "Super Battle Golf",
+      "Slug": "super-battle-golf",
+      "Loader": "bepinex",
+      "SteamId": "4069520",
+      "Folder": "SuperBattleGolf",
+      "Executables": [
+        "Super Battle Golf.exe"
+      ]
+    },
+    {
+      "Name": "Super Fantasy Kingdom",
+      "Slug": "super-fantasy-kingdom",
+      "Loader": "bepinex",
+      "SteamId": "2289750",
+      "Folder": "SuperFantasyKingdom",
+      "Executables": [
+        "Super Fantasy Kingdom.exe"
+      ]
+    },
+    {
+      "Name": "Super Psycho Baseball",
+      "Slug": "super-psycho-baseball",
+      "Loader": "bepinex",
+      "SteamId": "2216960",
+      "Folder": "SuperPsychoBaseball",
+      "Executables": [
+        "SuperPsychoBaseball.exe"
+      ]
+    },
+    {
+      "Name": "The Farmer Was Replaced",
+      "Slug": "the-farmer-was-replaced",
+      "Loader": "bepinex",
+      "SteamId": "2060160",
+      "Folder": "TheFarmerWasReplaced",
+      "Executables": [
+        "TheFarmerWasReplaced.exe"
+      ]
+    },
+    {
+      "Name": "The Lab",
+      "Slug": "the-lab",
+      "Loader": "bepinex",
+      "SteamId": "450390",
+      "Folder": "TheLab",
+      "Executables": [
+        "TheLab.exe"
+      ]
+    },
+    {
+      "Name": "The Spell Brigade",
+      "Slug": "the-spell-brigade",
+      "Loader": "bepinex",
+      "SteamId": "2904000",
+      "Folder": "TheSpellBrigade",
+      "Executables": [
+        "TheSpellBrigade.exe"
+      ]
+    },
+    {
+      "Name": "Unfair Flips",
+      "Slug": "unfair-flips",
+      "Loader": "bepinex",
+      "SteamId": "3925760",
+      "Folder": "UnfairFlips",
+      "Executables": [
+        "Unfair Flips.exe"
+      ]
+    },
+    {
+      "Name": "Vampire Crawlers",
+      "Slug": "vampire-crawlers",
+      "Loader": "bepinex",
+      "SteamId": "3265700",
+      "Folder": "VampireCrawlers",
+      "Executables": [
+        "Vampire Crawlers.exe",
+        "Vampire Crawlers.app"
+      ]
+    },
+    {
+      "Name": "Vellum",
+      "Slug": "vellum",
+      "Loader": "recursive-melonloader",
+      "SteamId": "917950",
+      "Folder": "Vellum",
+      "Executables": [
+        "Vellum.exe"
+      ]
+    },
+    {
+      "Name": "Very Very Valet",
+      "Slug": "very-very-valet",
+      "Loader": "bepinex",
+      "SteamId": "1448840",
+      "Folder": "VeryVeryValet",
+      "Executables": [
+        "VeryVeryValet_Release.exe"
+      ]
+    },
+    {
+      "Name": "Vigil",
+      "Slug": "vigil",
+      "Loader": "recursive-melonloader",
+      "SteamId": "3817090",
+      "Folder": "Vigil",
+      "Executables": [
+        "Vigil.exe"
+      ]
+    },
+    {
+      "Name": "Voodoo Fishin'",
+      "Slug": "voodoo-fishin",
+      "Loader": "bepinex",
+      "SteamId": "3071240",
+      "Folder": "VoodooFishin",
+      "Executables": [
+        "Voodoo Fishin'.exe"
+      ]
+    },
+    {
+      "Name": "Waterpark Simulator",
+      "Slug": "waterpark-simulator",
+      "Loader": "bepinex",
+      "SteamId": "3293260",
+      "Folder": "WaterparkSimulator",
+      "Executables": [
+        "WaterparkSimulator.exe"
+      ]
+    },
+    {
+      "Name": "Windrose",
+      "Slug": "windrose",
+      "Loader": "shimloader",
+      "SteamId": "3041230",
+      "Folder": "Windrose",
+      "Executables": [
+        "Windrose.exe"
+      ]
+    },
+    {
+      "Name": "Wobbly Life",
+      "Slug": "wobbly-life",
+      "Loader": "bepinex",
+      "SteamId": "1211020",
+      "Folder": "WobblyLife",
+      "Executables": [
+        "Wobbly Life.exe"
+      ]
+    },
+    {
+      "Name": "Word Play",
+      "Slug": "word-play",
+      "Loader": "bepinex",
+      "SteamId": "3586660",
+      "Folder": "WordPlay",
+      "Executables": [
+        "Word Play.exe"
+      ]
+    },
+    {
+      "Name": "YAPYAP",
+      "Slug": "yapyap",
+      "Loader": "bepinex",
+      "SteamId": "3834090",
+      "Folder": "Yapyap",
+      "Executables": [
+        "yapyap.exe"
+      ]
+    },
+    {
+      "Name": "A Little to the Left",
+      "Slug": "a-little-to-the-left",
+      "Loader": "bepinex",
+      "SteamId": "1629520",
+      "Folder": "ALittleToTheLeft",
+      "Executables": [
+        "A Little To The Left.exe",
+        "A Little To The Left.app"
+      ]
+    },
+    {
+      "Name": "AI LIMIT",
+      "Slug": "ai-limit",
+      "Loader": "bepinex",
+      "SteamId": "2407270",
+      "Folder": "AiLimit",
+      "Executables": [
+        "AI-LIMIT.exe"
+      ]
+    },
+    {
+      "Name": "Among Us 3D",
+      "Slug": "among-us-3d",
+      "Loader": "bepinex",
+      "SteamId": "3168600",
+      "Folder": "AmongUs3D",
+      "Executables": [
+        "AmongUs3D.exe"
+      ]
+    },
+    {
+      "Name": "Approximately Up",
+      "Slug": "approximately-up",
+      "Loader": "bepinex",
+      "SteamId": "3904850",
+      "Folder": "ApproximatelyUp",
+      "Executables": [
+        "ApproximatelyUp.exe"
+      ]
+    },
+    {
+      "Name": "Berry Bury Berry",
+      "Slug": "berry-bury-berry",
+      "Loader": "bepinex",
+      "SteamId": "3370870",
+      "Folder": "BerryBuryBerry",
+      "Executables": [
+        "BerryBerryBerryBerryBerryBerryBerryBerryBerry.exe"
+      ]
+    },
+    {
+      "Name": "BOMBANANA!",
+      "Slug": "bombanana",
+      "Loader": "bepinex",
+      "SteamId": "4656000",
+      "Folder": "Bombanana",
+      "Executables": [
+        "BOMBANANA.exe",
+        "BOMBANANA.app"
+      ]
+    },
+    {
+      "Name": "Cast n Chill",
+      "Slug": "cast-n-chill",
+      "Loader": "recursive-melonloader",
+      "SteamId": "3483740",
+      "Folder": "CastNChill",
+      "Executables": [
+        "castnchill.exe",
+        "Cast n Chill.app"
+      ]
+    },
+    {
+      "Name": "Cat Mail Co.",
+      "Slug": "cat-mail-co",
+      "Loader": "bepinex",
+      "SteamId": "4380490",
+      "Folder": "CatMailCo",
+      "Executables": [
+        "CatMailCo.exe",
+        "CatMailCo-OSX-Universal.app"
+      ]
+    },
+    {
+      "Name": "Cult of PiN",
+      "Slug": "cult-of-pin",
+      "Loader": "bepinex",
+      "SteamId": "3144340",
+      "Folder": "CultOfPiN",
+      "Executables": [
+        "CultOfPin.exe",
+        "CultOfPin.x86_64",
+        "CultOfPin.app"
+      ]
+    },
+    {
+      "Name": "Cuphead",
+      "Slug": "cuphead",
+      "Loader": "bepinex",
+      "SteamId": "268910",
+      "Folder": "Cuphead",
+      "Executables": [
+        "Cuphead.exe",
+        "Cuphead.app"
+      ]
+    },
+    {
+      "Name": "Electoral Carnage",
+      "Slug": "electoral-carnage",
+      "Loader": "bepinex",
+      "SteamId": "3706810",
+      "Folder": "ElectoralCarnage",
+      "Executables": [
+        "Electoral Carnage.exe",
+        "Electoral Carnage.app"
+      ]
+    },
+    {
+      "Name": "FRUKT",
+      "Slug": "frukt",
+      "Loader": "recursive-melonloader",
+      "SteamId": "3880400",
+      "Folder": "Frukt",
+      "Executables": [
+        "FRUKT.exe"
+      ]
+    },
+    {
+      "Name": "Graveyard Keeper 2",
+      "Slug": "graveyard-keeper-2",
+      "Loader": "bepinex",
+      "SteamId": "4358690",
+      "Folder": "GraveyardKeeper2",
+      "Executables": [
+        "GraveyardKeeper2.exe"
+      ]
+    },
+    {
+      "Name": "Gunman Contracts - Stand Alone",
+      "Slug": "gunman-contracts-stand-alone",
+      "Loader": "bepinex",
+      "SteamId": "2421750",
+      "Folder": "GunmanContractsStandAlone",
+      "Executables": [
+        "GunmanContracts.exe"
+      ]
+    },
+    {
+      "Name": "Holdfast: Nations At War",
+      "Slug": "holdfast-nations-at-war",
+      "Loader": "bepinex",
+      "SteamId": "589290",
+      "Folder": "HoldfastNationsAtWar",
+      "Executables": [
+        "Holdfast NaW.exe"
+      ]
+    },
+    {
+      "Name": "How to Fish",
+      "Slug": "how-to-fish",
+      "Loader": "bepinex",
+      "SteamId": "4001890",
+      "Folder": "HowToFish",
+      "Executables": [
+        "How to Fish.exe"
+      ]
+    },
+    {
+      "Name": "In Falsus",
+      "Slug": "in-falsus",
+      "Loader": "bepinex",
+      "SteamId": "3971950",
+      "Folder": "InFalsus",
+      "Executables": [
+        "infalsus.exe"
+      ]
+    },
+    {
+      "Name": "Inferno Protocol",
+      "Slug": "inferno-protocol",
+      "Loader": "bepinex",
+      "SteamId": "3908940",
+      "Folder": "InfernoProtocol",
+      "Executables": [
+        "Inferno Protocol.exe"
+      ]
+    },
+    {
+      "Name": "Last Pirates: Die Together",
+      "Slug": "last-pirates-die-together",
+      "Loader": "bepinex",
+      "SteamId": "4317790",
+      "Folder": "LastPiratesDieTogether",
+      "Executables": [
+        "Last Pirates Die Together.exe"
+      ]
+    },
+    {
+      "Name": "Lazy Witch's Factory",
+      "Slug": "lazy-witchs-factory",
+      "Loader": "bepinex",
+      "SteamId": "3971650",
+      "Folder": "LazyWitchsFactory",
+      "Executables": [
+        "LazyWitchsFactory.exe"
+      ]
+    },
+    {
+      "Name": "Limitless Survivor",
+      "Slug": "limitless-survivor",
+      "Loader": "bepinex",
+      "SteamId": "4438540",
+      "Folder": "LimitlessSurvivor",
+      "Executables": [
+        "Limitless Survivor.exe"
+      ]
+    },
+    {
+      "Name": "Moonlighter",
+      "Slug": "moonlighter",
+      "Loader": "bepinex",
+      "SteamId": "606150",
+      "Folder": "Moonlighter",
+      "Executables": [
+        "Moonlighter.exe",
+        "Moonlighter.app",
+        "Moonlighter.x86",
+        "Moonlighter.x86_64"
+      ]
+    },
+    {
+      "Name": "Nivalis Nights",
+      "Slug": "nivalis-nights",
+      "Loader": "bepinex",
+      "SteamId": "1488490",
+      "Folder": "NivalisNights",
+      "Executables": [
+        "Nivalis Nights.exe"
+      ]
+    },
+    {
+      "Name": "Nucleares",
+      "Slug": "nucleares",
+      "Loader": "bepinex",
+      "SteamId": "1428420",
+      "Folder": "Nucleares",
+      "Executables": [
+        "Nucleares.exe"
+      ]
+    },
+    {
+      "Name": "Offscreen",
+      "Slug": "offscreen",
+      "Loader": "recursive-melonloader",
+      "SteamId": "3702990",
+      "Folder": "Offscreen",
+      "Executables": [
+        "Offscreen.exe"
+      ]
+    },
+    {
+      "Name": "Re:Legend",
+      "Slug": "re-legend",
+      "Loader": "bepinex",
+      "SteamId": "823950",
+      "Folder": "ReLegend",
+      "Executables": [
+        "ReLegend.exe"
+      ]
+    },
+    {
+      "Name": "Rhythm Doctor",
+      "Slug": "rhythm-doctor",
+      "Loader": "bepinex",
+      "SteamId": "774181",
+      "Folder": "RhythmDoctor",
+      "Executables": [
+        "Rhythm Doctor.exe",
+        "Rhythm Doctor.app",
+        "Rhythm Doctor"
+      ]
+    },
+    {
+      "Name": "Space Cat Digger",
+      "Slug": "space-cat-digger",
+      "Loader": "bepinex",
+      "SteamId": "5291170",
+      "Folder": "SpaceCatDigger",
+      "Executables": [
+        "Space Cat Digger Demo.exe"
+      ]
+    },
+    {
+      "Name": "Stonewards",
+      "Slug": "stonewards",
+      "Loader": "bepinex",
+      "SteamId": "4502710",
+      "Folder": "Stonewards",
+      "Executables": [
+        "Stonewards.exe"
+      ]
+    },
+    {
+      "Name": "Survival: Fountain of Youth",
+      "Slug": "survival-fountain-of-youth",
+      "Loader": "bepinex",
+      "SteamId": "1967630",
+      "Folder": "SurvivalFountainOfYouth",
+      "Executables": [
+        "Survival Fountain of Youth.exe"
+      ]
+    },
+    {
+      "Name": "The Message from Deep Space",
+      "Slug": "the-message-from-deep-space",
+      "Loader": "bepinex",
+      "SteamId": "4080030",
+      "Folder": "TheMessageFromDeepSpace",
+      "Executables": [
+        "The Message From Deep Space.exe",
+        "TMFDS.app"
+      ]
+    },
+    {
+      "Name": "The Sexy Brutale",
+      "Slug": "the-sexy-brutale",
+      "Loader": "bepinex",
+      "SteamId": "552590",
+      "Folder": "TheSexyBrutale",
+      "Executables": [
+        "game.exe"
+      ]
+    },
+    {
+      "Name": "Tiny Rogues",
+      "Slug": "tiny-rogues",
+      "Loader": "bepinex",
+      "SteamId": "2088570",
+      "Folder": "TinyRogues",
+      "Executables": [
+        "Tiny Rogues.exe"
+      ]
+    },
+    {
+      "Name": "Tunguska: The Visitation",
+      "Slug": "tunguska-the-visitation",
+      "Loader": "bepinex",
+      "SteamId": "1601970",
+      "Folder": "TunguskaTheVisitation",
+      "Executables": [
+        "Tunguska.exe"
+      ]
+    }
+  ]
+}

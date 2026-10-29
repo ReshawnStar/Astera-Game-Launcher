@@ -1,0 +1,8 @@
+{
+  "PackageSha256": "59FFE65ADE67AD9D886267F877B634A450363CB81B94E19DB9CA4C36461416F6",
+  "Source": "https://api.nuget.org/v3-flatcontainer/yamldotnet/18.1.0/yamldotnet.18.1.0.nupkg",
+  "License": "MIT",
+  "DllSha256": "9C0EE9EC903A44F94E84369C1A961D8B16612A53837843559160A299AA58FD57",
+  "Target": "net47",
+  "Version": "18.1.0"
+}

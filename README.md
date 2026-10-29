@@ -273,3 +273,33 @@ rewritten; a matching cached ZIP is reused. This is not a delta download system.
 For a single release command, use `scripts/Publish-MinecraftPackRelease.ps1 -ReleaseName <fresh-name> -NotesFile <notes.md> -Publish`. It includes shaders, builds the ZIP, audits an isolated install, then signs/uploads/promotes it. Use `-Preview` for inventory only. No launcher EXE is rebuilt.
 
 First-time CurseForge import: `scripts/Build-CurseForgeSetup.ps1 -PackZip <tested-pack.zip>` creates a tiny, empty profile ZIP with the matching Minecraft/Fabric versions. Import it in CurseForge, then link the created profile in Astera and Update. This does not import/register a profile automatically. The setup ZIP contains no mods or personal data.
+
+## Thunderstore profiles (0.1.36)
+
+Add a supported installed Steam game with **Add game → Thunderstore profiles**, or
+select an existing Steam entry. Astera discovers the game's profiles in the
+standard Thunderstore Mod Manager and r2modman data folders. A custom data folder
+can be selected in the profile picker. Profiles remain grouped inside one game.
+
+Choose Vanilla or a named profile, then Play. Direct modded launch and share-code
+installation currently support Mono BepInEx profiles such as Lethal Company.
+Unsupported loaders do not silently fall back to vanilla. The selected game must
+be stopped before switching or replacing its profile.
+
+**Update by code** checks the exported mod versions, dependencies and Thunderstore
+community before review. Astera builds an independent managed copy, retains the
+previous owned copy as a backup and preserves the manager's original. Personal
+configuration absent from the new pack survives; supplied pack configuration takes
+precedence. **Use original** switches back to the manager copy. Version-specific
+archives are hash-checked and reused; metadata requests are cached and paced, with
+bounded retries respecting the server's retry delay.
+
+The native game launch uses Steam and the selected profile's absolute preloader
+path. Only known Doorstop root files are linked, with differing originals backed
+up. Game executables and saves are not replaced by profile updates. Custom private
+performance add-on channels are a future extension and are not part of this release.
+
+Profile import behavior follows the upstream format documented at
+https://github.com/ebkr/r2modmanPlus/wiki/Profiles and its implementation. YamlDotNet
+18.1.0 is pinned from its official NuGet package; its MIT notice and provenance are
+under assets/vendor/yamldotnet, and the notice is embedded with the dependency.
