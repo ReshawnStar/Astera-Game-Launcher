@@ -1,0 +1,1 @@
+Original colored and grayscale SVG variants supplied by Star/Cipher, preserved unchanged. The filled grayscale source is the active theme-tinted footer download icon. Luminous and outline variants are retained as source for future style work. No external SVG runtime or network is used.

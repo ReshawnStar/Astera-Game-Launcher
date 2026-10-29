@@ -130,7 +130,7 @@ sealed partial class LibraryForm {
         heroTagline.Text="You're not alone this time.";heroTagline.Font=UiTheme.Text(14,true);heroTagline.ForeColor=Color.White;heroTagline.Dock=DockStyle.Fill;
         status.Font=UiTheme.Text(12,true);status.Dock=DockStyle.Fill;status.AutoEllipsis=true;status.TextAlign=ContentAlignment.MiddleLeft;
         profileLabel.Dock=DockStyle.Fill;profileLabel.ForeColor=Muted;profileLabel.AutoEllipsis=true;profileLabel.Font=UiTheme.Text(12);
-        heroText.Controls.Add(heroTitle,0,0);heroText.Controls.Add(heroSubtitle,0,1);heroText.Controls.Add(heroTagline,0,2);heroText.Controls.Add(status,0,3);heroText.Controls.Add(profileLabel,0,4);banner.Controls.Add(heroText);
+        heroText.Controls.Add(heroTitle,0,0);heroText.Controls.Add(heroSubtitle,0,1);heroText.Controls.Add(heroTagline,0,2);heroText.Controls.Add(profileLabel,0,4);banner.Controls.Add(heroText);status.Dock=DockStyle.None;banner.Controls.Add(status);
         var action=new FlowLayoutPanel{BackColor=Color.Transparent,Location=new Point(24,258),Height=58,WrapContents=false};
         heroActions=action;BuildModProfileStrip();
         play.Text="PLAY";Style(play);((AsteraButton)play).Role=ButtonRole.Primary;((AsteraButton)play).Symbol=ButtonSymbol.Play;((AsteraButton)play).OrbitGlow=true;play.Font=UiTheme.Button();play.MinimumSize=new Size(170,48);play.Click+=delegate{PrimaryGameAction();};
@@ -138,7 +138,7 @@ sealed partial class LibraryForm {
         moreMenu=AsteraMenuRenderer.Create(menuComponents);moreMenu.Items.Add("Open game folder",null,delegate{OpenGameFolder();});moreMenu.Items.Add("Game settings",null,delegate{Configure();});moreMenu.Items.Add("Update activity",null,delegate{SelectLibraryTab(1);});moreMenu.Items.Add("Open Astera logs",null,delegate{OpenDiagnostics();});moreMenu.Items.Add("Collect game logs",null,delegate{CollectGameLogs();});
         moreMenu.Items.Add("Astera update activity",null,delegate{ShowAsteraActivity();});moreMenu.Items.Add("Astera changelog",null,delegate{AppChangelog.Show(this);});moreMenu.Items.Add("Capture UI snapshot",null,delegate{CaptureUiFromMenu();});
         var more=Button("",delegate(object sender,EventArgs e){var button=(Control)sender;moreMenu.Show(button,new Point(0,button.Height));});more.MinimumSize=new Size(48,48);((AsteraButton)more).Symbol=ButtonSymbol.More;more.AccessibleName="More options";
-        action.Controls.AddRange(new Control[]{play,check,more});BuildPlaytimeStats(action);banner.Controls.Add(action);
+        action.Controls.AddRange(new Control[]{play,check,more});action.Controls.SetChildIndex(modProfileStrip,1);BuildPlaytimeStats(action);banner.Controls.Add(action);
         banner.Resize+=delegate{LayoutHeroContent();};
 
         tabs.Dock=DockStyle.Fill;tabs.Padding=new Padding(0,7,0,4);tabs.WrapContents=false;tabs.Margin=Padding.Empty;
@@ -169,7 +169,7 @@ sealed partial class LibraryForm {
         activityCard.Dock=DockStyle.Fill;activityCard.Margin=Padding.Empty;ConfigureReadOnly(log,activityCard.BackColor);activityCard.Controls.Add(log);activityCard.Controls.Add(new Label{Text="Update activity",Dock=DockStyle.Top,Height=34,Font=UiTheme.Text(17,true)});
         AddDiagnosticButtons();BuildArtworkPage();BuildPreferencesPage();
         releaseLabel.Dock=DockStyle.Fill;releaseLabel.ForeColor=Muted;releaseLabel.Font=UiTheme.Text(12);releaseLabel.TextAlign=ContentAlignment.MiddleLeft;BuildWorkProgress(body);
-        Controls.Add(viewport);Controls.Add(sidebar);Controls.Add(header);SelectLibraryTab(0);
+        Controls.Add(viewport);Controls.Add(sidebar);Controls.Add(header);SelectLibraryTab(0);BuildTopNavigation(header,sidebar,tagline);
         Disposed+=delegate{CancelGameTransition();if(artPreview.Image!=null)artPreview.Image.Dispose();if(activityCard.Parent==null)activityCard.Dispose();if(overviewRight.Parent==null)overviewRight.Dispose();timer.Dispose();diagnosticsTimer.Dispose();};
     }
     static Label Heading(string title){return new Label{Text=title,Font=UiTheme.Text(17,true),ForeColor=Color.FromArgb(235,238,255),Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleLeft};}

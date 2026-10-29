@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Astera download icon, filled">
+ <title>Astera Download — Filled Grayscale</title>
+ <defs>
+  <linearGradient id="cyan" x1="0" y1="0" x2="0.85" y2="1">
+   <stop offset="0" stop-color="#F4F4F4"/>
+   <stop offset="0.6" stop-color="#BEBEBE"/>
+   <stop offset="1" stop-color="#858585"/>
+  </linearGradient>
+ </defs>
+ <rect x="4" y="4" width="56" height="56" rx="13" fill="url(#cyan)"/>
+ <path d="M32 15V38 M22.5 29L32 38.5L41.5 29" fill="none" stroke="#242424" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+ <path d="M16.5 44.5V49.5Q16.5 53.5 21 53.5H43Q47.5 53.5 47.5 49.5V44.5" fill="none" stroke="#242424" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

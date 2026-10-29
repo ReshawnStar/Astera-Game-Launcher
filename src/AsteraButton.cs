@@ -64,7 +64,7 @@ public sealed partial class AsteraButton:Button {
     }
     protected override void OnPaint(PaintEventArgs e){
         if(Width<4||Height<4)return;
-        PaintBackdrop(e);
+        PaintBackdrop(e);if(UpdateTile){DrawUpdateTile(e.Graphics);return;}
         var g=e.Graphics;g.SmoothingMode=SmoothingMode.AntiAlias;
         int lift=FeedbackLift;Rectangle bounds=new Rectangle(1,1+lift,Width-3,Height-3);
         string state=!Enabled?"disabled":pressed?"pressed":hover?"hover":"normal";

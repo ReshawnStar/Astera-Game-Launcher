@@ -51,6 +51,9 @@ foreach($icon in Get-ChildItem -LiteralPath $icons -Filter '*.png' -File){
     try{if($image.Width -ne 128 -or $image.Height -ne 128){throw ('UI icons must be 128x128: '+$icon.Name)}}finally{$image.Dispose()}
     $art+=('/resource:'+$icon.FullName+',Astera.Icons.'+$icon.BaseName)
 }
+$art+=('/resource:'+(Join-Path $root 'assets/backgrounds/gacha-nebula-plus.png')+',Astera.Backgrounds.GachaNebulaPlus')
+$art+=('/resource:'+(Join-Path $root 'content/discover-catalog.json')+',Astera.Discover.Catalog')
+foreach($variant in @('filled','luminous','outline','filled-grayscale','luminous-grayscale','outline-grayscale')){$svg=Join-Path $root ('assets/ui-v1/download-icons/'+$variant+'.svg');if(!(Test-Path -LiteralPath $svg) -or (Get-Item -LiteralPath $svg).Length -gt 64KB){throw 'Download icon source is missing or too large'};$art+=('/resource:'+$svg+',Astera.Download.'+$variant)}
 $background=Join-Path $root 'assets/backgrounds/minecraft-squared.png'
 if(!(Test-Path -LiteralPath $background) -or (Get-Item -LiteralPath $background).Length -gt 25MB){throw 'Minecraft background is missing or too large'}
 $art+=('/resource:'+$background+',Astera.Backgrounds.MinecraftSquared')

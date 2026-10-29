@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Astera download icon, luminous concept">
+ <title>Astera Download — Luminous</title>
+ <defs>
+  <linearGradient id="body" x1="0" y1="0" x2="0.25" y2="1">
+   <stop offset="0" stop-color="#64FFFF"/>
+   <stop offset="0.48" stop-color="#1CE0F4"/>
+   <stop offset="1" stop-color="#079BE9"/>
+  </linearGradient>
+  <filter id="outerglow" x="-35%" y="-35%" width="170%" height="170%">
+   <feGaussianBlur in="SourceAlpha" stdDeviation="2.4" result="blur"/>
+   <feFlood flood-color="#13BFFF" flood-opacity="0.75" result="flood"/>
+   <feComposite in="flood" in2="blur" operator="in" result="glow"/>
+   <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+ </defs>
+ <g filter="url(#outerglow)">
+  <rect x="6" y="6" width="52" height="52" rx="13.5" fill="url(#body)" stroke="#2BF1FF" stroke-width="1"/>
+  <path d="M11 17 Q11 11 20 11H44Q53 11 53 20" fill="none" stroke="#BBFFFF" stroke-width="1.3" stroke-linecap="round" opacity=".4"/>
+  <path d="M32 17V37 M23 29L32 38L41 29" fill="none" stroke="#071C39" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M18.5 44.5V48Q18.5 52 23 52H41Q45.5 52 45.5 48V44.5" fill="none" stroke="#071C39" stroke-width="5.8" stroke-linecap="round" stroke-linejoin="round"/>
+ </g>
+</svg>

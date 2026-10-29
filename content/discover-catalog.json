@@ -1,0 +1,92 @@
+{
+  "Schema": 1,
+  "Projects": [
+    {
+      "Id": "gacha-nebula-plus",
+      "Title": "Gacha Nebula +",
+      "Category": "Character Creator",
+      "Summary": "A new chapter in character creation.",
+      "Description": "Create characters and build Studio scenes with Gacha Nebula +. This release adds saving, backup and stability improvements to the existing Nebula experience.",
+      "Requirements": "Windows. Keep the entire game folder together. Astera installs the included launcher helper and runtime.",
+      "Notes": "Saving and stability improvements\n\n- More reliable save checkpoints and recovery backups.\n- Fixes for Studio scene loading and character placement.\n- Less background rendering and unnecessary redraw work.",
+      "Status": "available",
+      "Featured": true,
+      "LibraryKind": -1,
+      "Artwork": {
+        "Resource": "Astera.Backgrounds.GachaNebulaPlus"
+      },
+      "Screenshots": [],
+      "Package": {
+        "GameHash": "d35818eefacb82b966c4c7633fb0b6784e3f4696eae07ab7bffe3d14cba6da97",
+        "LauncherHash": "cc1fca71ed80608167d71b522f888c2995d0a73a4bddd30ea1e3fb8fad9c8c7f",
+        "Hash": "65c55de608c0a2259b504db6be8d5c6f3740b21be4d5a054c1263112eeb320f0",
+        "Version": "2026.10.28",
+        "Bytes": 561950843,
+        "Url": "https://github.com/ReshawnStar/Astera-Game-Launcher/releases/download/gacha-nebula-plus-2026.10.28/Gacha-Nebula-Plus-2026-10-28.zip"
+      }
+    },
+    {
+      "Id": "minecraft-squared",
+      "Title": "Minecraft²",
+      "Category": "Modpack",
+      "Summary": "Your worlds. A little more alive.",
+      "Description": "Explore a reimagined Minecraft world, meet Allies who fight and grow alongside you, and face new dangers together. Build, survive, and create your own adventures.\n\nYou're not alone this time.",
+      "Requirements": "Minecraft: Java Edition and CurseForge. Link a compatible Minecraft² profile in Astera to install or manage the pack.",
+      "Notes": "See Minecraft² in your Library for the latest release notes.",
+      "Status": "available",
+      "Featured": true,
+      "LibraryKind": 0,
+      "Artwork": {
+        "Resource": "Astera.Backgrounds.MinecraftSquared"
+      },
+      "Screenshots": []
+    },
+    {
+      "Id": "star-dash",
+      "Title": "Star Dash",
+      "Category": "Racing",
+      "Summary": "Discover Star Dash.",
+      "Description": "Find Star Dash here and manage your existing installation in Astera.",
+      "Requirements": "An existing Windows Star Dash installation. Link it in Library to play.",
+      "Notes": "No patch notes available yet.",
+      "Status": "available",
+      "Featured": false,
+      "LibraryKind": 1,
+      "Artwork": {
+        "Resource": "Astera.Backgrounds.StarDash"
+      },
+      "Screenshots": []
+    },
+    {
+      "Id": "last-light",
+      "Title": "Last Light",
+      "Category": "Action / Horror",
+      "Summary": "Coming soon.",
+      "Description": "More about Last Light will be shared when it is ready.",
+      "Requirements": "System requirements will be announced before release.",
+      "Notes": "No patch notes available yet.",
+      "Status": "coming-soon",
+      "Featured": false,
+      "LibraryKind": -1,
+      "Artwork": {},
+      "Screenshots": []
+    },
+    {
+      "Id": "ftl-multiverse",
+      "Title": "FTL: Multiverse",
+      "Category": "Modpack",
+      "Summary": "Explore new sectors and adventures across the multiverse.",
+      "Description": "Explore new sectors, command powerful starships, encounter dangerous enemies, and discover countless adventures across the multiverse.\n\nFTL: Multiverse is an external project. Astera helps you manage its installation alongside your existing FTL game.",
+      "Requirements": "A supported Windows FTL: Faster Than Light installation. Astera checks the required mod components during setup.",
+      "Notes": "Open FTL: Multiverse in your Library for official release notes when available.",
+      "Status": "available",
+      "Featured": false,
+      "LibraryKind": 2,
+      "OfficialUrl": "https://github.com/FTL-Multiverse-Team/FTL-Multiverse-Releases",
+      "Artwork": {
+        "Resource": "Astera.Backgrounds.FtlMultiverse"
+      },
+      "Screenshots": []
+    }
+  ]
+}

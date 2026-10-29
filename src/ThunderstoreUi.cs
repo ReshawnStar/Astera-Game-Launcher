@@ -8,20 +8,38 @@ using System.Windows.Forms;
 using MC2Pack;
 namespace Astera {
 sealed partial class LibraryForm {
-    Panel modProfileStrip;Label modProfileLabel;Button modProfileChoose,modProfileUpdate;readonly HashSet<string> modProfileScanned=new HashSet<string>();
+    Panel modProfileStrip;ProfileLaunchButton modProfileChoose;ContextMenuStrip modProfileMenu;readonly HashSet<string> modProfileScanned=new HashSet<string>();
     ThunderGame SelectedThunderGame {get{var game=CurrentCustom;if(game==null)return null;var art=CustomSteam(game);return ThunderstoreProfiles.Game(game.Platform=="steam"?game.PlatformId:art==null?null:art.AppId);}}
     ModProfileLink SelectedModProfile(CustomGame game){return game==null||game.ModProfiles==null?null:game.ModProfiles.FirstOrDefault(p=>p.Id==game.SelectedModProfile);}
     void BuildModProfileStrip(){
-        modProfileStrip=new Panel{Height=36,BackColor=Color.Transparent,Visible=false};modProfileLabel=new Label{Left=0,Top=9,Width=260,Height=24,AutoEllipsis=true,ForeColor=Color.White};modProfileChoose=Button("Profiles…",delegate{ChooseModProfile();});modProfileChoose.SetBounds(270,0,120,34);modProfileUpdate=Button("Update by code…",async delegate{await UpdateModProfile();});modProfileUpdate.SetBounds(400,0,175,34);modProfileStrip.Controls.AddRange(new Control[]{modProfileLabel,modProfileChoose,modProfileUpdate});banner.Controls.Add(modProfileStrip);
+        modProfileStrip=new Panel{Width=158,Height=48,MinimumSize=new Size(158,48),Margin=new Padding(0,0,10,0),BackColor=Color.Transparent,Visible=false};
+        modProfileChoose=new ProfileLaunchButton{Dock=DockStyle.Fill};modProfileChoose.Click+=delegate{ShowModProfileMenu();};modProfileStrip.Controls.Add(modProfileChoose);heroActions.Controls.Add(modProfileStrip);
+        modProfileMenu=AsteraMenuRenderer.Create(menuComponents);
     }
     void RefreshModProfileStrip(){
         if(modProfileStrip==null)return;var game=CurrentCustom;var definition=SelectedThunderGame;modProfileStrip.Visible=game!=null&&definition!=null;
         if(!modProfileStrip.Visible)return;
+        check.Visible=false;
         if(!previewMode&&modProfileScanned.Add(game.Id))ScanModProfiles(game,definition);
-        var selected=SelectedModProfile(game);modProfileLabel.Text="Profile: "+(selected==null?"Vanilla":selected.Name);bool locked=busy||GameRunning(game)||GameStarting(game);modProfileChoose.Enabled=!locked;modProfileUpdate.Enabled=!locked&&definition.Loader=="bepinex";modProfileUpdate.Text=selected==null?"Import by code…":"Update by code…";LayoutModProfileStrip();
+        var selected=SelectedModProfile(game);modProfileChoose.ProfileName=selected==null?"Vanilla":selected.Name;modProfileChoose.AccessibleName="Play profile: "+modProfileChoose.ProfileName;modProfileChoose.Invalidate();modProfileChoose.Enabled=!busy&&!GameRunning(game)&&!GameStarting(game);
+    }
+    void ShowModProfileMenu(){
+        var game=CurrentCustom;var definition=SelectedThunderGame;if(game==null||definition==null||busy||GameRunning(game)||GameStarting(game))return;
+        ClearLibraryMenu(modProfileMenu);
+        Action<string,string> add=delegate(string title,string id){var item=new ToolStripMenuItem(title){Checked=(game.SelectedModProfile??"")==id};item.Click+=delegate{SelectLaunchProfile(game,id);};modProfileMenu.Items.Add(item);};
+        add("Vanilla","");foreach(var profile in game.ModProfiles??new List<ModProfileLink>())add(profile.Name,profile.Id);
+        modProfileMenu.Items.Add(new ToolStripSeparator());modProfileMenu.Items.Add("Manage profiles…",null,delegate{ChooseModProfile();});
+        var import=modProfileMenu.Items.Add("Import by code…",null,async delegate{await UpdateModProfile(true);});import.Enabled=definition.Loader=="bepinex";
+        if(SelectedModProfile(game)!=null){var update=modProfileMenu.Items.Add("Update selected by code…",null,async delegate{await UpdateModProfile();});update.Enabled=definition.Loader=="bepinex";}
+        modProfileMenu.Items.Add(new ToolStripSeparator());modProfileMenu.Items.Add("Open in Steam",null,delegate{OpenCustomSteamLibrary();});
+        modProfileMenu.Show(modProfileChoose,new Point(0,modProfileChoose.Height));
+    }
+    void SelectLaunchProfile(CustomGame game,string id){
+        if(game==null||CurrentCustom!=game||busy||GameRunning(game)||GameStarting(game))return;
+        if(!String.IsNullOrEmpty(id)&&(game.ModProfiles==null||!game.ModProfiles.Any(p=>p.Id==id)))return;
+        game.SelectedModProfile=id??"";store.Save();RefreshModProfileStrip();LayoutHeroContent();
     }
     async void ScanModProfiles(CustomGame game,ThunderGame definition){try{var roots=ThunderstoreProfiles.Roots(store.Settings.ThunderstoreRoots).ToArray();var found=await Task.Run(()=>ThunderstoreProfiles.Discover(definition,roots));if(IsDisposed)return;ThunderstoreProfiles.Merge(game,found);store.Save();if(CurrentCustom==game){RefreshModProfileStrip();LayoutHeroContent();}}catch(Exception error){AsteraDiagnostics.Write("Thunderstore profile scan",error);}}
-    void LayoutModProfileStrip(){if(modProfileStrip==null||!modProfileStrip.Visible||heroActions==null)return;modProfileStrip.SetBounds(24,heroActions.Top-42,Math.Max(100,banner.Width-48),36);modProfileLabel.Width=Math.Max(140,Math.Min(260,modProfileStrip.Width-350));modProfileChoose.Left=modProfileLabel.Right+10;modProfileUpdate.Left=modProfileChoose.Right+10;modProfileStrip.BringToFront();}
     void ChooseModProfile(){var game=CurrentCustom;var definition=SelectedThunderGame;if(game==null||definition==null||busy||GameRunning(game))return;
         using(var dialog=new AsteraDialog{Text=game.Name+" profiles",Size=new Size(650,480),StartPosition=FormStartPosition.CenterParent}){
             var list=new ListBox{Dock=DockStyle.Fill,BackColor=Base,ForeColor=Color.White,BorderStyle=BorderStyle.None};var rows=new List<ModProfileLink>();Action fill=delegate{rows=new List<ModProfileLink>{null};rows.AddRange(game.ModProfiles??new List<ModProfileLink>());list.Items.Clear();foreach(var row in rows)list.Items.Add(row==null?"Vanilla":row.Name+"  ·  "+(row.UseManaged&&!String.IsNullOrEmpty(row.Managed)?"Astera copy":row.Manager));list.SelectedIndex=Math.Max(0,rows.FindIndex(p=>p!=null&&p.Id==game.SelectedModProfile));};
@@ -32,11 +50,9 @@ sealed partial class LibraryForm {
             var original=Button("Use original",delegate{int index=list.SelectedIndex;if(index<=0||GameRunning(game))return;var link=rows[index];if(String.IsNullOrEmpty(link.Source)||!Directory.Exists(link.Source))return;link.UseManaged=false;game.SelectedModProfile=link.Id;store.Save();RefreshModProfileStrip();dialog.DialogResult=DialogResult.OK;});actions.Height=100;actions.WrapContents=true;actions.Controls.AddRange(new Control[]{use,original,scan,browse});dialog.Controls.Add(list);dialog.Controls.Add(message);dialog.Controls.Add(actions);fill();list.DoubleClick+=delegate{use.PerformClick();};dialog.ShowDialog(this);
         }
     }
-    async Task UpdateModProfile(){
-        var game=CurrentCustom;var definition=SelectedThunderGame;if(game==null||definition==null||busy||GameRunning(game))return;var selected=SelectedModProfile(game);string code;
-        using(var dialog=new AsteraDialog{Text=selected==null?"Import a mod profile":"Update "+selected.Name,Size=new Size(610,235),StartPosition=FormStartPosition.CenterParent}){
-            var label=new Label{Left=18,Top=25,Width=565,Height=38,Text="Paste the profile share code from Thunderstore or r2modman."};var input=new TextBox{Left=18,Top=73,Width=565};var go=Button("Check profile",delegate{try{input.Text=ThunderstoreProfiles.Code(input.Text);dialog.DialogResult=DialogResult.OK;}catch(Exception error){MessageBox.Show(dialog,error.Message,"Profile code");}});go.SetBounds(400,125,180,38);dialog.Controls.AddRange(new Control[]{label,input,go});dialog.AcceptButton=go;if(dialog.ShowDialog(this)!=DialogResult.OK)return;code=input.Text;
-        }
+    async Task UpdateModProfile(bool importNew=false){
+        var game=CurrentCustom;var definition=SelectedThunderGame;if(game==null||definition==null||busy||GameRunning(game)||GameStarting(game))return;var selected=importNew?null:SelectedModProfile(game);string code;
+        TextBox input;using(var dialog=BuildProfileCodeDialog(selected,out input)){if(dialog.ShowDialog(this)!=DialogResult.OK)return;code=input.Text;}
         string key="custom:"+game.Id;ThunderImportPlan plan=null;string work=SelfUpdateFiles.Inside(SelfUpdateFiles.Root(store.Root),"thunderstore-work/"+Guid.NewGuid().ToString("N"));
         await Work(delegate{plan=ThunderstoreImport.Download(code,work,cancellation.Token,ReportWorkProgress,definition,SelfUpdateFiles.Inside(SelfUpdateFiles.Root(store.Root),"thunderstore-api-cache"));},false,key);if(plan==null||IsDisposed)return;
         if(MessageBox.Show(this,"Install "+plan.Export.Name+" for "+game.Name+"?\n\n"+plan.Packages.Count+" enabled packages. Astera will keep its own copy; the original manager profile and game saves stay intact.","Review mod profile",MessageBoxButtons.YesNo,MessageBoxIcon.Question)!=DialogResult.Yes)return;

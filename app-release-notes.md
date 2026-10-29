@@ -1,11 +1,11 @@
-# Astera 0.1.36 — Choose your modded profile
+# Astera 0.1.37 — Discover new worlds
 
-- Added Thunderstore and r2modman profile discovery for supported Steam games.
-- Choose Vanilla or a modded profile inside the game's library page.
-- Import or update a supported BepInEx profile using its share code.
-- Astera keeps its own updated copy, so your original manager profile stays available.
-- Profiles cannot be switched or replaced while the game is running.
+- Added Discover with featured projects, search, categories and project pages.
+- Install and launch Gacha Nebula + from Astera.
+- Gacha updates preserve Recovery backups and personal exports.
+- Choose Thunderstore profiles beside Play, with profile management and code imports in one menu.
+- Cleaned up game banners and fixed cramped text in the Astera update window.
+- Added a sharper download icon that follows your chosen accent color.
+- Reserved a separate Arcade tab for future built-in games.
 
-Direct modded launch and code-based installation currently support Mono BepInEx profiles, including Lethal Company. Other loaders need their own integration.
-
-Windows Defender detections remain under investigation. This is not a confirmed resolution of every detection.
+Windows Defender detection reports remain under investigation.

@@ -9,7 +9,7 @@ sealed partial class LibraryForm {
     readonly AsteraButton appUpdateIcon=new AsteraButton();ToolTip appUpdateTip;bool checkingApp;byte[] appEnvelope;AppRelease appRelease;
     void BuildVersionFooter(Control sidebar){
         var footer=new Panel{Dock=DockStyle.Bottom,Height=64,BackColor=sidebar.BackColor};var label=new Label{Text="by Star  ·  v"+SelfUpdate.CurrentVersion,ForeColor=Color.FromArgb(144,155,205),Location=new Point(0,26),Size=new Size(144,24),Font=UiTheme.Text(12)};
-        appUpdateIcon.AutoSize=false;appUpdateIcon.MinimumSize=new Size(26,26);appUpdateIcon.Size=new Size(26,26);appUpdateIcon.Location=new Point(146,24);appUpdateIcon.Padding=new Padding(3);appUpdateIcon.Margin=Padding.Empty;appUpdateIcon.Role=ButtonRole.Quiet;appUpdateIcon.Symbol=ButtonSymbol.Refresh;appUpdateIcon.AccessibleName="Check for Astera updates";appUpdateIcon.Click+=async delegate{await RunAsteraUpdate();};
+        appUpdateIcon.AutoSize=false;appUpdateIcon.MinimumSize=new Size(36,36);appUpdateIcon.Size=new Size(36,36);appUpdateIcon.Location=new Point(146,18);appUpdateIcon.Padding=new Padding(5);appUpdateIcon.UpdateTile=true;appUpdateIcon.Margin=Padding.Empty;appUpdateIcon.Role=ButtonRole.Quiet;appUpdateIcon.Symbol=ButtonSymbol.Refresh;appUpdateIcon.AccessibleName="Check for Astera updates";appUpdateIcon.Click+=async delegate{await RunAsteraUpdate();};
         appUpdateTip=new ToolTip(menuComponents);appUpdateTip.SetToolTip(appUpdateIcon,"Check for Astera updates");footer.Controls.Add(label);footer.Controls.Add(appUpdateIcon);sidebar.Controls.Add(footer);
     }
     string appCheckError;bool appUpdateFlowActive;
