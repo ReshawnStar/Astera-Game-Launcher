@@ -19,8 +19,8 @@ sealed partial class LibraryForm {
             heroActions.Top=banner.Height-72;heroActions.Width=banner.Width-40;LayoutPlaytimeStats();
             heroTextPanel.Top=minecraft?Math.Max(12,heroActions.Top-height-40):banner.Height<300?44:66;
             string message=(status.Text??"").ToLowerInvariant();
-            status.Visible=busy||message.Contains("not found")||message.Contains("unavailable")||message.Contains("missing")||message.Contains("error")||message.Contains("failed");
-            if(busy)status.Text=String.IsNullOrEmpty(workPhase)?"Working…":workPhase+"…";
+            status.BackColor=Color.Transparent;status.Visible=!busy&&!appUpdateFlowActive&&(message.Contains("not found")||message.Contains("unavailable")||message.Contains("missing")||message.Contains("error")||message.Contains("failed"));
+
             status.SetBounds(24,heroActions.Top-26,Math.Max(100,banner.Width-48),22);
         }finally{layingOutHero=false;}
     }

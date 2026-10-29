@@ -6,7 +6,7 @@ namespace Astera {
 sealed class TopNavigationTab:Button {
     internal bool Selected;
     internal TopNavigationTab(string text){Text=text;AccessibleName=text;FlatStyle=FlatStyle.Flat;FlatAppearance.BorderSize=0;Size=new Size(98,44);Font=UiTheme.Text(16,true);Cursor=Cursors.Hand;SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer,true);}
-    protected override void OnPaint(PaintEventArgs e){e.Graphics.Clear(BackColor);TextRenderer.DrawText(e.Graphics,Text,Font,ClientRectangle,Selected?Color.White:Color.FromArgb(167,180,205),TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter);if(Selected)using(var pen=new Pen(Color.FromArgb(54,201,240),2))e.Graphics.DrawLine(pen,12,Height-3,Width-12,Height-3);if(Focused)ControlPaint.DrawFocusRectangle(e.Graphics,Rectangle.Inflate(ClientRectangle,-5,-7));}
+    protected override void OnPaint(PaintEventArgs e){e.Graphics.Clear(BackColor);TextRenderer.DrawText(e.Graphics,Text,Font,ClientRectangle,Selected?Color.White:Color.FromArgb(167,180,205),TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter);if(Selected)using(var pen=new Pen(Color.FromArgb(54,201,240),2))e.Graphics.DrawLine(pen,12,Height-3,Width-12,Height-3);if(Focused&&ShowFocusCues)using(var cue=new Pen(ButtonAtlas.AccentColor,3))e.Graphics.DrawLine(cue,12,Height-3,Width-12,Height-3);}
 }
 sealed partial class LibraryForm {
     Panel topNavigation,discoverPage,arcadePage,librarySidebar;
@@ -20,11 +20,11 @@ sealed partial class LibraryForm {
         Action arrange=delegate{topNavigation.Location=new Point((header.ClientSize.Width-topNavigation.Width)/2,14);tagline.Visible=header.ClientSize.Width>=1450;};header.Resize+=delegate{arrange();};arrange();
         discoverPage=BuildDiscoverPage();arcadePage=new Panel{Dock=DockStyle.Fill,Padding=new Padding(36),Visible=false,BackColor=BackColor};
         var arcadeText=new Label{Dock=DockStyle.Top,Height=150,ForeColor=Color.White,Font=UiTheme.Text(22,true),Text="Arcade\r\n\r\nComing soon"};arcadePage.Controls.Add(arcadeText);
-        Controls.Add(discoverPage);Controls.SetChildIndex(discoverPage,0);Controls.Add(arcadePage);Controls.SetChildIndex(arcadePage,0);
+        Controls.Add(discoverPage);Controls.SetChildIndex(discoverPage,0);Controls.Add(arcadePage);Controls.SetChildIndex(arcadePage,0);BuildPrimaryTransitionLifecycle();
     }
-    void SelectPrimaryPage(int page){
-        if(page<0||page>2||primaryPage==page)return;
-        CancelGameTransition();primaryPage=page;
+    void ApplyPrimaryPage(int page){
+        if(page<0||page>2)return;
+        CancelDiscoverTransition();CancelGameTransition();primaryPage=page;
         SuspendLayout();try{gameViewport.Visible=librarySidebar.Visible=page==0;discoverPage.Visible=page==1;arcadePage.Visible=page==2;for(int i=0;i<primaryTabs.Length;i++){primaryTabs[i].Selected=i==page;primaryTabs[i].Invalidate();}}finally{ResumeLayout(true);}
         banner.PauseTransition(page!=0);if(page==0){if(IsCustomGame&&CurrentCustom.ManagedProjectId==ManagedGames.Id)RefreshManagedPresentation(CurrentCustom);LayoutHeroContent();}
     }

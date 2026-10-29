@@ -1,11 +1,10 @@
-# Astera 0.1.37 — Discover new worlds
+# Astera 0.1.38 — A smoother Discover
 
-- Added Discover with featured projects, search, categories and project pages.
-- Install and launch Gacha Nebula + from Astera.
-- Gacha updates preserve Recovery backups and personal exports.
-- Choose Thunderstore profiles beside Play, with profile management and code imports in one menu.
-- Cleaned up game banners and fixed cramped text in the Astera update window.
-- Added a sharper download icon that follows your chosen accent color.
-- Reserved a separate Arcade tab for future built-in games.
+- Added loading transitions between Library, Discover and Arcade, and within Discover project pages.
+- Pages now prepare behind the loading cover before fading and sliding into view.
+- Added Last Light's new banner.
+- Improved Discover card artwork sizing, search styling and carousel controls.
+- Click anywhere on a project card to explore it, with a smaller Install or Manage action.
+- Removed the stray Working strip from game banners and dark selection outlines.
 
 Windows Defender detection reports remain under investigation.

@@ -27,3 +27,5 @@ Astera checks the catalog on first Discover visit. Offline it uses a verified
 cached catalog or the bundled one. Downloads still use the project's existing
 verified install workflow and normal review steps; catalog browsing installs nothing.
 Gacha Nebula + uses the reviewed managed ZIP provider. Its Package metadata pins Version, Bytes, ZIP Hash, LauncherHash and GameHash. An empty Url offers a user-selected verified ZIP; a signed HTTPS Url enables the normal download path. Play invokes the protective helper with --play. Existing Recovery and personal exports are preserved; same-version altered packages and downgrades are refused. New managed installers require reviewed client code.
+
+Artwork positioning: CatalogImage supports optional Fit ('cover' or 'contain') and X/Y alignment in the range 0..1. A project's optional HeroArtwork overrides card art in featured/detail banners. Missing settings keep existing catalogs compatible; Gacha and Last Light default to showing the full artwork. The supplied Last Light logo is a local fallback for its currently empty live artwork entry.

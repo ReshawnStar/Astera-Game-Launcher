@@ -23,8 +23,8 @@ sealed class DiscoverScroller:UserControl,IMessageFilter {
     }
 }
 sealed class DiscoverArtwork:Panel {
-    internal Image Artwork;internal bool Shade;internal string CatalogKey="";
+    internal Image Artwork;internal bool Shade;internal string Fit="cover";internal float ImageX=.5f,ImageY=.5f;internal string CatalogKey="";
     internal DiscoverArtwork(){DoubleBuffered=true;BackColor=Color.FromArgb(22,30,54);}
-    protected override void OnPaintBackground(PaintEventArgs e){e.Graphics.Clear(BackColor);if(Artwork!=null)Banner.Cover(e.Graphics,Artwork,ClientRectangle);if(Shade&&Width>0&&Height>0)using(var brush=new System.Drawing.Drawing2D.LinearGradientBrush(ClientRectangle,Color.FromArgb(235,12,17,33),Color.FromArgb(45,12,17,33),0f))e.Graphics.FillRectangle(brush,ClientRectangle);}
+    protected override void OnPaintBackground(PaintEventArgs e){e.Graphics.Clear(BackColor);if(Artwork!=null){float ratio=Fit=="contain"?Math.Min(Width/(float)Artwork.Width,Height/(float)Artwork.Height):Math.Max(Width/(float)Artwork.Width,Height/(float)Artwork.Height);float w=Artwork.Width*ratio,h=Artwork.Height*ratio;var destination=new RectangleF((Width-w)*ImageX,(Height-h)*ImageY,w,h);using(var attributes=new System.Drawing.Imaging.ImageAttributes()){attributes.SetWrapMode(System.Drawing.Drawing2D.WrapMode.TileFlipXY);e.Graphics.InterpolationMode=System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;e.Graphics.DrawImage(Artwork,Rectangle.Round(destination),0,0,Artwork.Width,Artwork.Height,GraphicsUnit.Pixel,attributes);}}if(Shade&&Width>0&&Height>0)using(var brush=new System.Drawing.Drawing2D.LinearGradientBrush(ClientRectangle,Color.FromArgb(235,12,17,33),Color.FromArgb(45,12,17,33),0f))e.Graphics.FillRectangle(brush,ClientRectangle);}
 }
 }

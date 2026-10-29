@@ -29,6 +29,7 @@ static class Program {
         if(args.Length==2&&args[0]=="--catalog-validate"){try{DiscoverCatalog.Parse(File.ReadAllText(args[1]));return 0;}catch(Exception error){AsteraDiagnostics.Write("Invalid project catalog",error);return 1;}}
         if(args.Length==2&&args[0]=="--managed-game-audit")return LibraryForm.AuditManagedGame(args[1]);
         if(args.Length==3&&args[0]=="--nebula-package-audit")return LibraryForm.AuditManagedGame(args[1],args[2]);
+        if(args.Length==2&&args[0]=="--primary-transition-audit")return LibraryForm.AuditPrimaryTransition(args[1]);
         if(args.Length==2&&args[0]=="--discover-audit")return LibraryForm.AuditDiscover(args[1]);
         if(args.Length==2&&args[0]=="--activity-audit")return LibraryForm.AuditActivity(args[1]);
         if(args.Length==2&&args[0]=="--startup-audit")return LibraryForm.AuditStartup(args[1]);
