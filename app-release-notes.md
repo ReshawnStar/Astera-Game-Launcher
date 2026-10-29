@@ -1,7 +1,6 @@
-# Astera 0.1.39 — Gacha installation repair
+# Astera 0.1.40 — A home for your games
 
-- Shortened temporary installation paths for Gacha Nebula + to fix Windows path-length failures.
-- Temporary-file cleanup now retries brief file locks and preserves the original error if cleanup is blocked.
-- Added clearer guidance for permission and path-length errors.
-
-If Windows reports that a game path is too long, choose a short local folder such as C:\Games.
+- New installations of Gacha Nebula + use an Astera game library outside OneDrive by default. You can choose another location.
+- Astera can find and link a verified existing Gacha Nebula + installation, with a manual Locate option if needed.
+- Uninstall Gacha Nebula + while keeping saves, Recovery backups and personal files. Reinstall from the same Library entry.
+- Fixed installation in longer folder paths, including nested Documents-style locations.

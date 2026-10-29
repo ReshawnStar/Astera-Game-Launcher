@@ -137,7 +137,7 @@ sealed partial class LibraryForm {
         check.Text="Check for updates";Style(check);((AsteraButton)check).Symbol=ButtonSymbol.Refresh;check.MinimumSize=new Size(195,48);check.Click+=async delegate{await Check(false);};
         moreMenu=AsteraMenuRenderer.Create(menuComponents);moreMenu.Items.Add("Open game folder",null,delegate{OpenGameFolder();});moreMenu.Items.Add("Game settings",null,delegate{Configure();});moreMenu.Items.Add("Update activity",null,delegate{SelectLibraryTab(1);});moreMenu.Items.Add("Open Astera logs",null,delegate{OpenDiagnostics();});moreMenu.Items.Add("Collect game logs",null,delegate{CollectGameLogs();});
         moreMenu.Items.Add("Astera update activity",null,delegate{ShowAsteraActivity();});moreMenu.Items.Add("Astera changelog",null,delegate{AppChangelog.Show(this);});moreMenu.Items.Add("Capture UI snapshot",null,delegate{CaptureUiFromMenu();});
-        var more=Button("",delegate(object sender,EventArgs e){var button=(Control)sender;moreMenu.Show(button,new Point(0,button.Height));});more.MinimumSize=new Size(48,48);((AsteraButton)more).Symbol=ButtonSymbol.More;more.AccessibleName="More options";
+        BuildManagedLibraryMenu();var more=Button("",delegate(object sender,EventArgs e){var button=(Control)sender;moreMenu.Show(button,new Point(0,button.Height));});more.MinimumSize=new Size(48,48);((AsteraButton)more).Symbol=ButtonSymbol.More;more.AccessibleName="More options";
         action.Controls.AddRange(new Control[]{play,check,more});action.Controls.SetChildIndex(modProfileStrip,1);BuildPlaytimeStats(action);banner.Controls.Add(action);
         banner.Resize+=delegate{LayoutHeroContent();};
 
