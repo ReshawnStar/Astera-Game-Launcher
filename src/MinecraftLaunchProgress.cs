@@ -5,30 +5,29 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 namespace Astera {
-// Only contain an automatic CurseForge foreground change. Never hide a login
-// prompt, another application, or override new mouse/keyboard input.
+interface ILaunchDesktop {IntPtr Foreground();string Title(IntPtr window);bool FromHost(IntPtr window,string directory);bool Minimize(IntPtr window);void Restore(Form owner);}
+sealed class WindowsLaunchDesktop:ILaunchDesktop {
+ [DllImport("user32.dll")]static extern IntPtr GetForegroundWindow();
+ [DllImport("user32.dll",CharSet=CharSet.Unicode)]static extern int GetWindowText(IntPtr window,StringBuilder title,int length);
+ [DllImport("user32.dll")]static extern uint GetWindowThreadProcessId(IntPtr window,out uint process);
+ [DllImport("user32.dll")]static extern bool ShowWindowAsync(IntPtr window,int command);
+ public IntPtr Foreground(){return GetForegroundWindow();}
+ public string Title(IntPtr window){var text=new StringBuilder(128);GetWindowText(window,text,text.Capacity);return text.ToString();}
+ public bool FromHost(IntPtr window,string directory){uint pid;GetWindowThreadProcessId(window,out pid);try{using(var process=Process.GetProcessById((int)pid)){string path=Path.GetFullPath(process.MainModule.FileName);return path.StartsWith(directory.TrimEnd(Path.DirectorySeparatorChar)+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase);}}catch(System.ComponentModel.Win32Exception){return false;}catch(InvalidOperationException){return false;}catch(ArgumentException){return false;}}
+ public bool Minimize(IntPtr window){return ShowWindowAsync(window,7);}
+ public void Restore(Form owner){owner.Activate();}
+}
+// A single correction contains the automatic main-manager activation. It never
+// closes a manager, hides login prompts, or pins Astera above other applications.
 sealed class CurseForgeBackground {
-    [StructLayout(LayoutKind.Sequential)]struct InputStamp {internal uint Size,Time;}
-    [DllImport("user32.dll")]static extern bool GetLastInputInfo(ref InputStamp stamp);
-    [DllImport("user32.dll")]static extern IntPtr GetForegroundWindow();
-    [DllImport("user32.dll",CharSet=CharSet.Unicode)]static extern int GetWindowText(IntPtr window,StringBuilder title,int length);
-    [DllImport("user32.dll")]static extern uint GetWindowThreadProcessId(IntPtr window,out uint process);
-    [DllImport("user32.dll")]static extern bool ShowWindowAsync(IntPtr window,int command);
-    readonly string hostDirectory;uint input;bool allowed;
-    internal int BackgroundedWindows;internal readonly bool InitiallyArmed;internal bool InputInterrupted;
-    internal CurseForgeBackground(Form owner,ProcessStartInfo command){hostDirectory=command.UseShellExecute?"":Path.GetDirectoryName(command.FileName);var stamp=new InputStamp{Size=(uint)Marshal.SizeOf(typeof(InputStamp))};allowed=hostDirectory.Length>0&&GetForegroundWindow()==owner.Handle&&GetLastInputInfo(ref stamp);input=stamp.Time;InitiallyArmed=allowed;}
-    internal void Stop(){allowed=false;}
-    internal void Pulse(Form owner){if(!allowed||owner.IsDisposed||!owner.Visible||owner.WindowState==FormWindowState.Minimized)return;
-        var stamp=new InputStamp{Size=(uint)Marshal.SizeOf(typeof(InputStamp))};if(!GetLastInputInfo(ref stamp)){allowed=false;return;}IntPtr foreground=GetForegroundWindow();if(foreground==owner.Handle){input=stamp.Time;return;}if(stamp.Time!=input){InputInterrupted=true;allowed=false;return;}if(foreground==IntPtr.Zero)return;
-        var title=new StringBuilder(128);GetWindowText(foreground,title,title.Capacity);if(title.ToString()!="CurseForge"){allowed=false;return;}
-        uint pid;GetWindowThreadProcessId(foreground,out pid);try{using(var process=Process.GetProcessById((int)pid)){string path=Path.GetFullPath(process.MainModule.FileName);if(!path.StartsWith(hostDirectory.TrimEnd(Path.DirectorySeparatorChar)+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase)){allowed=false;return;}}}catch(System.ComponentModel.Win32Exception){allowed=false;return;}catch(InvalidOperationException){allowed=false;return;}catch(ArgumentException){allowed=false;return;}
-        // SW_SHOWMINNOACTIVE leaves the game manager running. Its windows and
-        // account state are not closed, changed or injected into.
-        if(ShowWindowAsync(foreground,7)){BackgroundedWindows++;owner.Activate();}
-    }
+ readonly string hostDirectory;readonly ILaunchDesktop desktop;bool allowed,lastWasOwner;
+ internal int BackgroundedWindows;internal readonly bool InitiallyArmed;
+ internal CurseForgeBackground(Form owner,ProcessStartInfo command,ILaunchDesktop desktop=null){this.desktop=desktop??new WindowsLaunchDesktop();hostDirectory=command.UseShellExecute?"":Path.GetDirectoryName(command.FileName);InitiallyArmed=allowed=hostDirectory.Length>0&&this.desktop.Foreground()==owner.Handle;lastWasOwner=InitiallyArmed;}
+ internal void Stop(){allowed=false;}
+ internal void Pulse(Form owner){if(!allowed||owner.IsDisposed||!owner.Visible||owner.WindowState==FormWindowState.Minimized)return;IntPtr foreground=desktop.Foreground();if(foreground==owner.Handle){lastWasOwner=true;return;}if(foreground==IntPtr.Zero)return;if(desktop.Title(foreground)!="CurseForge"){lastWasOwner=false;return;}if(!desktop.FromHost(foreground,hostDirectory)){allowed=false;return;}if(desktop.Minimize(foreground)){BackgroundedWindows++;allowed=false;if(lastWasOwner)desktop.Restore(owner);}}
 }
 sealed partial class LibraryForm {
-    sealed class MinecraftLaunchNotice {internal string Profile,Name,GameId;internal ProcessStartInfo Command;internal DateTime Started;internal bool TimedOut;internal CurseForgeBackground Background;internal LaunchFlavor Flavor;}
+    sealed class MinecraftLaunchNotice {internal string Profile,Name,GameId;internal ProcessStartInfo Command;internal DateTime Started;internal bool TimedOut,OverlayDismissed;internal CurseForgeBackground Background;internal LaunchFlavor Flavor;}
     MinecraftLaunchNotice minecraftLaunch;
     readonly Timer minecraftLaunchClock=new Timer{Interval=100};bool minecraftLaunchClockReady;
     bool MinecraftLaunchVisible {get{return minecraftLaunch!=null&&GameKind==0&&String.Equals(store.Settings.Profile,minecraftLaunch.Profile,StringComparison.OrdinalIgnoreCase);}}
@@ -47,6 +46,6 @@ sealed partial class LibraryForm {
     }
     void StopMinecraftLaunch(){minecraftLaunchClock.Stop();if(minecraftLaunch!=null)minecraftLaunch.Background.Stop();minecraftLaunch=null;}
     void ShowMinecraftLaunchManager(){if(minecraftLaunch==null)return;minecraftLaunch.Background.Stop();var command=minecraftLaunch.Command;if(!command.UseShellExecute&&Path.GetFileName(command.FileName).Equals("OverwolfLauncher.exe",StringComparison.OrdinalIgnoreCase)){using(var process=Process.Start(new ProcessStartInfo(command.FileName){UseShellExecute=false,WorkingDirectory=command.WorkingDirectory,Arguments="-launchapp "+CurseForgeLaunch.AppId+" -from-startmenu"})){};}else using(var process=Process.Start(new ProcessStartInfo(minecraftLaunch.Profile){UseShellExecute=true})){};}
-    void PresentMinecraftLaunch(){bool timedOut=minecraftLaunch.TimedOut;workPanel.Visible=true;releaseLabel.Visible=false;workHeartbeat.Stop();if(gameBody!=null)gameBody.RowStyles[3].Height=80;workMeter.Fraction=timedOut?0:-1;workLabel.AutoEllipsis=true;workLabel.Text=timedOut?"Minecraft hasn't started yet. Open CurseForge to check.":(DateTime.UtcNow-minecraftLaunch.Started<TimeSpan.FromSeconds(2)?"Opening CurseForge in the background…":"Preparing Minecraft…")+" · "+minecraftLaunch.Name+" · "+(DateTime.UtcNow-minecraftLaunch.Started).ToString(@"mm\:ss");workFlavor.Visible=true;workFlavor.Text=timedOut?"CurseForge may need attention. Open its window to check.":minecraftLaunch.Flavor.At(minecraftLaunch.Started,store.Settings.StartupFlavor);workCancel.Text=workCancel.AccessibleName="Open launcher";workCancel.Visible=workCancel.Enabled=true;workCancel.Parent.Width=145;workCancel.Width=145;}
+    void PresentMinecraftLaunch(){bool timedOut=minecraftLaunch.TimedOut;workPanel.Visible=true;releaseLabel.Visible=false;workHeartbeat.Stop();if(gameBody!=null)gameBody.RowStyles[3].Height=80;workMeter.Fraction=timedOut||launchScreen!=null?0:-1;workLabel.AutoEllipsis=true;workLabel.Text=timedOut?"Minecraft hasn't started yet. Open CurseForge to check.":(DateTime.UtcNow-minecraftLaunch.Started<TimeSpan.FromSeconds(2)?"Opening CurseForge in the background…":"Preparing Minecraft…")+" · "+minecraftLaunch.Name+" · "+(DateTime.UtcNow-minecraftLaunch.Started).ToString(@"mm\:ss");workFlavor.Visible=true;workFlavor.Text=timedOut?"CurseForge may need attention. Open its window to check.":minecraftLaunch.Flavor.At(minecraftLaunch.Started,store.Settings.StartupFlavor);workCancel.Text=workCancel.AccessibleName="Open launcher";workCancel.Visible=workCancel.Enabled=true;workCancel.Parent.Width=145;workCancel.Width=145;}
 }
 }

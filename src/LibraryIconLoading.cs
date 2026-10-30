@@ -19,7 +19,7 @@ sealed partial class LibraryForm {
     readonly HashSet<string> libraryIconsPending=new HashSet<string>();
     readonly SemaphoreSlim libraryIconGate=new SemaphoreSlim(2);
     bool libraryIconsPosted;
-    static string LibraryIconKey(CustomGame game){return String.Join("|",new[]{game.Id,game.Executable,game.Platform,game.PlatformId,game.Icon,game.RobloxIcon,game.UniverseId.ToString()});}
+    static string LibraryIconKey(CustomGame game){return String.Join("|",new[]{game.Id,game.Executable,game.Platform,game.PlatformId,game.Icon,game.RobloxIcon,game.UniverseId.ToString(),game.ManagedProjectId});}
     string VisibleLibraryIconPath(CustomGame game){string path;return game!=null&&visibleLibraryPaths.TryGetValue(game.Id,out path)?path:null;}
     Image VisibleLibraryIcon(CustomGame game){Image image;return game!=null&&visibleLibraryIcons.TryGetValue(game.Id,out image)?image:null;}
     void ScheduleLibraryIcons(){if(previewMode||libraryIconsPosted||IsDisposed||Disposing||!Visible||!IsHandleCreated)return;libraryIconsPosted=true;BeginInvoke((Action)delegate{libraryIconsPosted=false;if(!IsDisposed&&!Disposing&&Visible&&WindowState!=FormWindowState.Minimized)WarmVisibleLibraryIcons(startupScreen==null);});}
@@ -27,7 +27,7 @@ sealed partial class LibraryForm {
     bool IsLibraryIconVisible(string id){if(IsDisposed||Disposing||!Visible||WindowState==FormWindowState.Minimized)return false;int first=games.Items.Count==0?0:games.TopIndex,last=Math.Min(games.Items.Count,first+games.ClientSize.Height/Math.Max(1,games.ItemHeight)+1);for(int i=first;i<last;i++){var row=games.Items[i] as LibraryEntry;if(row!=null&&row.Custom!=null&&row.Custom.Id==id)return true;}return false;}
     static LibraryIconResult ReadLibraryIcon(string path){if(String.IsNullOrWhiteSpace(path)||!File.Exists(path))return null;try{return new LibraryIconResult{Path=path,Image=ReadCustomIcon(path)};}catch(IOException){}catch(ArgumentException){}catch(UnauthorizedAccessException){}return null;}
     static LibraryIconResult FindLibraryIcon(CustomGame game,string root,bool online,CancellationToken token){
-        token.ThrowIfCancellationRequested();var own=ReadLibraryIcon(game.Icon);if(own!=null)return own;
+        token.ThrowIfCancellationRequested();var own=ReadLibraryIcon(game.Icon);if(own!=null)return own;if(game.ManagedProjectId==ManagedGames.Id)return new LibraryIconResult{Image=new Bitmap(GameArtwork.NebulaIcon)};
         if(game.Platform=="roblox"){
             var saved=ReadLibraryIcon(game.RobloxIcon);if(saved!=null)return saved;
             string cache=Path.Combine(root,"artwork","roblox");if(game.UniverseId>0){saved=ReadLibraryIcon(Path.Combine(cache,"rbx-"+game.UniverseId+"-icon.png"));if(saved!=null)return saved;}
@@ -56,7 +56,7 @@ sealed partial class LibraryForm {
     async void QueueLibraryIcon(CustomGame game,bool online){
         string key=LibraryIconKey(game);DateTime last;if(libraryIconsPending.Contains(key)||libraryIconAttempts.TryGetValue(key,out last)&&DateTime.UtcNow-last<TimeSpan.FromMinutes(5))return;
         libraryIconsPending.Add(key);libraryIconAttempts[key]=DateTime.UtcNow;bool acquired=false;LibraryIconResult result=null;var token=itchArtworkStop.Token;
-        var snapshot=new CustomGame{Id=game.Id,Name=game.Name,Executable=game.Executable,Platform=game.Platform,PlatformId=game.PlatformId,Icon=game.Icon,RobloxIcon=game.RobloxIcon,UniverseId=game.UniverseId};
+        var snapshot=new CustomGame{Id=game.Id,Name=game.Name,Executable=game.Executable,Platform=game.Platform,PlatformId=game.PlatformId,Icon=game.Icon,RobloxIcon=game.RobloxIcon,UniverseId=game.UniverseId,ManagedProjectId=game.ManagedProjectId};
         try{await libraryIconGate.WaitAsync(token);acquired=true;if(!IsLibraryIconVisible(game.Id)){libraryIconAttempts.Remove(key);return;}result=await Task.Run(()=>FindLibraryIcon(snapshot,store.Root,false,token));token.ThrowIfCancellationRequested();if(result==null&&online){libraryIconGate.Release();acquired=false;await libraryIconGate.WaitAsync(token);acquired=true;if(!IsLibraryIconVisible(game.Id)){libraryIconAttempts.Remove(key);return;}result=await Task.Run(()=>FindLibraryIcon(snapshot,store.Root,true,token));token.ThrowIfCancellationRequested();}ApplyLibraryIcon(snapshot,key,result);}
         catch(OperationCanceledException){libraryIconAttempts.Remove(key);}
         catch(Exception error){if(!token.IsCancellationRequested&&!IsDisposed)AsteraDiagnostics.Write("Library icon unavailable",new IOException(error.GetType().Name));}

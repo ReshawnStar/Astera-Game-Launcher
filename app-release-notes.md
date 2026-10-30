@@ -19,3 +19,7 @@
 - CurseForge launches show progress and keep the manager in the background when possible. Open launcher is available if it needs attention.
 - Long game launches show a waiting notice, optional familiar loading lines and an honest timeout status.
 - Added the supplied Minecraft icon, artwork and logo for non-Minecraft² profiles.
+
+- Game launches now use the full Astera waiting screen, with Back to library and Open launcher actions.
+- Fixed mouse movement cancelling background CurseForge handling.
+- Restored Gacha Nebula +’s original game icon instead of the save helper’s generic icon.

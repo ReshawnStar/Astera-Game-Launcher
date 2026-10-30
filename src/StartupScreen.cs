@@ -10,17 +10,17 @@ using System.Windows.Forms;
 namespace Astera {
 sealed class StartupScreen:Panel {
     const TextFormatFlags PaintFlags=TextFormatFlags.PreserveGraphicsClipping|TextFormatFlags.PreserveGraphicsTranslateTransform;
-    readonly System.Windows.Forms.Timer clock=new System.Windows.Forms.Timer{Interval=50};readonly Stopwatch time=Stopwatch.StartNew();
+    readonly System.Windows.Forms.Timer clock=new System.Windows.Forms.Timer{Interval=16};readonly Stopwatch time=Stopwatch.StartNew();
     readonly Font brandFont=UiTheme.Text(46,true),statusFont=UiTheme.Text(16),flavorFont=UiTheme.Text(15),captionFont=UiTheme.Text(12);
-    readonly StartupFlavorPool pool;readonly bool playful;readonly Bitmap mark;readonly AsteraButton close=new AsteraButton{Symbol=ButtonSymbol.Cancel,Text="",Role=ButtonRole.Quiet,AutoSize=false,Size=new Size(38,38),MinimumSize=new Size(38,38),Padding=new Padding(6),AccessibleName="Close Astera"};
+    readonly Action leaveLaunch;readonly StartupFlavorPool pool;readonly bool playful;readonly Bitmap mark;readonly AsteraButton close=new AsteraButton{Symbol=ButtonSymbol.Cancel,Text="",Role=ButtonRole.Quiet,AutoSize=false,Size=new Size(38,38),MinimumSize=new Size(38,38),Padding=new Padding(6),AccessibleName="Close Astera"};
     string stage="Getting your library ready…",line="";long nextLine=3500;Form owner;
     internal int PaintCount;internal bool AnimationRunning {get{return clock.Enabled;}}internal string StatusText {get{return stage;}}internal string FlavorText {get{return line;}}
     internal Rectangle DotsBounds {get{return new Rectangle(Width/2-32,Height/2-4,64,64);}}
     Rectangle StatusBounds {get{return new Rectangle(40,Height/2+83,Math.Max(1,Width-80),32);}}
     Rectangle FlavorBounds {get{return new Rectangle(Math.Max(30,(Width-760)/2),Height/2+153,Math.Min(760,Math.Max(1,Width-60)),68);}}
-    internal StartupScreen(StartupFlavorPool messages,bool showPlayful){pool=messages;playful=showPlayful;line=playful?pool.Next():"";Dock=DockStyle.Fill;BackColor=Color.FromArgb(12,17,33);SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.Opaque|ControlStyles.ResizeRedraw,true);
+    internal StartupScreen(StartupFlavorPool messages,bool showPlayful,Action leave=null,Action openLauncher=null){leaveLaunch=leave;pool=messages;playful=showPlayful;line=playful?pool.Next():"";Dock=DockStyle.Fill;BackColor=Color.FromArgb(12,17,33);SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.Opaque|ControlStyles.ResizeRedraw,true);
         using(var stream=Assembly.GetExecutingAssembly().GetManifestResourceStream("Astera.Brand.Mark"))using(var image=Image.FromStream(stream))mark=new Bitmap(image);
-        Controls.Add(close);close.Click+=delegate{var form=FindForm();if(form!=null)form.Close();};Resize+=delegate{close.Location=new Point(Width-close.Width-20,20);};
+        if(leave!=null){close.Text="Back to library";close.Symbol=ButtonSymbol.Previous;close.Width=180;close.MinimumSize=new Size(180,38);close.AccessibleName="Back to library without stopping the game";}Controls.Add(close);close.Click+=delegate{if(leaveLaunch!=null){leaveLaunch();return;}var form=FindForm();if(form!=null)form.Close();};if(openLauncher!=null){var open=new AsteraButton{Text="Open launcher",AutoSize=false,Size=new Size(170,40),MinimumSize=new Size(170,40),AccessibleName="Open game launcher"};open.Click+=delegate{openLauncher();};Controls.Add(open);Resize+=delegate{open.Location=new Point((Width-open.Width)/2,Height/2+235);};}Resize+=delegate{close.Location=new Point(Width-close.Width-20,20);};
         clock.Tick+=delegate{Invalidate(DotsBounds);if(playful&&time.ElapsedMilliseconds>=nextLine){nextLine=time.ElapsedMilliseconds+3500;line=pool.Next();Invalidate(FlavorBounds);}};UiEffects.Changed+=EffectsChanged;
     }
     internal void SetStatus(string text){if(stage==text)return;stage=text;Invalidate(StatusBounds);}
@@ -35,6 +35,7 @@ sealed class StartupScreen:Panel {
     protected override void OnPaint(PaintEventArgs e){PaintCount++;var g=e.Graphics;g.Clear(BackColor);int y=Height/2-120;Size title=TextRenderer.MeasureText("ASTERA",brandFont,Size.Empty,TextFormatFlags.NoPadding);int width=58+20+title.Width,x=(Width-width)/2;g.DrawImageUnscaled(mark,x,y);TextRenderer.DrawText(g,"ASTERA",brandFont,new Point(x+78,y+(58-title.Height)/2),Color.FromArgb(237,241,255),TextFormatFlags.NoPadding|TextFormatFlags.SingleLine|PaintFlags);
         LoadingDots.Draw(g,DotsBounds,time.Elapsed.TotalSeconds,UiEffects.Enabled);TextRenderer.DrawText(g,stage,statusFont,StatusBounds,Color.FromArgb(226,232,250),TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.SingleLine|TextFormatFlags.EndEllipsis|TextFormatFlags.NoPrefix|PaintFlags);
         if(playful){var caption=new Rectangle(40,Height/2+132,Math.Max(1,Width-80),20);TextRenderer.DrawText(g,"WHILE YOU WAIT",captionFont,caption,Color.FromArgb(135,149,182),TextFormatFlags.HorizontalCenter|TextFormatFlags.NoPrefix|PaintFlags);TextRenderer.DrawText(g,line,flavorFont,FlavorBounds,Color.FromArgb(171,183,213),TextFormatFlags.HorizontalCenter|TextFormatFlags.WordBreak|TextFormatFlags.NoPrefix|PaintFlags);}
+        if(leaveLaunch!=null)TextRenderer.DrawText(g,"Returning to Library will not stop the game.",captionFont,new Rectangle(30,Height-48,Math.Max(1,Width-60),30),Color.FromArgb(135,149,182),TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix|PaintFlags);
         using(var border=new Pen(Color.FromArgb(44,53,80)))g.DrawRectangle(border,0,0,Width-1,Height-1);
     }
     protected override void Dispose(bool disposing){if(disposing){UiEffects.Changed-=EffectsChanged;DetachOwner();clock.Dispose();mark.Dispose();brandFont.Dispose();statusFont.Dispose();flavorFont.Dispose();captionFont.Dispose();}base.Dispose(disposing);}

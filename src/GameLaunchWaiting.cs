@@ -11,7 +11,7 @@ sealed class LaunchFlavor {
  internal string At(DateTime start,bool enabled){if(!enabled||DateTime.UtcNow-start<TimeSpan.FromSeconds(6))return "";if(DateTime.UtcNow>=next){Text=pool.Next();next=DateTime.UtcNow.AddSeconds(5);}return Text;}
 }
 sealed partial class LibraryForm {
- sealed class GameLaunchWait {internal string Id,Activity,Name;internal CustomGame Game;internal DateTime Started;internal bool TimedOut,Dismissed;internal LaunchFlavor Flavor;}
+ sealed class GameLaunchWait {internal string Id,Activity,Name;internal CustomGame Game;internal DateTime Started;internal bool TimedOut,Dismissed,OverlayDismissed;internal LaunchFlavor Flavor;}
  readonly Dictionary<string,GameLaunchWait> gameLaunchWaits=new Dictionary<string,GameLaunchWait>();
  readonly Timer gameWaitClock=new Timer{Interval=500};bool gameWaitReady,gameWaitPolling;DateTime nextGameWaitProbe;
  static string LaunchRunningId(string key,CustomGame game){return key=="builtin:0"?"builtin-minecraft:"+MC2Pack.Engine.Hash(System.Text.Encoding.UTF8.GetBytes(game.Executable.ToLowerInvariant())).Substring(0,16):key=="builtin:1"?"builtin-stardash":key=="builtin:2"?"builtin-ftl":game.Id;}
@@ -29,6 +29,6 @@ sealed partial class LibraryForm {
  }
  void ClearLateLaunchNotices(){bool running;if(minecraftLaunch!=null&&minecraftLaunch.TimedOut&&minecraftLaunch.GameId!=null&&runningGames.TryGetValue(minecraftLaunch.GameId,out running)&&running)StopMinecraftLaunch();foreach(var wait in gameLaunchWaits.Values.Where(w=>w.TimedOut).ToArray())if(runningGames.TryGetValue(wait.Id,out running)&&running)ObserveGameLaunch(wait,true);}
  void DismissGameLaunchWait(){var wait=SelectedLaunchWait;if(wait==null)return;if(wait.TimedOut)gameLaunchWaits.Remove(wait.Id);else wait.Dismissed=true;UpdateWorkProgress();}
- void PresentGameLaunchWait(GameLaunchWait wait){workPanel.Visible=true;releaseLabel.Visible=false;workHeartbeat.Stop();if(gameBody!=null)gameBody.RowStyles[3].Height=80;workMeter.Fraction=wait.TimedOut?0:-1;workLabel.Text=(wait.TimedOut?"Still waiting for ":"Starting ")+wait.Name+(wait.TimedOut?". Check its launcher if needed.":"… · "+(DateTime.UtcNow-wait.Started).ToString(@"mm\:ss"));workFlavor.Text=wait.TimedOut?"This does not mean the game failed. You can check its launcher or dismiss this notice.":wait.Flavor.At(wait.Started,store.Settings.StartupFlavor);workFlavor.Visible=true;workCancel.Text=workCancel.AccessibleName="Dismiss";workCancel.Visible=workCancel.Enabled=true;workCancel.Parent.Width=95;workCancel.Width=95;}
+ void PresentGameLaunchWait(GameLaunchWait wait){workPanel.Visible=true;releaseLabel.Visible=false;workHeartbeat.Stop();if(gameBody!=null)gameBody.RowStyles[3].Height=80;workMeter.Fraction=wait.TimedOut||launchScreen!=null?0:-1;workLabel.Text=(wait.TimedOut?"Still waiting for ":"Starting ")+wait.Name+(wait.TimedOut?". Check its launcher if needed.":"… · "+(DateTime.UtcNow-wait.Started).ToString(@"mm\:ss"));workFlavor.Text=wait.TimedOut?"This does not mean the game failed. You can check its launcher or dismiss this notice.":wait.Flavor.At(wait.Started,store.Settings.StartupFlavor);workFlavor.Visible=true;workCancel.Text=workCancel.AccessibleName="Dismiss";workCancel.Visible=workCancel.Enabled=true;workCancel.Parent.Width=95;workCancel.Width=95;}
 }
 }

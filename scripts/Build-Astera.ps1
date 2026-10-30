@@ -63,6 +63,7 @@ $art+=('/resource:'+(Join-Path $root 'assets/backgrounds/ftl-multiverse.png')+',
 $art+=('/resource:'+(Join-Path $root 'assets/games/ftl-multiverse-icon.png')+',Astera.Games.FtlMultiverseIcon')
 $art+=('/resource:'+(Join-Path $root 'assets/games/minecraft-squared-icon.png')+',Astera.Games.MinecraftSquaredIcon')
 $art+=('/resource:'+(Join-Path $root 'assets/games/minecraft-vanilla-icon.png')+',Astera.Games.MinecraftVanillaIcon')
+$art+=('/resource:'+(Join-Path $root 'assets/games/gacha-nebula-icon.png')+',Astera.Games.GachaNebulaIcon')
 $art+=('/resource:'+(Join-Path $root 'assets/games/minecraft-vanilla-logo.png')+',Astera.Games.MinecraftVanillaLogo')
 $art+=('/resource:'+(Join-Path $root 'assets/backgrounds/minecraft-vanilla.png')+',Astera.Backgrounds.MinecraftVanilla')
 $art+=('/resource:'+(Join-Path $root 'content/minecraft-0.7.173-gf205.md')+',Astera.Notes.Minecraft205')

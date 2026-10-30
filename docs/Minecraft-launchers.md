@@ -10,8 +10,8 @@ CurseForge on Overwolf receives its own generated launch-game URI directly when
 installed. This avoids Prism owning the shared curseforge URL scheme, without
 changing Windows associations. Launcher account files are never copied or read.
 
-A launch notice explains preparation and offers Open launcher if CurseForge needs
-attention. The manager is requested in the background. A short-lived focus guard
+A full-window logo and six-dot waiting screen explains preparation and offers Open launcher if CurseForge needs
+attention. The manager is requested in the background. A one-correction focus guard
 only minimizes an automatically activated main CurseForge window from the known
 host directory; input in another app or explicitly opening the manager takes
 priority. Login prompts and other applications are not hidden. External launcher
@@ -20,7 +20,7 @@ window behavior remains platform-dependent.
 Other supported successful launch paths show the same waiting presentation. It
 uses actual process detection, not a claim that internal game loading is complete.
 Roblox detection refers to its client, not proof of joining a particular experience.
-Optional supplied waiting lines appear separately from operational status. Dismiss
+Optional supplied waiting lines appear separately from operational status. Back to library hides the cover while retaining launch tracking. Dismiss
 never terminates a game. A timeout asks for attention rather than reporting failure;
 late starts clear stale notices when the normal running monitor detects them.
 
