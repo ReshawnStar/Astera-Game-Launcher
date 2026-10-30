@@ -8,7 +8,7 @@
       "Summary": "A new chapter in character creation.",
       "Description": "Create characters and build Studio scenes with Gacha Nebula +. This release adds saving, backup and stability improvements to the existing Nebula experience.",
       "Requirements": "Windows. Keep the entire game folder together. Astera installs the included launcher helper and runtime.",
-      "Notes": "Saving and stability improvements\n\n- More reliable save checkpoints and recovery backups.\n- Fixes for Studio scene loading and character placement.\n- Less background rendering and unnecessary redraw work.",
+      "Notes": "Startup fix\n\n- Fixed a launch loop that could prevent a new profile from opening again before its first gameplay save.\n- Keeps a copy of the initial profile and preserves existing save backups.",
       "Status": "available",
       "Featured": true,
       "LibraryKind": -1,
@@ -18,11 +18,11 @@
       "Screenshots": [],
       "Package": {
         "GameHash": "d35818eefacb82b966c4c7633fb0b6784e3f4696eae07ab7bffe3d14cba6da97",
-        "LauncherHash": "cc1fca71ed80608167d71b522f888c2995d0a73a4bddd30ea1e3fb8fad9c8c7f",
-        "Hash": "65c55de608c0a2259b504db6be8d5c6f3740b21be4d5a054c1263112eeb320f0",
-        "Version": "2026.10.28",
-        "Bytes": 561950843,
-        "Url": "https://github.com/ReshawnStar/Astera-Game-Launcher/releases/download/gacha-nebula-plus-2026.10.28/Gacha-Nebula-Plus-2026-10-28.zip"
+        "LauncherHash": "5bb4eb86445486fbb6a8a6a8ad0b0df824c3b95f3ba726ca64fa39e06a37782c",
+        "Hash": "71862916c0790123665dbf8114a5bb4c9d0bd9421532a3c8225ac33eee4779fe",
+        "Version": "2026.10.29",
+        "Bytes": 561942744,
+        "Url": "https://github.com/ReshawnStar/Astera-Game-Launcher/releases/download/gacha-nebula-plus-2026.10.29/Gacha-Nebula-Plus-2026-10-29.zip"
       }
     },
     {
