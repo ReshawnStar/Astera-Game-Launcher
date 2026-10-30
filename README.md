@@ -32,7 +32,8 @@ silently diverge between the command line and an IDE. No signing key is required
 to build or run focused application checks.
 
 The current public release is 0.1.40. Source 0.1.41 is a maintenance candidate;
-changing `VERSION` does not publish anything. See [player-facing release notes](app-release-notes.md).
+changing `VERSION` does not publish anything. See [validation and limitations](docs/MAINTENANCE-0.1.41.md)
+and [player-facing release notes](app-release-notes.md).
 Older implementation and release details are preserved in
 [the historical README](docs/history/README-through-0.1.40.md), not current setup instructions.
 
@@ -54,3 +55,4 @@ including an update helper. Their original cause remains unresolved; clean local
 scans are not proof that another computer cannot flag a build. Use official releases
 and report the exact version and threat name. Do not disable antivirus protection
 or add exclusions as an installation solution.
+
