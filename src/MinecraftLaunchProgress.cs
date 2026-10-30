@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -27,21 +27,23 @@ sealed class CurseForgeBackground {
  internal void Pulse(Form owner){if(!allowed||owner.IsDisposed||!owner.Visible||owner.WindowState==FormWindowState.Minimized)return;IntPtr foreground=desktop.Foreground();if(foreground==owner.Handle){lastWasOwner=true;return;}if(foreground==IntPtr.Zero)return;if(desktop.Title(foreground)!="CurseForge"){lastWasOwner=false;return;}if(!desktop.FromHost(foreground,hostDirectory)){allowed=false;return;}if(desktop.Minimize(foreground)){BackgroundedWindows++;allowed=false;if(lastWasOwner)desktop.Restore(owner);}}
 }
 sealed partial class LibraryForm {
-    sealed class MinecraftLaunchNotice {internal string Profile,Name,GameId;internal ProcessStartInfo Command;internal DateTime Started;internal bool TimedOut,OverlayDismissed;internal CurseForgeBackground Background;internal LaunchFlavor Flavor;}
+    sealed class MinecraftLaunchNotice {internal string Profile,Name,GameId;internal ProcessStartInfo Command;internal DateTime Started;internal bool TimedOut,OverlayDismissed,WindowReady;internal System.Collections.Generic.HashSet<IntPtr> ExistingWindows;internal CurseForgeBackground Background;internal LaunchFlavor Flavor;}
     MinecraftLaunchNotice minecraftLaunch;
+    bool minecraftWindowPolling;DateTime nextMinecraftWindowProbe;
     readonly Timer minecraftLaunchClock=new Timer{Interval=100};bool minecraftLaunchClockReady;
     bool MinecraftLaunchVisible {get{return minecraftLaunch!=null&&GameKind==0&&String.Equals(store.Settings.Profile,minecraftLaunch.Profile,StringComparison.OrdinalIgnoreCase);}}
     void BeginMinecraftLaunch(GameProfile profile,ProcessStartInfo command,Action<ProcessStartInfo> dispatch=null){
         StopMinecraftLaunch();var game=SelectedRunningGame;
-        minecraftLaunch=new MinecraftLaunchNotice{Profile=profile.Path,Name=profile.Name,GameId=game==null?null:game.Id,Command=command,Started=DateTime.UtcNow,Flavor=new LaunchFlavor(store.Root,true)};
+        minecraftLaunch=new MinecraftLaunchNotice{Profile=profile.Path,Name=profile.Name,GameId=game==null?null:game.Id,Command=command,ExistingWindows=MinecraftWindows.Visible(),Started=DateTime.UtcNow,Flavor=new LaunchFlavor(store.Root,true)};
         minecraftLaunch.Background=new CurseForgeBackground(this,command);
         if(game!=null)startingGames[game.Id]=DateTime.UtcNow.AddMinutes(2);
         if(!minecraftLaunchClockReady){minecraftLaunchClockReady=true;minecraftLaunchClock.Tick+=delegate{TickMinecraftLaunch();};Disposed+=delegate{minecraftLaunchClock.Dispose();};}
-        RefreshView();minecraftLaunchClock.Start();
+        nextMinecraftWindowProbe=DateTime.MinValue;RefreshView();minecraftLaunchClock.Start();
         try{if(dispatch!=null)dispatch(command);else using(var process=Process.Start(command)){};TrackLaunchedGame("builtin:0",new CustomGame{Executable=profile.Path,Platform="minecraft"});LogActivity("builtin:0","Asked CurseForge to start "+profile.Name+". Waiting for Minecraft.");}
         catch{if(game!=null)startingGames.Remove(game.Id);StopMinecraftLaunch();RefreshView();throw;}
     }
-    void TickMinecraftLaunch(){if(minecraftLaunch==null){minecraftLaunchClock.Stop();return;}minecraftLaunch.Background.Pulse(this);var game=SelectedRunningGame;if(game!=null&&game.Id==minecraftLaunch.GameId&&GameRunning(game)){LogActivity("builtin:0","Minecraft started for "+minecraftLaunch.Name+".");StopMinecraftLaunch();RefreshView();return;}
+    async void ProbeMinecraftWindow(){if(minecraftWindowPolling||minecraftLaunch==null||DateTime.UtcNow<nextMinecraftWindowProbe)return;var notice=minecraftLaunch;var game=new CustomGame{Executable=notice.Profile,Platform="minecraft"};minecraftWindowPolling=true;nextMinecraftWindowProbe=DateTime.UtcNow.AddSeconds(1);try{bool ready=await System.Threading.Tasks.Task.Run(()=>MinecraftWindows.Ready(game,notice.ExistingWindows));if(!IsDisposed&&Object.ReferenceEquals(minecraftLaunch,notice))notice.WindowReady=ready;}finally{minecraftWindowPolling=false;}}
+    void TickMinecraftLaunch(){if(minecraftLaunch==null){minecraftLaunchClock.Stop();return;}minecraftLaunch.Background.Pulse(this);if(!previewMode)ProbeMinecraftWindow();var game=SelectedRunningGame;if(game!=null&&game.Id==minecraftLaunch.GameId&&GameRunning(game)&&minecraftLaunch.WindowReady){LogActivity("builtin:0","Minecraft window opened for "+minecraftLaunch.Name+".");StopMinecraftLaunch();RefreshView();return;}
         if(DateTime.UtcNow-minecraftLaunch.Started>=TimeSpan.FromMinutes(2)){minecraftLaunch.TimedOut=true;minecraftLaunch.Background.Stop();if(minecraftLaunch.GameId!=null)startingGames.Remove(minecraftLaunch.GameId);minecraftLaunchClock.Stop();LogActivity("builtin:0","Still waiting for Minecraft. CurseForge may need attention.");RefreshView();return;}UpdateWorkProgress();
     }
     void StopMinecraftLaunch(){minecraftLaunchClock.Stop();if(minecraftLaunch!=null)minecraftLaunch.Background.Stop();minecraftLaunch=null;}

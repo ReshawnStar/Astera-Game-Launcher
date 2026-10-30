@@ -33,3 +33,9 @@ References:
 - https://prismlauncher.org/wiki/getting-started/command-line-interface/
 - https://dev.overwolf.com/ow-native/reference/extensions/ow-extensions/
 - https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-logicaltophysicalpointforpermonitordpi
+
+Minecraft launch covers wait for the selected profile log/process plus a newly
+visible Minecraft Java window. Windows already open at dispatch are excluded.
+This detects the game window, not completion of resource loading or world entry.
+Probes run off the UI thread; the existing bounded timeout and escape actions remain.
+

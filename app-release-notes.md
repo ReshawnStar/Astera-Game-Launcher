@@ -1,4 +1,4 @@
-# Astera 0.1.40 — More ways to play
+﻿# Astera 0.1.40 — More ways to play
 
 - New installations of Gacha Nebula + use an Astera game library outside OneDrive by default. You can choose another location.
 - Astera can find and link a verified existing Gacha Nebula + installation, with a manual Locate option if needed.
@@ -23,3 +23,5 @@
 - Game launches now use the full Astera waiting screen, with Back to library and Open launcher actions.
 - Fixed mouse movement cancelling background CurseForge handling.
 - Restored Gacha Nebula +’s original game icon instead of the save helper’s generic icon.
+
+- Minecraft’s waiting screen stays up until its game window appears, rather than disappearing as soon as Java starts.
