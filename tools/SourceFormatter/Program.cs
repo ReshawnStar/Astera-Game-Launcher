@@ -39,7 +39,11 @@ foreach (string directory in new[] { "src", "updater" })
         // Refuse edits that change code, strings, directives, or documentation tokens.
         string[] Shape(SyntaxNode node) => node.DescendantNodesAndSelf()
             .Select(child => child.RawKind + ":" + child.ChildNodesAndTokens().Count).ToArray();
-        if (!Tokens(original).SequenceEqual(Tokens(reparsed)) || !Shape(original).SequenceEqual(Shape(reparsed)))
+        string[] InactiveCode(SyntaxNode node) => node.DescendantTrivia(descendIntoTrivia: true)
+            .Where(trivia => trivia.IsKind(SyntaxKind.DisabledTextTrivia))
+            .Select(trivia => trivia.ToFullString()).ToArray();
+        if (!Tokens(original).SequenceEqual(Tokens(reparsed)) || !Shape(original).SequenceEqual(Shape(reparsed))
+            || !InactiveCode(original).SequenceEqual(InactiveCode(reparsed)))
             throw new InvalidDataException("Formatting changed syntax: " + file);
 
         bool differs = before != after;
