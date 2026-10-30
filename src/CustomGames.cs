@@ -5,28 +5,401 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-namespace Astera {
-public sealed class CustomGame {public string ManagedProjectId="";public List<ModProfileLink> ModProfiles=new List<ModProfileLink>();public string SelectedModProfile="";public string[] RobloxBanners=new string[0];public string RobloxDescription="";public int RobloxDescriptionVersion;public int RobloxArtworkVersion;public long RobloxArtworkCheckedUtc;public long UniverseId;public string RobloxIcon="",RobloxBanner="";public string ItchLaunchTarget="";public string Id=Guid.NewGuid().ToString("N"),Name="",Executable="",Background="",Character="",Icon="",Platform="",PlatformId="";}
-sealed class LibraryEntry {internal int Kind;internal string Name;internal CustomGame Custom;public override string ToString(){return Custom==null?Name:Custom.Name;}}
-static class CustomGames {
-    internal static string Validate(string path){if(String.IsNullOrWhiteSpace(path)||!Path.GetExtension(path).Equals(".exe",StringComparison.OrdinalIgnoreCase))throw new IOException("Choose a Windows EXE.");path=Path.GetFullPath(path);using(var stream=File.OpenRead(path))using(var reader=new BinaryReader(stream)){if(stream.Length<64||reader.ReadUInt16()!=0x5a4d)throw new IOException("This file is not a Windows executable.");stream.Position=60;int offset=reader.ReadInt32();if(offset<64||offset>stream.Length-4)throw new IOException("This EXE has an invalid header.");stream.Position=offset;if(reader.ReadUInt32()!=0x4550)throw new IOException("This file is not a Windows executable.");}return path;}
-    internal static void Set(List<CustomGame> games,CustomGame item,string name,string path){if(item.Platform=="roblox"){long place;if(!RobloxSupport.Positive(item.PlatformId,out place))throw new IOException("Invalid Roblox Place ID");name=(name??"").Trim();if(name.Length==0||name.Length>100||name.Any(Char.IsControl))throw new IOException("Give the experience a name of1–100 characters.");item.Name=name;item.Executable=RobloxSupport.WebUrl(place);return;}path=String.IsNullOrEmpty(item.Platform)?Validate(path):Path.GetFullPath(path);if(!String.IsNullOrEmpty(item.Platform)&&!Directory.Exists(path))throw new IOException("Game installation not found");name=(name??"").Trim();if(name.Length==0||name.Length>100||name.Any(Char.IsControl))throw new IOException("Give the game a name of 1–100 characters.");if(games.Any(g=>g!=item&&g.Platform!="roblox"&&String.Equals(Path.GetFullPath(g.Executable),path,StringComparison.OrdinalIgnoreCase)))throw new IOException("That EXE is already in your library.");item.Name=name;item.Executable=path;}
-    internal static ProcessStartInfo StartInfo(CustomGame game){var path=Validate(game.Executable);return new ProcessStartInfo(path){WorkingDirectory=Path.GetDirectoryName(path),Arguments=game.ManagedProjectId==ManagedGames.Id?"--play":"",UseShellExecute=true};}
-}
-sealed partial class LibraryForm {
-    CustomGame CurrentCustom {get{var row=games.SelectedItem as LibraryEntry??activeLibraryEntry;return row==null?null:row.Custom;}}
-    bool IsCustomGame {get{return CurrentCustom!=null;}}
-    // Identity is independent of the alphabetic display position.
-    int GameKind {get{var row=games.SelectedItem as LibraryEntry??activeLibraryEntry;return row==null?-1:row.Kind;}set{for(int i=0;i<games.Items.Count;i++)if(((LibraryEntry)games.Items[i]).Kind==value){games.SelectedIndex=i;return;}}}
-    void AddCustomExeGame(){if(busy)return;using(var picker=new OpenFileDialog{Title="Add a game",Filter="Windows games (*.exe)|*.exe",CheckFileExists=true}){if(picker.ShowDialog(this)!=DialogResult.OK)return;var entry=new CustomGame{Name=Path.GetFileNameWithoutExtension(picker.FileName),Executable=picker.FileName};if(!EditCustomDialog(entry,true))return;}}
-    void EditCustomGame(){if(CurrentCustom!=null)EditCustomDialog(CurrentCustom,false);}
-    bool EditCustomDialog(CustomGame entry,bool adding){using(var dialog=new AsteraDialog{Text=adding?"Add game":"Game settings",Size=new Size(610,270),StartPosition=FormStartPosition.CenterParent,FormBorderStyle=FormBorderStyle.None,MaximizeBox=false,MinimizeBox=false,BackColor=Base,ForeColor=Color.White,Font=Font}){
-        var name=new TextBox{Text=entry.Name,Left=20,Top=46,Width=550,MaxLength=100};var path=new TextBox{Text=entry.Executable,Left=20,Top=107,Width=430};var choose=Button("Browse…",delegate{using(var picker=new OpenFileDialog{Filter="Windows games (*.exe)|*.exe"})if(picker.ShowDialog(dialog)==DialogResult.OK)path.Text=picker.FileName;});choose.SetBounds(460,103,110,34);
-        var save=Button(adding?"Add game":"Save",delegate{try{CustomGames.Set(store.Settings.CustomGames,entry,name.Text,path.Text);if(adding)store.Settings.CustomGames.Add(entry);store.Save();ReloadGames(entry);RefreshView();dialog.DialogResult=DialogResult.OK;}catch(Exception error){MessageBox.Show(dialog,error.Message,"Game settings");}});save.SetBounds(430,171,140,38);
-        var remove=Button("Remove from library",delegate{if(MessageBox.Show(dialog,"Remove this entry from Astera? Your game files will stay where they are.","Remove game",MessageBoxButtons.YesNo)!=DialogResult.Yes)return;store.Settings.CustomGames.Remove(entry);store.Save();ReloadGames(null);GameKind=0;dialog.DialogResult=DialogResult.OK;});remove.SetBounds(20,171,220,38);remove.Visible=!adding;
-        if(!String.IsNullOrEmpty(entry.Platform)){path.ReadOnly=true;choose.Visible=false;}dialog.Controls.AddRange(new Control[]{new Label{Text="Game name",Left=20,Top=19,AutoSize=true},name,new Label{Text=entry.Platform=="roblox"?"Experience URL":String.IsNullOrEmpty(entry.Platform)?"Game EXE":"Game install folder",Left=20,Top=82,AutoSize=true},path,choose,save,remove});dialog.AcceptButton=save;return dialog.ShowDialog(this)==DialogResult.OK;}}
-    async void LaunchCustomGame(){if(IsRoblox){LaunchRoblox();return;}var game=CurrentCustom;if(game==null||GameStarting(game))return;bool updateOnly=play.Text=="UPDATE";startingGames[game.Id]=DateTime.UtcNow.AddSeconds(10);RefreshView();try{var cached=CustomSteam(game);bool running=await System.Threading.Tasks.Task.Run(()=>RunningGames.Check(game,cached==null?game.PlatformId:cached.AppId));runningGames[game.Id]=running;if(running){startingGames.Remove(game.Id);return;}var steam=PlatformLibraries.SteamArt(game);if(updateOnly||steam!=null&&steam.UpdatePending){startingGames.Remove(game.Id);if(steam==null)throw new IOException("Steam could not identify this installation");ApplySteamArtwork(game.Executable,steam);Process.Start(new ProcessStartInfo("steam://nav/games/details/"+steam.AppId){UseShellExecute=true});releaseLabel.Text="Finish the update in Steam. Play will be available afterward.";return;}if(LaunchThunderProfile(game))return;if(!String.IsNullOrEmpty(game.Platform)){var start=game.Platform=="itch"?ItchStart(game):PlatformLibraries.Start(game);if(start==null){startingGames.Remove(game.Id);return;}Process.Start(start);TrackCustomLaunch(game);return;}CustomGames.Validate(game.Executable);Process.Start(steam==null?CustomGames.StartInfo(game):SteamArtwork.Launch(steam.AppId));TrackCustomLaunch(game);}catch(Exception error){startingGames.Remove(game.Id);MessageBox.Show(this,error.Message,"Could not start game");}finally{if(!IsDisposed)RefreshView();}}
-    void RefreshCustomView(){if(IsRoblox){RefreshRobloxView();return;}UpdateTransferSlot();var game=CurrentCustom;CacheCustomIcon(game);QueuePlatformArtwork(game);appUpdateIcon.Enabled=!busy&&!checkingApp;banner.Game="custom";var steam=CustomSteam(game);bool pending=steam!=null&&steam.UpdatePending;bool running=GameRunning(game),starting=GameStarting(game);play.Text=running?"RUNNING":starting?"STARTING…":pending?"UPDATE":PlatformLibraries.Available(game)?"PLAY":"LOCATE GAME";((AsteraButton)play).Symbol=pending?ButtonSymbol.Download:ButtonSymbol.Play;play.Enabled=!busy&&!running&&!starting;check.Text=steam==null?"Check for updates":"OPEN IN STEAM";check.Enabled=steam!=null&&!busy;download.Enabled=install.Enabled=restore.Enabled=cancel.Enabled=false;settings.Enabled=games.Enabled=!busy;status.Text=running?"Running":starting?"Starting…":pending?"Update available in Steam":PlatformLibraries.Available(game)?"Ready to play":"Installation not found";status.ForeColor=Color.White;profileLabel.Text=game.Executable;releaseLabel.Text="Added to your library";latestHeading.Text=steam==null?"Latest update":"Official Steam posts";QueueSteamNews(steam);string news=CustomNews(steam);if(notes.Text!=news)notes.Text=news;RefreshModProfileStrip();UpdateCustomLayout();RefreshManagedPresentation(game);games.Invalidate();}
-    void UpdateCustomLayout(){UpdateGamePreferences();var game=CurrentCustom;chooseLibraryIcon.Visible=true;if(minecraftSkinChoice!=null)minecraftSkinChoice.Visible=false;heroTitle.Text=game.Name;heroSubtitle.Text=game.Platform=="roblox"?"Open this experience in Roblox.":"Your library. Ready when you are.";LayoutHeroContent();string background=String.IsNullOrEmpty(game.Background)?AutomaticGameBackground(game):game.Background;banner.Artwork(background,game.Character);banner.LiveSkin(null);installationPath.Text=game.Platform=="roblox"?"Place ID: "+game.PlatformId+"\r\nManaged by Roblox":GameFolder();openFolder.Enabled=!busy&&Directory.Exists(GameFolder());chooseBackground.Enabled=chooseCharacter.Enabled=!busy;artLabel.Text=!String.IsNullOrEmpty(game.Background)?Path.GetFileName(game.Background):!String.IsNullOrEmpty(background)?(game.Platform=="roblox"?"Roblox artwork":game.Platform=="itch"||itchArt.ContainsKey(game.Executable)?"itch.io cover artwork":"Steam library artwork"):"Choose your game artwork";string key="custom:"+game.Id+":"+background;if(previewArtwork!=key){previewArtwork=key;var old=artPreview.Image;previewScene.Artwork=null;artPreview.Image=null;try{if(!String.IsNullOrEmpty(background))artPreview.Image=Banner.ReadArtwork(background);}catch{}previewScene.Artwork=artPreview.Image;if(old!=null)old.Dispose();previewScene.Invalidate();}}
-}
+
+namespace Astera
+{
+    public sealed class CustomGame
+    {
+        public string ManagedProjectId = "";
+        public List<ModProfileLink> ModProfiles = new List<ModProfileLink>();
+        public string SelectedModProfile = "";
+        public string[] RobloxBanners = new string[0];
+        public string RobloxDescription = "";
+        public int RobloxDescriptionVersion;
+        public int RobloxArtworkVersion;
+        public long RobloxArtworkCheckedUtc;
+        public long UniverseId;
+        public string RobloxIcon = "", RobloxBanner = "";
+        public string ItchLaunchTarget = "";
+        public string Id = Guid.NewGuid().ToString("N"), Name = "", Executable = "", Background = "", Character = "", Icon = "", Platform = "", PlatformId = "";
+    }
+
+    sealed class LibraryEntry
+    {
+        internal int Kind;
+        internal string Name;
+        internal CustomGame Custom;
+        public override string ToString()
+        {
+            return Custom == null ? Name : Custom.Name;
+        }
+    }
+
+    static class CustomGames
+    {
+        internal static string Validate(string path)
+        {
+            if (String.IsNullOrWhiteSpace(path) || !Path.GetExtension(path).Equals(".exe", StringComparison.OrdinalIgnoreCase))
+                throw new IOException("Choose a Windows EXE.");
+            path = Path.GetFullPath(path);
+            using (var stream = File.OpenRead(path))
+            using (var reader = new BinaryReader(stream))
+            {
+                if (stream.Length < 64 || reader.ReadUInt16() != 0x5a4d)
+                    throw new IOException("This file is not a Windows executable.");
+                stream.Position = 60;
+                int offset = reader.ReadInt32();
+                if (offset < 64 || offset > stream.Length - 4)
+                    throw new IOException("This EXE has an invalid header.");
+                stream.Position = offset;
+                if (reader.ReadUInt32() != 0x4550)
+                    throw new IOException("This file is not a Windows executable.");
+            }
+
+            return path;
+        }
+
+        internal static void Set(List<CustomGame> games, CustomGame item, string name, string path)
+        {
+            if (item.Platform == "roblox")
+            {
+                long place;
+                if (!RobloxSupport.Positive(item.PlatformId, out place))
+                    throw new IOException("Invalid Roblox Place ID");
+                name = (name ?? "").Trim();
+                if (name.Length == 0 || name.Length > 100 || name.Any(Char.IsControl))
+                    throw new IOException("Give the experience a name of1–100 characters.");
+                item.Name = name;
+                item.Executable = RobloxSupport.WebUrl(place);
+                return;
+            }
+
+            path = String.IsNullOrEmpty(item.Platform) ? Validate(path) : Path.GetFullPath(path);
+            if (!String.IsNullOrEmpty(item.Platform) && !Directory.Exists(path))
+                throw new IOException("Game installation not found");
+            name = (name ?? "").Trim();
+            if (name.Length == 0 || name.Length > 100 || name.Any(Char.IsControl))
+                throw new IOException("Give the game a name of 1–100 characters.");
+            if (games.Any(g => g != item && g.Platform != "roblox" && String.Equals(Path.GetFullPath(g.Executable), path, StringComparison.OrdinalIgnoreCase)))
+                throw new IOException("That EXE is already in your library.");
+            item.Name = name;
+            item.Executable = path;
+        }
+
+        internal static ProcessStartInfo StartInfo(CustomGame game)
+        {
+            var path = Validate(game.Executable);
+            return new ProcessStartInfo(path)
+            {
+                WorkingDirectory = Path.GetDirectoryName(path),
+                Arguments = game.ManagedProjectId == ManagedGames.Id ? "--play" : "",
+                UseShellExecute = true
+            };
+        }
+    }
+
+    sealed partial class LibraryForm
+    {
+        CustomGame CurrentCustom
+        {
+            get
+            {
+                var row = games.SelectedItem as LibraryEntry ?? activeLibraryEntry;
+                return row == null ? null : row.Custom;
+            }
+        }
+
+        bool IsCustomGame
+        {
+            get
+            {
+                return CurrentCustom != null;
+            }
+        }
+
+        // Identity is independent of the alphabetic display position.
+        int GameKind
+        {
+            get
+            {
+                var row = games.SelectedItem as LibraryEntry ?? activeLibraryEntry;
+                return row == null ? -1 : row.Kind;
+            }
+
+            set
+            {
+                for (int i = 0; i < games.Items.Count; i++)
+                    if (((LibraryEntry)games.Items[i]).Kind == value)
+                    {
+                        games.SelectedIndex = i;
+                        return;
+                    }
+            }
+        }
+
+        void AddCustomExeGame()
+        {
+            if (busy)
+                return;
+            using (var picker = new OpenFileDialog
+            {
+                Title = "Add a game",
+                Filter = "Windows games (*.exe)|*.exe",
+                CheckFileExists = true
+            }
+
+            )
+            {
+                if (picker.ShowDialog(this) != DialogResult.OK)
+                    return;
+                var entry = new CustomGame
+                {
+                    Name = Path.GetFileNameWithoutExtension(picker.FileName),
+                    Executable = picker.FileName
+                };
+                if (!EditCustomDialog(entry, true))
+                    return;
+            }
+        }
+
+        void EditCustomGame()
+        {
+            if (CurrentCustom != null)
+                EditCustomDialog(CurrentCustom, false);
+        }
+
+        bool EditCustomDialog(CustomGame entry, bool adding)
+        {
+            using (var dialog = new AsteraDialog
+            {
+                Text = adding ? "Add game" : "Game settings",
+                Size = new Size(610, 270),
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.None,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                BackColor = Base,
+                ForeColor = Color.White,
+                Font = Font
+            }
+
+            )
+            {
+                var name = new TextBox
+                {
+                    Text = entry.Name,
+                    Left = 20,
+                    Top = 46,
+                    Width = 550,
+                    MaxLength = 100
+                };
+                var path = new TextBox
+                {
+                    Text = entry.Executable,
+                    Left = 20,
+                    Top = 107,
+                    Width = 430
+                };
+                var choose = Button("Browse…", delegate
+                {
+                    using (var picker = new OpenFileDialog
+                    {
+                        Filter = "Windows games (*.exe)|*.exe"
+                    }
+
+                    )
+                        if (picker.ShowDialog(dialog) == DialogResult.OK)
+                            path.Text = picker.FileName;
+                });
+                choose.SetBounds(460, 103, 110, 34);
+                var save = Button(adding ? "Add game" : "Save", delegate
+                {
+                    try
+                    {
+                        CustomGames.Set(store.Settings.CustomGames, entry, name.Text, path.Text);
+                        if (adding)
+                            store.Settings.CustomGames.Add(entry);
+                        store.Save();
+                        ReloadGames(entry);
+                        RefreshView();
+                        dialog.DialogResult = DialogResult.OK;
+                    }
+                    catch (Exception error)
+                    {
+                        MessageBox.Show(dialog, error.Message, "Game settings");
+                    }
+                });
+                save.SetBounds(430, 171, 140, 38);
+                var remove = Button("Remove from library", delegate
+                {
+                    if (MessageBox.Show(dialog, "Remove this entry from Astera? Your game files will stay where they are.", "Remove game", MessageBoxButtons.YesNo) != DialogResult.Yes)
+                        return;
+                    store.Settings.CustomGames.Remove(entry);
+                    store.Save();
+                    ReloadGames(null);
+                    GameKind = 0;
+                    dialog.DialogResult = DialogResult.OK;
+                });
+                remove.SetBounds(20, 171, 220, 38);
+                remove.Visible = !adding;
+                if (!String.IsNullOrEmpty(entry.Platform))
+                {
+                    path.ReadOnly = true;
+                    choose.Visible = false;
+                }
+
+                dialog.Controls.AddRange(new Control[] { new Label { Text = "Game name", Left = 20, Top = 19, AutoSize = true }, name, new Label { Text = entry.Platform == "roblox" ? "Experience URL" : String.IsNullOrEmpty(entry.Platform) ? "Game EXE" : "Game install folder", Left = 20, Top = 82, AutoSize = true }, path, choose, save, remove });
+                dialog.AcceptButton = save;
+                return dialog.ShowDialog(this) == DialogResult.OK;
+            }
+        }
+
+        async void LaunchCustomGame()
+        {
+            if (IsRoblox)
+            {
+                LaunchRoblox();
+                return;
+            }
+
+            var game = CurrentCustom;
+            if (game == null || GameStarting(game))
+                return;
+            bool updateOnly = play.Text == "UPDATE";
+            startingGames[game.Id] = DateTime.UtcNow.AddSeconds(10);
+            RefreshView();
+            try
+            {
+                var cached = CustomSteam(game);
+                bool running = await System.Threading.Tasks.Task.Run(() => RunningGames.Check(game, cached == null ? game.PlatformId : cached.AppId));
+                runningGames[game.Id] = running;
+                if (running)
+                {
+                    startingGames.Remove(game.Id);
+                    return;
+                }
+
+                var steam = PlatformLibraries.SteamArt(game);
+                if (updateOnly || steam != null && steam.UpdatePending)
+                {
+                    startingGames.Remove(game.Id);
+                    if (steam == null)
+                        throw new IOException("Steam could not identify this installation");
+                    ApplySteamArtwork(game.Executable, steam);
+                    Process.Start(new ProcessStartInfo("steam://nav/games/details/" + steam.AppId) { UseShellExecute = true });
+                    releaseLabel.Text = "Finish the update in Steam. Play will be available afterward.";
+                    return;
+                }
+
+                if (LaunchThunderProfile(game))
+                    return;
+                if (!String.IsNullOrEmpty(game.Platform))
+                {
+                    var start = game.Platform == "itch" ? ItchStart(game) : PlatformLibraries.Start(game);
+                    if (start == null)
+                    {
+                        startingGames.Remove(game.Id);
+                        return;
+                    }
+
+                    Process.Start(start);
+                    TrackCustomLaunch(game);
+                    return;
+                }
+
+                CustomGames.Validate(game.Executable);
+                Process.Start(steam == null ? CustomGames.StartInfo(game) : SteamArtwork.Launch(steam.AppId));
+                TrackCustomLaunch(game);
+            }
+            catch (Exception error)
+            {
+                startingGames.Remove(game.Id);
+                MessageBox.Show(this, error.Message, "Could not start game");
+            }
+            finally
+            {
+                if (!IsDisposed)
+                    RefreshView();
+            }
+        }
+
+        void RefreshCustomView()
+        {
+            if (IsRoblox)
+            {
+                RefreshRobloxView();
+                return;
+            }
+
+            UpdateTransferSlot();
+            var game = CurrentCustom;
+            CacheCustomIcon(game);
+            QueuePlatformArtwork(game);
+            appUpdateIcon.Enabled = !busy && !checkingApp;
+            banner.Game = "custom";
+            var steam = CustomSteam(game);
+            bool pending = steam != null && steam.UpdatePending;
+            bool running = GameRunning(game), starting = GameStarting(game);
+            play.Text = running ? "RUNNING" : starting ? "STARTING…" : pending ? "UPDATE" : PlatformLibraries.Available(game) ? "PLAY" : "LOCATE GAME";
+            ((AsteraButton)play).Symbol = pending ? ButtonSymbol.Download : ButtonSymbol.Play;
+            play.Enabled = !busy && !running && !starting;
+            check.Text = steam == null ? "Check for updates" : "OPEN IN STEAM";
+            check.Enabled = steam != null && !busy;
+            download.Enabled = install.Enabled = restore.Enabled = cancel.Enabled = false;
+            settings.Enabled = games.Enabled = !busy;
+            status.Text = running ? "Running" : starting ? "Starting…" : pending ? "Update available in Steam" : PlatformLibraries.Available(game) ? "Ready to play" : "Installation not found";
+            status.ForeColor = Color.White;
+            profileLabel.Text = game.Executable;
+            releaseLabel.Text = "Added to your library";
+            latestHeading.Text = steam == null ? "Latest update" : "Official Steam posts";
+            QueueSteamNews(steam);
+            string news = CustomNews(steam);
+            if (notes.Text != news)
+                notes.Text = news;
+            RefreshModProfileStrip();
+            UpdateCustomLayout();
+            RefreshManagedPresentation(game);
+            games.Invalidate();
+        }
+
+        void UpdateCustomLayout()
+        {
+            UpdateGamePreferences();
+            var game = CurrentCustom;
+            chooseLibraryIcon.Visible = true;
+            if (minecraftSkinChoice != null)
+                minecraftSkinChoice.Visible = false;
+            heroTitle.Text = game.Name;
+            heroSubtitle.Text = game.Platform == "roblox" ? "Open this experience in Roblox." : "Your library. Ready when you are.";
+            LayoutHeroContent();
+            string background = String.IsNullOrEmpty(game.Background) ? AutomaticGameBackground(game) : game.Background;
+            banner.Artwork(background, game.Character);
+            banner.LiveSkin(null);
+            installationPath.Text = game.Platform == "roblox" ? "Place ID: " + game.PlatformId + "\r\nManaged by Roblox" : GameFolder();
+            openFolder.Enabled = !busy && Directory.Exists(GameFolder());
+            chooseBackground.Enabled = chooseCharacter.Enabled = !busy;
+            artLabel.Text = !String.IsNullOrEmpty(game.Background) ? Path.GetFileName(game.Background) : !String.IsNullOrEmpty(background) ? (game.Platform == "roblox" ? "Roblox artwork" : game.Platform == "itch" || itchArt.ContainsKey(game.Executable) ? "itch.io cover artwork" : "Steam library artwork") : "Choose your game artwork";
+            string key = "custom:" + game.Id + ":" + background;
+            if (previewArtwork != key)
+            {
+                previewArtwork = key;
+                var old = artPreview.Image;
+                previewScene.Artwork = null;
+                artPreview.Image = null;
+                try
+                {
+                    if (!String.IsNullOrEmpty(background))
+                        artPreview.Image = Banner.ReadArtwork(background);
+                }
+                catch
+                {
+                }
+
+                previewScene.Artwork = artPreview.Image;
+                if (old != null)
+                    old.Dispose();
+                previewScene.Invalidate();
+            }
+        }
+    }
 }

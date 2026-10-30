@@ -3,21 +3,300 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
-namespace Astera {
-sealed class SettingsForm:AsteraDialog {
-    public Preferences Result;
-    internal SettingsForm(Preferences original,int scope=0,Action logs=null,Action library=null){Text=scope<0?"Astera settings":scope==0?"Minecraft² settings":"Star Dash settings";Size=scope<0?new Size(660,700):scope==0?new Size(700,420):new Size(700,260);StartPosition=FormStartPosition.CenterParent;
-        var flow=new FlowLayoutPanel{Dock=DockStyle.Fill,Padding=new Padding(20),FlowDirection=FlowDirection.TopDown,WrapContents=false,AutoScroll=true};var footer=new FlowLayoutPanel{Dock=DockStyle.Bottom,Height=58,Padding=new Padding(18,4,18,8),FlowDirection=FlowDirection.RightToLeft};Controls.Add(flow);Controls.Add(footer);
-        Action<string> heading=delegate(string text){flow.Controls.Add(new Label{Text=text,AutoSize=true,Font=UiTheme.Text(16,true),Margin=new Padding(0,8,0,8)});};Action<string> note=delegate(string text){flow.Controls.Add(new Label{Text=text,AutoSize=true,MaximumSize=new Size(590,0),ForeColor=Color.FromArgb(184,195,222),Margin=new Padding(0,0,0,8)});};Func<string,bool,CheckBox> toggle=delegate(string text,bool value){var box=new CheckBox{Text=text,Checked=value,AutoSize=true,MaximumSize=new Size(580,0),Margin=new Padding(0,2,0,8)};flow.Controls.Add(box);return box;};
-        string accent=original.ButtonAccent;TextBox profile=null,channel=null,stardash=null;CheckBox automatic=null,launcherAutomatic=null,tray=null,packs=null,effects=null,flavor=null,playtime=null;
-        Func<string,string,Action<TextBox>,TextBox> pathRow=delegate(string title,string value,Action<TextBox> browse){note(title);var row=new TableLayoutPanel{Width=620,Height=42,ColumnCount=2,RowCount=1,Margin=new Padding(0,0,0,10)};row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute,120));var field=new TextBox{Text=value??"",Dock=DockStyle.Fill,BackColor=Color.FromArgb(28,36,57),ForeColor=Color.White,BorderStyle=BorderStyle.FixedSingle};row.Controls.Add(field,0,0);var choose=new AsteraButton{Text="Choose…",Dock=DockStyle.Fill,Margin=new Padding(8,0,0,0)};choose.Click+=delegate{browse(field);};row.Controls.Add(choose,1,0);flow.Controls.Add(row);return field;};
-        if(scope<0){heading("General");tray=toggle("Keep Astera in the tray when its window closes",original.KeepInTray);heading("Updates");launcherAutomatic=toggle("Check and install Astera updates at startup",original.CheckAppOnStart);automatic=toggle("Check game and mod updates at startup and while Astera is running",original.CheckOnStart);note("Steam and itch.io use their own update systems.");heading("Library");playtime=toggle("Track estimated playtime locally",original.TrackPlaytime);note("Counts while Astera is open. Roblox tracks the experience launched here; switches inside Roblox cannot be identified.");var manage=new AsteraButton{Text="Manage game locations"};manage.Click+=delegate{if(library!=null){Hide();library();Show();}};flow.Controls.Add(manage);heading("Safety & backups");note("Managed files are backed up before updating. Safety checks stay enabled.");heading("Appearance");effects=toggle("Enable animated effects",original.AnimatedEffects);flavor=toggle("Show playful startup messages",original.StartupFlavor);var accentButton=new AsteraButton{Text="Button color: "+accent};var palette=new ContextMenuStrip();AsteraMenuRenderer.Style(palette);foreach(string color in ButtonAtlas.Accents){string selected=color;palette.Items.Add(color,null,delegate{accent=selected;accentButton.Text="Button color: "+selected;});}accentButton.Click+=delegate{palette.Show(accentButton,new Point(0,accentButton.Height));};Disposed+=delegate{palette.Dispose();};flow.Controls.Add(accentButton);heading("About Astera");note("Version "+SelfUpdate.CurrentVersion);var row=new FlowLayoutPanel{Width=580,Height=44,WrapContents=false};var diagnostics=new AsteraButton{Text="Diagnostics"};diagnostics.Click+=delegate{if(logs!=null)logs();};var notes=new AsteraButton{Text="Changelog"};notes.Click+=delegate{AppChangelog.Show(this);};row.Controls.Add(notes);row.Controls.Add(diagnostics);flow.Controls.Add(row);}
-        else if(scope==0){heading("Minecraft²");profile=pathRow("CurseForge profile folder",original.Profile,delegate(TextBox field){using(var picker=new ExplorerFolderDialog{Description="Choose your Minecraft² CurseForge profile",SelectedPath=field.Text})if(picker.ShowDialog(this)==DialogResult.OK)field.Text=picker.SelectedPath;});packs=toggle("Set up supplied resource packs when updating",original.ConfigurePacks);var advanced=toggle("Show advanced update channel",false);channel=new TextBox{Text=original.FeedUrl,Dock=DockStyle.None,Width=620,BackColor=Color.FromArgb(28,36,57),ForeColor=Color.White,Visible=false};advanced.CheckedChanged+=delegate{channel.Visible=advanced.Checked;};flow.Controls.Add(channel);}
-        else{heading("Star Dash");stardash=pathRow("Game application",original.StarDashExecutable,delegate(TextBox field){using(var picker=new OpenFileDialog{Filter="Windows application|*.exe"})if(picker.ShowDialog(this)==DialogResult.OK)field.Text=picker.FileName;});}
-        var save=new AsteraButton{Text="Save"};footer.Controls.Add(save);AcceptButton=save;save.Click+=delegate{try{var json=new System.Web.Script.Serialization.JavaScriptSerializer();var result=json.Deserialize<Preferences>(json.Serialize(original));if(scope<0){result.KeepInTray=tray.Checked;result.CheckOnStart=automatic.Checked;result.CheckAppOnStart=launcherAutomatic.Checked;result.AnimatedEffects=effects.Checked;result.StartupFlavor=flavor.Checked;result.TrackPlaytime=playtime.Checked;result.ButtonAccent=accent;}else if(scope==0){if(!String.IsNullOrWhiteSpace(profile.Text))Profiles.Read(profile.Text.Trim());if(!String.IsNullOrWhiteSpace(channel.Text))new Transport().Address(channel.Text.Trim());result.Profile=profile.Text.Trim();result.FeedUrl=channel.Text.Trim();result.ConfigurePacks=packs.Checked;}else{if(!String.IsNullOrWhiteSpace(stardash.Text))LocalStarDash.Validate(stardash.Text.Trim());result.StarDashExecutable=stardash.Text.Trim();}Result=result;DialogResult=DialogResult.OK;Close();}catch(Exception error){MessageBox.Show(this,error.Message,"Settings");}};
+
+namespace Astera
+{
+    sealed class SettingsForm : AsteraDialog
+    {
+        public Preferences Result;
+        internal SettingsForm(Preferences original, int scope = 0, Action logs = null, Action library = null)
+        {
+            Text = scope < 0 ? "Astera settings" : scope == 0 ? "Minecraft² settings" : "Star Dash settings";
+            Size = scope < 0 ? new Size(660, 700) : scope == 0 ? new Size(700, 420) : new Size(700, 260);
+            StartPosition = FormStartPosition.CenterParent;
+            var flow = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                Padding = new Padding(20),
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                AutoScroll = true
+            };
+            var footer = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 58,
+                Padding = new Padding(18, 4, 18, 8),
+                FlowDirection = FlowDirection.RightToLeft
+            };
+            Controls.Add(flow);
+            Controls.Add(footer);
+            Action<string> heading = delegate (string text)
+            {
+                flow.Controls.Add(new Label { Text = text, AutoSize = true, Font = UiTheme.Text(16, true), Margin = new Padding(0, 8, 0, 8) });
+            };
+            Action<string> note = delegate (string text)
+            {
+                flow.Controls.Add(new Label { Text = text, AutoSize = true, MaximumSize = new Size(590, 0), ForeColor = Color.FromArgb(184, 195, 222), Margin = new Padding(0, 0, 0, 8) });
+            };
+            Func<string, bool, CheckBox> toggle = delegate (string text, bool value)
+            {
+                var box = new CheckBox
+                {
+                    Text = text,
+                    Checked = value,
+                    AutoSize = true,
+                    MaximumSize = new Size(580, 0),
+                    Margin = new Padding(0, 2, 0, 8)
+                };
+                flow.Controls.Add(box);
+                return box;
+            };
+            string accent = original.ButtonAccent;
+            TextBox profile = null, channel = null, stardash = null;
+            CheckBox automatic = null, launcherAutomatic = null, tray = null, packs = null, effects = null, flavor = null, playtime = null;
+            Func<string, string, Action<TextBox>, TextBox> pathRow = delegate (string title, string value, Action<TextBox> browse)
+            {
+                note(title);
+                var row = new TableLayoutPanel
+                {
+                    Width = 620,
+                    Height = 42,
+                    ColumnCount = 2,
+                    RowCount = 1,
+                    Margin = new Padding(0, 0, 0, 10)
+                };
+                row.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+                row.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+                var field = new TextBox
+                {
+                    Text = value ?? "",
+                    Dock = DockStyle.Fill,
+                    BackColor = Color.FromArgb(28, 36, 57),
+                    ForeColor = Color.White,
+                    BorderStyle = BorderStyle.FixedSingle
+                };
+                row.Controls.Add(field, 0, 0);
+                var choose = new AsteraButton
+                {
+                    Text = "Choose…",
+                    Dock = DockStyle.Fill,
+                    Margin = new Padding(8, 0, 0, 0)
+                };
+                choose.Click += delegate
+                {
+                    browse(field);
+                };
+                row.Controls.Add(choose, 1, 0);
+                flow.Controls.Add(row);
+                return field;
+            };
+            if (scope < 0)
+            {
+                heading("General");
+                tray = toggle("Keep Astera in the tray when its window closes", original.KeepInTray);
+                heading("Updates");
+                launcherAutomatic = toggle("Check and install Astera updates at startup", original.CheckAppOnStart);
+                automatic = toggle("Check game and mod updates at startup and while Astera is running", original.CheckOnStart);
+                note("Steam and itch.io use their own update systems.");
+                heading("Library");
+                playtime = toggle("Track estimated playtime locally", original.TrackPlaytime);
+                note("Counts while Astera is open. Roblox tracks the experience launched here; switches inside Roblox cannot be identified.");
+                var manage = new AsteraButton
+                {
+                    Text = "Manage game locations"
+                };
+                manage.Click += delegate
+                {
+                    if (library != null)
+                    {
+                        Hide();
+                        library();
+                        Show();
+                    }
+                };
+                flow.Controls.Add(manage);
+                heading("Safety & backups");
+                note("Managed files are backed up before updating. Safety checks stay enabled.");
+                heading("Appearance");
+                effects = toggle("Enable animated effects", original.AnimatedEffects);
+                flavor = toggle("Show playful startup messages", original.StartupFlavor);
+                var accentButton = new AsteraButton
+                {
+                    Text = "Button color: " + accent
+                };
+                var palette = new ContextMenuStrip();
+                AsteraMenuRenderer.Style(palette);
+                foreach (string color in ButtonAtlas.Accents)
+                {
+                    string selected = color;
+                    palette.Items.Add(color, null, delegate
+                    {
+                        accent = selected;
+                        accentButton.Text = "Button color: " + selected;
+                    });
+                }
+
+                accentButton.Click += delegate
+                {
+                    palette.Show(accentButton, new Point(0, accentButton.Height));
+                };
+                Disposed += delegate
+                {
+                    palette.Dispose();
+                };
+                flow.Controls.Add(accentButton);
+                heading("About Astera");
+                note("Version " + SelfUpdate.CurrentVersion);
+                var row = new FlowLayoutPanel
+                {
+                    Width = 580,
+                    Height = 44,
+                    WrapContents = false
+                };
+                var diagnostics = new AsteraButton
+                {
+                    Text = "Diagnostics"
+                };
+                diagnostics.Click += delegate
+                {
+                    if (logs != null)
+                        logs();
+                };
+                var notes = new AsteraButton
+                {
+                    Text = "Changelog"
+                };
+                notes.Click += delegate
+                {
+                    AppChangelog.Show(this);
+                };
+                row.Controls.Add(notes);
+                row.Controls.Add(diagnostics);
+                flow.Controls.Add(row);
+            }
+            else if (scope == 0)
+            {
+                heading("Minecraft²");
+                profile = pathRow("CurseForge profile folder", original.Profile, delegate (TextBox field)
+                {
+                    using (var picker = new ExplorerFolderDialog
+                    {
+                        Description = "Choose your Minecraft² CurseForge profile",
+                        SelectedPath = field.Text
+                    }
+
+                    )
+                        if (picker.ShowDialog(this) == DialogResult.OK)
+                            field.Text = picker.SelectedPath;
+                });
+                packs = toggle("Set up supplied resource packs when updating", original.ConfigurePacks);
+                var advanced = toggle("Show advanced update channel", false);
+                channel = new TextBox
+                {
+                    Text = original.FeedUrl,
+                    Dock = DockStyle.None,
+                    Width = 620,
+                    BackColor = Color.FromArgb(28, 36, 57),
+                    ForeColor = Color.White,
+                    Visible = false
+                };
+                advanced.CheckedChanged += delegate
+                {
+                    channel.Visible = advanced.Checked;
+                };
+                flow.Controls.Add(channel);
+            }
+            else
+            {
+                heading("Star Dash");
+                stardash = pathRow("Game application", original.StarDashExecutable, delegate (TextBox field)
+                {
+                    using (var picker = new OpenFileDialog
+                    {
+                        Filter = "Windows application|*.exe"
+                    }
+
+                    )
+                        if (picker.ShowDialog(this) == DialogResult.OK)
+                            field.Text = picker.FileName;
+                });
+            }
+
+            var save = new AsteraButton
+            {
+                Text = "Save"
+            };
+            footer.Controls.Add(save);
+            AcceptButton = save;
+            save.Click += delegate
+            {
+                try
+                {
+                    var json = new System.Web.Script.Serialization.JavaScriptSerializer();
+                    var result = json.Deserialize<Preferences>(json.Serialize(original));
+                    if (scope < 0)
+                    {
+                        result.KeepInTray = tray.Checked;
+                        result.CheckOnStart = automatic.Checked;
+                        result.CheckAppOnStart = launcherAutomatic.Checked;
+                        result.AnimatedEffects = effects.Checked;
+                        result.StartupFlavor = flavor.Checked;
+                        result.TrackPlaytime = playtime.Checked;
+                        result.ButtonAccent = accent;
+                    }
+                    else if (scope == 0)
+                    {
+                        if (!String.IsNullOrWhiteSpace(profile.Text))
+                            Profiles.Read(profile.Text.Trim());
+                        if (!String.IsNullOrWhiteSpace(channel.Text))
+                            new Transport().Address(channel.Text.Trim());
+                        result.Profile = profile.Text.Trim();
+                        result.FeedUrl = channel.Text.Trim();
+                        result.ConfigurePacks = packs.Checked;
+                    }
+                    else
+                    {
+                        if (!String.IsNullOrWhiteSpace(stardash.Text))
+                            LocalStarDash.Validate(stardash.Text.Trim());
+                        result.StarDashExecutable = stardash.Text.Trim();
+                    }
+
+                    Result = result;
+                    DialogResult = DialogResult.OK;
+                    Close();
+                }
+                catch (Exception error)
+                {
+                    MessageBox.Show(this, error.Message, "Settings");
+                }
+            };
+        }
     }
-}
-sealed partial class LibraryForm {
-    void ConfigureLauncher(){if(busy)return;using(var dialog=new SettingsForm(store.Settings,-1,OpenDiagnostics,ManageLibraryLocations)){if(dialog.ShowDialog(this)!=DialogResult.OK)return;store.Settings=dialog.Result;store.Save();if(!store.Settings.TrackPlaytime&&playtimeLedger!=null){playtimeLedger.Active.Clear();SavePlaytime();}UiEffects.Enabled=store.Settings.AnimatedEffects;ButtonAtlas.SetAccent(store.Settings.ButtonAccent);Invalidate(true);RefreshView();}}
-}
+
+    sealed partial class LibraryForm
+    {
+        void ConfigureLauncher()
+        {
+            if (busy)
+                return;
+            using (var dialog = new SettingsForm(store.Settings, -1, OpenDiagnostics, ManageLibraryLocations))
+            {
+                if (dialog.ShowDialog(this) != DialogResult.OK)
+                    return;
+                store.Settings = dialog.Result;
+                store.Save();
+                if (!store.Settings.TrackPlaytime && playtimeLedger != null)
+                {
+                    playtimeLedger.Active.Clear();
+                    SavePlaytime();
+                }
+
+                UiEffects.Enabled = store.Settings.AnimatedEffects;
+                ButtonAtlas.SetAccent(store.Settings.ButtonAccent);
+                Invalidate(true);
+                RefreshView();
+            }
+        }
+    }
 }

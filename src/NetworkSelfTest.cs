@@ -9,42 +9,415 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using MC2Pack;
-namespace Astera {
-static partial class NetworkSelfTest {
-    static void Assert(bool value,string message){if(!value)throw new Exception(message);}
-    static void Reject(Action action,string message){bool failed=false;try{action();}catch{failed=true;}Assert(failed,message);}
-    static void Put(string root,string path,string value){string target=Engine.Inside(root,path);Directory.CreateDirectory(Path.GetDirectoryName(target));File.WriteAllText(target,value);}
-    static void Jar(string root,string path,string id,string version){string file=Engine.Inside(root,path);Directory.CreateDirectory(Path.GetDirectoryName(file));using(var zip=ZipFile.Open(file,ZipArchiveMode.Create))using(var writer=new StreamWriter(zip.CreateEntry("fabric.mod.json").Open()))writer.Write(Engine.Json.Serialize(new{id=id,version=version}));}
-    static byte[] Signed(UpdateFeed feed,RSACryptoServiceProvider rsa){byte[] payload=Encoding.UTF8.GetBytes(Engine.Json.Serialize(feed));return Encoding.UTF8.GetBytes(Engine.Json.Serialize(new Envelope{Payload=Convert.ToBase64String(payload),Signature=Convert.ToBase64String(rsa.SignData(payload,"SHA256"))}));}
-    public static int Run(string directory){var checks=new List<string>();try{
-        string root=Path.GetFullPath(directory);if(Directory.Exists(root))throw new Exception("Use a new isolated test directory.");Directory.CreateDirectory(root);string source=Path.Combine(root,"source"),profile=Path.Combine(root,"profile"),cache=Path.Combine(root,"cache");Directory.CreateDirectory(source);Directory.CreateDirectory(profile);Directory.CreateDirectory(cache);
-        Put(profile,"astera-test-fixture.txt","Synthetic self-test profile; never a live game.");Jar(source,"mods/allies-new.jar","stars_allies","0.7.173+mc26.3");Jar(source,"mods/fixes.jar","stars_general_fixes","1.7.205+mc26.3");Put(source,"config/stars-general-fixes.json","{\"default\":2}");
-        Put(profile,"minecraftinstance.json","{\"name\":\"Minecraft Squared\",\"baseModLoader\":{\"minecraftVersion\":\"26.3\",\"name\":\"fabric-0.19.5-26.3\",\"forgeVersion\":\"0.19.5\"}}");Jar(profile,"mods/allies-old.jar","stars_allies","0.7.172+mc26.3");Directory.CreateDirectory(Path.Combine(profile,"mods"));File.Copy(Path.Combine(source,"mods/fixes.jar"),Path.Combine(profile,"mods/fixes.jar"));Jar(profile,"mods/fabric.jar","fabric-api","0.165.0+26.3");Put(profile,"config/stars-general-fixes.json","personal setting");Put(profile,"saves/keep/level.dat","world");Put(profile,"MC2-pack-state.json","legacy installer ledger sentinel");Put(profile,"options.txt","music:0.4\nkey_key.forward:key.keyboard.up\n");
-        using(var server=new FixtureServer())using(var rsa=new RSACryptoServiceProvider(2048,new CspParameters(24))){rsa.PersistKeyInCsp=false;var feed=new UpdateFeed{Schema=1,GameId="minecraft-squared",ExpiresUtc=DateTimeOffset.UtcNow.AddDays(1).ToUnixTimeSeconds(),Notes="Test update",Sources=new List<PayloadSource>(),RequiredMods=new List<RequiredMod>{new RequiredMod{Id="fabric-api",Version="0.165.0+26.3"}},Release=new Release{Schema=2,Sequence=2,PackId="astera-minecraft-squared",Name="fixture-2",Minecraft="26.3",Loader="0.19.5",Files=new List<PackFile>(),Retired=new List<RetiredFile>(),Packs=new List<string>{"stars_general_fixes:stars_compat"}}};
-            foreach(var file in Directory.GetFiles(source,"*",SearchOption.AllDirectories)){string relative=file.Substring(source.Length+1).Replace('\\','/');var mod=relative.StartsWith("mods/")?Engine.Mod(file):null;var item=new PackFile{Path=relative,Hash=Engine.Hash(file),Size=new FileInfo(file).Length,Kind=mod==null?"config":"mod",Policy=mod==null?"seed":"replace",Id=mod==null?null:Convert.ToString(mod["id"]),Version=mod==null?null:Convert.ToString(mod["version"])};feed.Release.Files.Add(item);string url="/"+item.Hash;server.Files[url]=File.ReadAllBytes(file);feed.Sources.Add(new PayloadSource{Path=relative,Url=server.Address+url});}
-            server.Files["/feed"]=Signed(feed,rsa);var client=new UpdateClient(rsa.ToXmlString(false),new Transport(true));var verified=client.Check(server.Address+"/feed",CancellationToken.None);checks.Add("Real loopback HTTP serves and verifies RSA-SHA256 update metadata");
-            var plan=client.Prepare(verified,profile,cache);Assert(plan.DownloadFiles==2,"Unchanged installed component was not reused");string bundle=client.Materialize(plan,cache,CancellationToken.None,delegate{});Assert(server.Requests.Count(p=>p!="/feed")==2,"Downloaded more than changed/missing managed files");checks.Add("Only two changed/missing payloads downloaded; unchanged General Fixes reused");
-            var apply=Engine.Scan(profile,bundle,true,false,false,delegate{});apply.Preconditions=plan.Guards;string prerequisite=Path.Combine(profile,"mods/fabric.jar");byte[] priorDependency=File.ReadAllBytes(prerequisite);File.AppendAllText(prerequisite,"late edit");Reject(delegate{Engine.Apply(apply,delegate{},true);},"Changed CurseForge dependency accepted after preview");File.WriteAllBytes(prerequisite,priorDependency);checks.Add("CurseForge dependency changes after preview invalidate installation before any writes");using(var held=new FileStream(Path.Combine(profile,".Astera-update.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None)){Reject(delegate{Engine.Apply(apply,delegate{},true);},"Concurrent profile update accepted");}checks.Add("Concurrent profile installation is excluded by an exclusive file lock");Engine.Apply(apply,delegate{},true);Assert(File.Exists(Path.Combine(profile,"mods/allies-new.jar"))&&!File.Exists(Path.Combine(profile,"mods/allies-old.jar")),"Mod ID replacement failed");Assert(File.ReadAllText(Path.Combine(profile,"config/stars-general-fixes.json"))=="personal setting","Personal config overwritten");Assert(File.ReadAllText(Path.Combine(profile,"saves/keep/level.dat"))=="world","World changed");Assert(File.ReadAllText(Path.Combine(profile,"MC2-pack-state.json"))=="legacy installer ledger sentinel","Full installer ledger changed");checks.Add("Install preserves world, modified config, options, CurseForge mod and legacy full-installer ledger");
-            var repeat=client.Prepare(verified,profile,cache);Assert(repeat.DownloadFiles==0,"Repeat update downloads again");string again=client.Materialize(repeat,cache,CancellationToken.None,delegate{});Assert(Engine.Scan(profile,again,true,false,false,delegate{}).Edits.Count==0,"Repeat update changes files");checks.Add("Repeat update uses cache/local files, performs no network downloads and zero installation edits");
-            var tampered=Engine.Json.Deserialize<Envelope>(Encoding.UTF8.GetString(server.Files["/feed"]));var changed=Convert.FromBase64String(tampered.Payload);changed[changed.Length-2]^=1;tampered.Payload=Convert.ToBase64String(changed);Reject(delegate{client.Verify(Encoding.UTF8.GetBytes(Engine.Json.Serialize(tampered)));},"Tampered metadata accepted");checks.Add("Tampered signature rejected before interpreting release instructions");
-            feed.ExpiresUtc=1;Reject(delegate{client.Verify(Signed(feed,rsa));},"Expired feed accepted");feed.ExpiresUtc=DateTimeOffset.UtcNow.AddDays(1).ToUnixTimeSeconds();checks.Add("Expired signed feed rejected");
-            string oldPath=feed.Release.Files[0].Path;feed.Release.Files[0].Path="config/../saves/world.json";Reject(delegate{client.Verify(Signed(feed,rsa));},"Signed traversal accepted");feed.Release.Files[0].Path=oldPath;var modFile=feed.Release.Files.First(f=>f.Kind=="mod");string oldId=modFile.Id;modFile.Id="third_party";Reject(delegate{client.Verify(Signed(feed,rsa));},"Third-party binary replacement permitted");modFile.Id=oldId;checks.Add("Signed traversal and third-party binary replacement refused");
-            feed.RequiredMods[0].Version="different";Reject(delegate{client.Prepare(feed,profile,cache);},"Missing CurseForge prerequisite ignored");feed.RequiredMods[0].Version="0.165.0+26.3";checks.Add("Mismatched CurseForge baseline blocks installation with a clear prerequisite report");
-            string corruptCache=Path.Combine(root,"corrupt-cache");Directory.CreateDirectory(corruptCache);var newProfile=Path.Combine(root,"profile-corrupt");Directory.CreateDirectory(newProfile);Put(newProfile,"minecraftinstance.json",File.ReadAllText(Path.Combine(profile,"minecraftinstance.json")));Jar(newProfile,"mods/fabric.jar","fabric-api","0.165.0+26.3");var corruptPlan=client.Prepare(feed,newProfile,corruptCache);var first=feed.Release.Files[0];string endpoint="/"+first.Hash;byte[] good=server.Files[endpoint];server.Files[endpoint]=good.Select(b=>(byte)(b^1)).ToArray();Reject(delegate{client.Materialize(corruptPlan,corruptCache,CancellationToken.None,delegate{});},"Corrupt payload accepted");server.Files[endpoint]=good;Assert(Directory.GetFiles(corruptCache,"*.partial").Length==0,"Partial download retained");Assert(!File.Exists(Path.Combine(newProfile,"Astera-minecraft-state.json")),"Corrupt download modified target");checks.Add("Corrupted download rejected, partial file removed, profile remains unmodified");
-            Reject(delegate{new Transport().Address("http://127.0.0.1/feed");},"Production HTTP allowed");Reject(delegate{new Transport().Address("file:///C:/feed.json");},"File transport allowed");Reject(delegate{new Transport().Address("https://user:secret@example.com/feed");},"Embedded credentials accepted");Reject(delegate{new Transport(true).Metadata(server.Address+"/redirect",CancellationToken.None);},"Redirect escaped allowed HTTPS/loopback transport");Reject(delegate{new Transport(true).Metadata(server.Address+"/oversized",CancellationToken.None);},"Oversized metadata accepted");checks.Add("Production transport rejects HTTP, file URLs and credentials; redirect downgrade and oversized metadata refused");
-            var token=new CancellationTokenSource();token.Cancel();Reject(delegate{new Transport(true).Metadata(server.Address+"/feed",token.Token);},"Cancellation ignored");token.Dispose();checks.Add("Cancellation aborts network operations before installation");
-            feed.Release.Sequence=1;var oldBundle=client.Materialize(client.Prepare(feed,profile,cache),cache,CancellationToken.None,delegate{});Reject(delegate{Engine.Scan(profile,oldBundle,true,false,false,delegate{});},"Older release overwrote newer ledger");feed.Release.Sequence=2;checks.Add("Installed-release downgrade refused");
-            var profiles=Path.Combine(root,"instances");Directory.CreateDirectory(profiles);Put(profiles,"RenamedFolder/minecraftinstance.json",File.ReadAllText(Path.Combine(profile,"minecraftinstance.json")));Put(profiles,"Unrelated/minecraftinstance.json","{\"name\":\"Another Game\"}");Assert(Profiles.Discover(profiles).Single().Name=="Minecraft Squared","Renamed profile discovery failed");Put(profiles,"But Again/minecraftinstance.json",File.ReadAllText(Path.Combine(profile,"minecraftinstance.json")));Assert(Profiles.Discover(profiles).Count==2&&Profiles.Discover(profiles).Any(p=>p.LegacyFolder),"Legacy/ambiguous profile detection failed");checks.Add("Metadata finds renamed Minecraft Squared profiles, recognises legacy But Again and exposes ambiguity");
+
+namespace Astera
+{
+    static partial class NetworkSelfTest
+    {
+        static void Assert(bool value, string message)
+        {
+            if (!value)
+                throw new Exception(message);
         }
-        string documents=Path.Combine(root,"godot-documents"),app=Path.Combine(documents,"Stardash","StarDash.exe");Directory.CreateDirectory(Path.GetDirectoryName(app));File.WriteAllBytes(app,new byte[]{77,90,0,0});Assert(!LocalStarDash.IsValid(app),"EXE without PCK was accepted");File.WriteAllBytes(Path.Combine(Path.GetDirectoryName(app),"StarDash.pck"),new byte[]{71,68,80,67});Assert(LocalStarDash.DefaultAt(documents)==app,"Existing Godot EXE/PCK export was not discovered");File.WriteAllBytes(Path.Combine(Path.GetDirectoryName(app),"StarDash.pck"),new byte[]{0,0,0,0});Assert(!LocalStarDash.IsValid(app),"Invalid Godot pack was accepted");checks.Add("Existing StarDash export discovery requires the EXE and recognisable Godot PCK together, without executing either");
-        var settings=new Store(Path.Combine(root,"local-game-settings"));settings.Settings.Profile=profile;settings.Settings.StarDashExecutable=app;settings.Settings.HighestSequence=42;settings.Save();var loaded=new Store(settings.Root);Assert(loaded.Settings.StarDashExecutable==app&&loaded.Settings.Profile==profile&&loaded.Settings.HighestSequence==42,"Local game link displaced existing settings");checks.Add("StarDash executable link survives settings reload while preserving Minecraft profile and channel sequence");
-        File.WriteAllText(Path.Combine(root,"result.json"),Engine.Json.Serialize(new{Passed=true,Checks=checks}));return 0;
-    }catch(Exception failure){if(Directory.Exists(directory))File.WriteAllText(Path.Combine(directory,"failure.txt"),failure.ToString());return 1;}}
-}
-sealed class FixtureServer:IDisposable {
-    readonly TcpListener listener;readonly Thread thread;volatile bool stopped;public readonly Dictionary<string,byte[]> Files=new Dictionary<string,byte[]>();public readonly List<string> Requests=new List<string>();public readonly string Address;
-    public FixtureServer(){listener=new TcpListener(IPAddress.Loopback,0);listener.Start();Address="http://127.0.0.1:"+((IPEndPoint)listener.LocalEndpoint).Port;thread=new Thread(Serve);thread.IsBackground=true;thread.Start();}
-    void Serve(){while(!stopped){try{using(var socket=listener.AcceptTcpClient()){socket.ReceiveTimeout=5000;using(var stream=socket.GetStream()){var reader=new StreamReader(stream,Encoding.ASCII,false,1024,true);string request=reader.ReadLine();if(request==null)continue;string path=request.Split(' ')[1],line;while(!String.IsNullOrEmpty(line=reader.ReadLine())){}Requests.Add(path);byte[] body;string headers;if(path=="/redirect"){body=new byte[0];headers="HTTP/1.1 302 Found\r\nLocation: http://example.com/feed\r\nContent-Length: 0\r\n";}else if(path=="/oversized"){body=new byte[0];headers="HTTP/1.1 200 OK\r\nContent-Length: 999999999\r\n";}else if(Files.TryGetValue(path,out body))headers="HTTP/1.1 200 OK\r\nContent-Length: "+body.Length+"\r\n";else{body=new byte[0];headers="HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n";}byte[] prefix=Encoding.ASCII.GetBytes(headers+"Connection: close\r\n\r\n");stream.Write(prefix,0,prefix.Length);stream.Write(body,0,body.Length);}}}catch{if(stopped)return;}}}
-    public void Dispose(){stopped=true;listener.Stop();thread.Join(5000);}
-}
+
+        static void Reject(Action action, string message)
+        {
+            bool failed = false;
+            try
+            {
+                action();
+            }
+            catch
+            {
+                failed = true;
+            }
+
+            Assert(failed, message);
+        }
+
+        static void Put(string root, string path, string value)
+        {
+            string target = Engine.Inside(root, path);
+            Directory.CreateDirectory(Path.GetDirectoryName(target));
+            File.WriteAllText(target, value);
+        }
+
+        static void Jar(string root, string path, string id, string version)
+        {
+            string file = Engine.Inside(root, path);
+            Directory.CreateDirectory(Path.GetDirectoryName(file));
+            using (var zip = ZipFile.Open(file, ZipArchiveMode.Create))
+            using (var writer = new StreamWriter(zip.CreateEntry("fabric.mod.json").Open()))
+                writer.Write(Engine.Json.Serialize(new
+                {
+                    id = id,
+                    version = version
+                }));
+        }
+
+        static byte[] Signed(UpdateFeed feed, RSACryptoServiceProvider rsa)
+        {
+            byte[] payload = Encoding.UTF8.GetBytes(Engine.Json.Serialize(feed));
+            return Encoding.UTF8.GetBytes(Engine.Json.Serialize(new Envelope { Payload = Convert.ToBase64String(payload), Signature = Convert.ToBase64String(rsa.SignData(payload, "SHA256")) }));
+        }
+
+        public static int Run(string directory)
+        {
+            var checks = new List<string>();
+            try
+            {
+                string root = Path.GetFullPath(directory);
+                if (Directory.Exists(root))
+                    throw new Exception("Use a new isolated test directory.");
+                Directory.CreateDirectory(root);
+                string source = Path.Combine(root, "source"), profile = Path.Combine(root, "profile"), cache = Path.Combine(root, "cache");
+                Directory.CreateDirectory(source);
+                Directory.CreateDirectory(profile);
+                Directory.CreateDirectory(cache);
+                Put(profile, "astera-test-fixture.txt", "Synthetic self-test profile; never a live game.");
+                Jar(source, "mods/allies-new.jar", "stars_allies", "0.7.173+mc26.3");
+                Jar(source, "mods/fixes.jar", "stars_general_fixes", "1.7.205+mc26.3");
+                Put(source, "config/stars-general-fixes.json", "{\"default\":2}");
+                Put(profile, "minecraftinstance.json", "{\"name\":\"Minecraft Squared\",\"baseModLoader\":{\"minecraftVersion\":\"26.3\",\"name\":\"fabric-0.19.5-26.3\",\"forgeVersion\":\"0.19.5\"}}");
+                Jar(profile, "mods/allies-old.jar", "stars_allies", "0.7.172+mc26.3");
+                Directory.CreateDirectory(Path.Combine(profile, "mods"));
+                File.Copy(Path.Combine(source, "mods/fixes.jar"), Path.Combine(profile, "mods/fixes.jar"));
+                Jar(profile, "mods/fabric.jar", "fabric-api", "0.165.0+26.3");
+                Put(profile, "config/stars-general-fixes.json", "personal setting");
+                Put(profile, "saves/keep/level.dat", "world");
+                Put(profile, "MC2-pack-state.json", "legacy installer ledger sentinel");
+                Put(profile, "options.txt", "music:0.4\nkey_key.forward:key.keyboard.up\n");
+                using (var server = new FixtureServer())
+                using (var rsa = new RSACryptoServiceProvider(2048, new CspParameters(24)))
+                {
+                    rsa.PersistKeyInCsp = false;
+                    var feed = new UpdateFeed
+                    {
+                        Schema = 1,
+                        GameId = "minecraft-squared",
+                        ExpiresUtc = DateTimeOffset.UtcNow.AddDays(1).ToUnixTimeSeconds(),
+                        Notes = "Test update",
+                        Sources = new List<PayloadSource>(),
+                        RequiredMods = new List<RequiredMod>
+                        {
+                            new RequiredMod
+                            {
+                                Id = "fabric-api",
+                                Version = "0.165.0+26.3"
+                            }
+                        },
+                        Release = new Release
+                        {
+                            Schema = 2,
+                            Sequence = 2,
+                            PackId = "astera-minecraft-squared",
+                            Name = "fixture-2",
+                            Minecraft = "26.3",
+                            Loader = "0.19.5",
+                            Files = new List<PackFile>(),
+                            Retired = new List<RetiredFile>(),
+                            Packs = new List<string>
+                            {
+                                "stars_general_fixes:stars_compat"
+                            }
+                        }
+                    };
+                    foreach (var file in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
+                    {
+                        string relative = file.Substring(source.Length + 1).Replace('\\', '/');
+                        var mod = relative.StartsWith("mods/") ? Engine.Mod(file) : null;
+                        var item = new PackFile
+                        {
+                            Path = relative,
+                            Hash = Engine.Hash(file),
+                            Size = new FileInfo(file).Length,
+                            Kind = mod == null ? "config" : "mod",
+                            Policy = mod == null ? "seed" : "replace",
+                            Id = mod == null ? null : Convert.ToString(mod["id"]),
+                            Version = mod == null ? null : Convert.ToString(mod["version"])
+                        };
+                        feed.Release.Files.Add(item);
+                        string url = "/" + item.Hash;
+                        server.Files[url] = File.ReadAllBytes(file);
+                        feed.Sources.Add(new PayloadSource { Path = relative, Url = server.Address + url });
+                    }
+
+                    server.Files["/feed"] = Signed(feed, rsa);
+                    var client = new UpdateClient(rsa.ToXmlString(false), new Transport(true));
+                    var verified = client.Check(server.Address + "/feed", CancellationToken.None);
+                    checks.Add("Real loopback HTTP serves and verifies RSA-SHA256 update metadata");
+                    var plan = client.Prepare(verified, profile, cache);
+                    Assert(plan.DownloadFiles == 2, "Unchanged installed component was not reused");
+                    string bundle = client.Materialize(plan, cache, CancellationToken.None, delegate
+                    {
+                    });
+                    Assert(server.Requests.Count(p => p != "/feed") == 2, "Downloaded more than changed/missing managed files");
+                    checks.Add("Only two changed/missing payloads downloaded; unchanged General Fixes reused");
+                    var apply = Engine.Scan(profile, bundle, true, false, false, delegate
+                    {
+                    });
+                    apply.Preconditions = plan.Guards;
+                    string prerequisite = Path.Combine(profile, "mods/fabric.jar");
+                    byte[] priorDependency = File.ReadAllBytes(prerequisite);
+                    File.AppendAllText(prerequisite, "late edit");
+                    Reject(delegate
+                    {
+                        Engine.Apply(apply, delegate
+                        {
+                        }, true);
+                    }, "Changed CurseForge dependency accepted after preview");
+                    File.WriteAllBytes(prerequisite, priorDependency);
+                    checks.Add("CurseForge dependency changes after preview invalidate installation before any writes");
+                    using (var held = new FileStream(Path.Combine(profile, ".Astera-update.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None))
+                    {
+                        Reject(delegate
+                        {
+                            Engine.Apply(apply, delegate
+                            {
+                            }, true);
+                        }, "Concurrent profile update accepted");
+                    }
+
+                    checks.Add("Concurrent profile installation is excluded by an exclusive file lock");
+                    Engine.Apply(apply, delegate
+                    {
+                    }, true);
+                    Assert(File.Exists(Path.Combine(profile, "mods/allies-new.jar")) && !File.Exists(Path.Combine(profile, "mods/allies-old.jar")), "Mod ID replacement failed");
+                    Assert(File.ReadAllText(Path.Combine(profile, "config/stars-general-fixes.json")) == "personal setting", "Personal config overwritten");
+                    Assert(File.ReadAllText(Path.Combine(profile, "saves/keep/level.dat")) == "world", "World changed");
+                    Assert(File.ReadAllText(Path.Combine(profile, "MC2-pack-state.json")) == "legacy installer ledger sentinel", "Full installer ledger changed");
+                    checks.Add("Install preserves world, modified config, options, CurseForge mod and legacy full-installer ledger");
+                    var repeat = client.Prepare(verified, profile, cache);
+                    Assert(repeat.DownloadFiles == 0, "Repeat update downloads again");
+                    string again = client.Materialize(repeat, cache, CancellationToken.None, delegate
+                    {
+                    });
+                    Assert(Engine.Scan(profile, again, true, false, false, delegate
+                    {
+                    }).Edits.Count == 0, "Repeat update changes files");
+                    checks.Add("Repeat update uses cache/local files, performs no network downloads and zero installation edits");
+                    var tampered = Engine.Json.Deserialize<Envelope>(Encoding.UTF8.GetString(server.Files["/feed"]));
+                    var changed = Convert.FromBase64String(tampered.Payload);
+                    changed[changed.Length - 2] ^= 1;
+                    tampered.Payload = Convert.ToBase64String(changed);
+                    Reject(delegate
+                    {
+                        client.Verify(Encoding.UTF8.GetBytes(Engine.Json.Serialize(tampered)));
+                    }, "Tampered metadata accepted");
+                    checks.Add("Tampered signature rejected before interpreting release instructions");
+                    feed.ExpiresUtc = 1;
+                    Reject(delegate
+                    {
+                        client.Verify(Signed(feed, rsa));
+                    }, "Expired feed accepted");
+                    feed.ExpiresUtc = DateTimeOffset.UtcNow.AddDays(1).ToUnixTimeSeconds();
+                    checks.Add("Expired signed feed rejected");
+                    string oldPath = feed.Release.Files[0].Path;
+                    feed.Release.Files[0].Path = "config/../saves/world.json";
+                    Reject(delegate
+                    {
+                        client.Verify(Signed(feed, rsa));
+                    }, "Signed traversal accepted");
+                    feed.Release.Files[0].Path = oldPath;
+                    var modFile = feed.Release.Files.First(f => f.Kind == "mod");
+                    string oldId = modFile.Id;
+                    modFile.Id = "third_party";
+                    Reject(delegate
+                    {
+                        client.Verify(Signed(feed, rsa));
+                    }, "Third-party binary replacement permitted");
+                    modFile.Id = oldId;
+                    checks.Add("Signed traversal and third-party binary replacement refused");
+                    feed.RequiredMods[0].Version = "different";
+                    Reject(delegate
+                    {
+                        client.Prepare(feed, profile, cache);
+                    }, "Missing CurseForge prerequisite ignored");
+                    feed.RequiredMods[0].Version = "0.165.0+26.3";
+                    checks.Add("Mismatched CurseForge baseline blocks installation with a clear prerequisite report");
+                    string corruptCache = Path.Combine(root, "corrupt-cache");
+                    Directory.CreateDirectory(corruptCache);
+                    var newProfile = Path.Combine(root, "profile-corrupt");
+                    Directory.CreateDirectory(newProfile);
+                    Put(newProfile, "minecraftinstance.json", File.ReadAllText(Path.Combine(profile, "minecraftinstance.json")));
+                    Jar(newProfile, "mods/fabric.jar", "fabric-api", "0.165.0+26.3");
+                    var corruptPlan = client.Prepare(feed, newProfile, corruptCache);
+                    var first = feed.Release.Files[0];
+                    string endpoint = "/" + first.Hash;
+                    byte[] good = server.Files[endpoint];
+                    server.Files[endpoint] = good.Select(b => (byte)(b ^ 1)).ToArray();
+                    Reject(delegate
+                    {
+                        client.Materialize(corruptPlan, corruptCache, CancellationToken.None, delegate
+                        {
+                        });
+                    }, "Corrupt payload accepted");
+                    server.Files[endpoint] = good;
+                    Assert(Directory.GetFiles(corruptCache, "*.partial").Length == 0, "Partial download retained");
+                    Assert(!File.Exists(Path.Combine(newProfile, "Astera-minecraft-state.json")), "Corrupt download modified target");
+                    checks.Add("Corrupted download rejected, partial file removed, profile remains unmodified");
+                    Reject(delegate
+                    {
+                        new Transport().Address("http://127.0.0.1/feed");
+                    }, "Production HTTP allowed");
+                    Reject(delegate
+                    {
+                        new Transport().Address("file:///C:/feed.json");
+                    }, "File transport allowed");
+                    Reject(delegate
+                    {
+                        new Transport().Address("https://user:secret@example.com/feed");
+                    }, "Embedded credentials accepted");
+                    Reject(delegate
+                    {
+                        new Transport(true).Metadata(server.Address + "/redirect", CancellationToken.None);
+                    }, "Redirect escaped allowed HTTPS/loopback transport");
+                    Reject(delegate
+                    {
+                        new Transport(true).Metadata(server.Address + "/oversized", CancellationToken.None);
+                    }, "Oversized metadata accepted");
+                    checks.Add("Production transport rejects HTTP, file URLs and credentials; redirect downgrade and oversized metadata refused");
+                    var token = new CancellationTokenSource();
+                    token.Cancel();
+                    Reject(delegate
+                    {
+                        new Transport(true).Metadata(server.Address + "/feed", token.Token);
+                    }, "Cancellation ignored");
+                    token.Dispose();
+                    checks.Add("Cancellation aborts network operations before installation");
+                    feed.Release.Sequence = 1;
+                    var oldBundle = client.Materialize(client.Prepare(feed, profile, cache), cache, CancellationToken.None, delegate
+                    {
+                    });
+                    Reject(delegate
+                    {
+                        Engine.Scan(profile, oldBundle, true, false, false, delegate
+                        {
+                        });
+                    }, "Older release overwrote newer ledger");
+                    feed.Release.Sequence = 2;
+                    checks.Add("Installed-release downgrade refused");
+                    var profiles = Path.Combine(root, "instances");
+                    Directory.CreateDirectory(profiles);
+                    Put(profiles, "RenamedFolder/minecraftinstance.json", File.ReadAllText(Path.Combine(profile, "minecraftinstance.json")));
+                    Put(profiles, "Unrelated/minecraftinstance.json", "{\"name\":\"Another Game\"}");
+                    Assert(Profiles.Discover(profiles).Single().Name == "Minecraft Squared", "Renamed profile discovery failed");
+                    Put(profiles, "But Again/minecraftinstance.json", File.ReadAllText(Path.Combine(profile, "minecraftinstance.json")));
+                    Assert(Profiles.Discover(profiles).Count == 2 && Profiles.Discover(profiles).Any(p => p.LegacyFolder), "Legacy/ambiguous profile detection failed");
+                    checks.Add("Metadata finds renamed Minecraft Squared profiles, recognises legacy But Again and exposes ambiguity");
+                }
+
+                string documents = Path.Combine(root, "godot-documents"), app = Path.Combine(documents, "Stardash", "StarDash.exe");
+                Directory.CreateDirectory(Path.GetDirectoryName(app));
+                File.WriteAllBytes(app, new byte[] { 77, 90, 0, 0 });
+                Assert(!LocalStarDash.IsValid(app), "EXE without PCK was accepted");
+                File.WriteAllBytes(Path.Combine(Path.GetDirectoryName(app), "StarDash.pck"), new byte[] { 71, 68, 80, 67 });
+                Assert(LocalStarDash.DefaultAt(documents) == app, "Existing Godot EXE/PCK export was not discovered");
+                File.WriteAllBytes(Path.Combine(Path.GetDirectoryName(app), "StarDash.pck"), new byte[] { 0, 0, 0, 0 });
+                Assert(!LocalStarDash.IsValid(app), "Invalid Godot pack was accepted");
+                checks.Add("Existing StarDash export discovery requires the EXE and recognisable Godot PCK together, without executing either");
+                var settings = new Store(Path.Combine(root, "local-game-settings"));
+                settings.Settings.Profile = profile;
+                settings.Settings.StarDashExecutable = app;
+                settings.Settings.HighestSequence = 42;
+                settings.Save();
+                var loaded = new Store(settings.Root);
+                Assert(loaded.Settings.StarDashExecutable == app && loaded.Settings.Profile == profile && loaded.Settings.HighestSequence == 42, "Local game link displaced existing settings");
+                checks.Add("StarDash executable link survives settings reload while preserving Minecraft profile and channel sequence");
+                File.WriteAllText(Path.Combine(root, "result.json"), Engine.Json.Serialize(new
+                {
+                    Passed = true,
+                    Checks = checks
+                }));
+                return 0;
+            }
+            catch (Exception failure)
+            {
+                if (Directory.Exists(directory))
+                    File.WriteAllText(Path.Combine(directory, "failure.txt"), failure.ToString());
+                return 1;
+            }
+        }
+    }
+
+    sealed class FixtureServer : IDisposable
+    {
+        readonly TcpListener listener;
+        readonly Thread thread;
+        volatile bool stopped;
+        public readonly Dictionary<string, byte[]> Files = new Dictionary<string, byte[]>();
+        public readonly List<string> Requests = new List<string>();
+        public readonly string Address;
+        public FixtureServer()
+        {
+            listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
+            Address = "http://127.0.0.1:" + ((IPEndPoint)listener.LocalEndpoint).Port;
+            thread = new Thread(Serve);
+            thread.IsBackground = true;
+            thread.Start();
+        }
+
+        void Serve()
+        {
+            while (!stopped)
+            {
+                try
+                {
+                    using (var socket = listener.AcceptTcpClient())
+                    {
+                        socket.ReceiveTimeout = 5000;
+                        using (var stream = socket.GetStream())
+                        {
+                            var reader = new StreamReader(stream, Encoding.ASCII, false, 1024, true);
+                            string request = reader.ReadLine();
+                            if (request == null)
+                                continue;
+                            string path = request.Split(' ')[1], line;
+                            while (!String.IsNullOrEmpty(line = reader.ReadLine()))
+                            {
+                            }
+
+                            Requests.Add(path);
+                            byte[] body;
+                            string headers;
+                            if (path == "/redirect")
+                            {
+                                body = new byte[0];
+                                headers = "HTTP/1.1 302 Found\r\nLocation: http://example.com/feed\r\nContent-Length: 0\r\n";
+                            }
+                            else if (path == "/oversized")
+                            {
+                                body = new byte[0];
+                                headers = "HTTP/1.1 200 OK\r\nContent-Length: 999999999\r\n";
+                            }
+                            else if (Files.TryGetValue(path, out body))
+                                headers = "HTTP/1.1 200 OK\r\nContent-Length: " + body.Length + "\r\n";
+                            else
+                            {
+                                body = new byte[0];
+                                headers = "HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\n";
+                            }
+
+                            byte[] prefix = Encoding.ASCII.GetBytes(headers + "Connection: close\r\n\r\n");
+                            stream.Write(prefix, 0, prefix.Length);
+                            stream.Write(body, 0, body.Length);
+                        }
+                    }
+                }
+                catch
+                {
+                    if (stopped)
+                        return;
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            stopped = true;
+            listener.Stop();
+            thread.Join(5000);
+        }
+    }
 }

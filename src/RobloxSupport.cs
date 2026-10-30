@@ -10,25 +10,275 @@ using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
-namespace Astera {
-sealed class RobloxExperience {internal long PlaceId,UniverseId;internal string Name,Description,Icon,Banner;internal string[] Banners=new string[0];}
-static partial class RobloxSupport {
-    internal static bool Positive(string value,out long id){return Int64.TryParse(value,NumberStyles.None,CultureInfo.InvariantCulture,out id)&&id>0;}
-    internal static bool TryParsePlaceId(string value,out long id){id=0;value=(value??"").Trim();if(value.Length>2048)return false;if(Positive(value,out id))return true;var direct=Regex.Match(value,@"^roblox://placeId=([0-9]+)$",RegexOptions.IgnoreCase);if(direct.Success)return Positive(direct.Groups[1].Value,out id);Uri u;if(!Uri.TryCreate(value,UriKind.Absolute,out u)||u.Scheme!="https"||!u.IsDefaultPort||!String.IsNullOrEmpty(u.UserInfo)||!new[]{"roblox.com","www.roblox.com","web.roblox.com"}.Contains(u.Host.ToLowerInvariant()))return false;var match=Regex.Match(u.AbsolutePath,@"^/games/([0-9]+)(?:/[^\r\n]*)?$",RegexOptions.IgnoreCase);if(match.Success)return Positive(match.Groups[1].Value,out id);if(u.AbsolutePath=="/games/start"){foreach(string part in u.Query.TrimStart('?').Split('&')){var pair=part.Split(new[]{'='},2);if(pair.Length==2&&pair[0].Equals("placeId",StringComparison.OrdinalIgnoreCase))return Positive(pair[1],out id);}}return false;}
-    internal static string DeepLink(long id){if(id<=0)throw new IOException("Invalid Roblox Place ID");return "roblox://placeId="+id.ToString(CultureInfo.InvariantCulture);}
-    internal static string WebUrl(long id){if(id<=0)throw new IOException("Invalid Roblox Place ID");return "https://www.roblox.com/games/"+id.ToString(CultureInfo.InvariantCulture);}
-    internal static bool ImageAddress(string value){Uri u;return Uri.TryCreate(value,UriKind.Absolute,out u)&&u.Scheme=="https"&&u.IsDefaultPort&&String.IsNullOrEmpty(u.UserInfo)&&String.IsNullOrEmpty(u.Fragment)&&(u.Host=="rbxcdn.com"||u.Host.EndsWith(".rbxcdn.com",StringComparison.OrdinalIgnoreCase));}
-    static byte[] Fetch(string url,int limit,CancellationToken token,bool image){var u=new Uri(url);for(int i=0;i<4;i++){if(image?!ImageAddress(u.AbsoluteUri):u.Scheme!="https"||!new[]{"apis.roblox.com","games.roblox.com","thumbnails.roblox.com"}.Contains(u.Host))throw new IOException("Unexpected Roblox endpoint");var response=WindowsHttps.Get(u,limit,token);if(response.Status>=300&&response.Status<400){if(String.IsNullOrEmpty(response.Location))throw new IOException("Missing Roblox redirect");u=new Uri(u,response.Location);continue;}if(response.Status!=200)throw new IOException("Roblox returned HTTP "+response.Status);return response.Body;}throw new IOException("Too many Roblox redirects");}
-    static Dictionary<string,object> Map(object obj){return obj as Dictionary<string,object>;}
-    static object Field(object obj,string key){var map=Map(obj);object value;return map!=null&&map.TryGetValue(key,out value)?value:null;}
-    static long Number(object obj,string key){long id;return Positive(Convert.ToString(Field(obj,key),CultureInfo.InvariantCulture),out id)?id:0;}
-    static object Json(string url,CancellationToken token){return new System.Web.Script.Serialization.JavaScriptSerializer{MaxJsonLength=2*1024*1024}.DeserializeObject(Encoding.UTF8.GetString(Fetch(url,2*1024*1024,token,false)));}
-    static object First(object obj){var data=Field(obj,"data") as object[];return data!=null&&data.Length>0?data[0]:null;}
-    static string FindImage(object obj){return CompletedImages(obj).FirstOrDefault();}
-    internal static RobloxExperience Lookup(long place,CancellationToken token){var info=new RobloxExperience{PlaceId=place,Name="Roblox experience "+place};info.UniverseId=Number(Json("https://apis.roblox.com/universes/v1/places/"+place+"/universe",token),"universeId");if(info.UniverseId<=0)throw new IOException("Roblox experience unavailable");var details=First(Json("https://games.roblox.com/v1/games?universeIds="+info.UniverseId,token));if(Number(details,"id")!=info.UniverseId)throw new IOException("Roblox returned another experience");info.Description=DescriptionText(Convert.ToString(Field(details,"description")));string name=Convert.ToString(Field(details,"name"));if(!String.IsNullOrWhiteSpace(name)&&name.Length<=100&&!name.Any(Char.IsControl))info.Name=name;try{info.Icon=FindImage(Json("https://thumbnails.roblox.com/v1/games/icons?universeIds="+info.UniverseId+"&size=256x256&format=Png&isCircular=false",token));}catch(WebException){token.ThrowIfCancellationRequested();}catch(IOException){token.ThrowIfCancellationRequested();}catch(ArgumentException){token.ThrowIfCancellationRequested();}try{info.Banners=Gallery(Json("https://thumbnails.roblox.com/v1/games/multiget/thumbnails?universeIds="+info.UniverseId+"&countPerUniverse=10&defaults=false&size=768x432&format=Png&isCircular=false",token),info.UniverseId);info.Banner=info.Banners.FirstOrDefault();}catch(WebException){token.ThrowIfCancellationRequested();}catch(IOException){token.ThrowIfCancellationRequested();}catch(ArgumentException){token.ThrowIfCancellationRequested();}return info;}
-    internal static string Cache(string url,string root,long universe,string kind,CancellationToken token,string variant=""){if(variant!=""&&!Regex.IsMatch(variant,"^[A-F0-9]{20}$"))throw new IOException("Invalid artwork cache variant");if(!ImageAddress(url)||url.IndexOf("/UnapprovedImage/",StringComparison.OrdinalIgnoreCase)>=0||universe<=0||kind!="icon"&&kind!="banner")return null;string path=Path.Combine(root,"rbx-"+universe+"-"+kind+(variant==""?"":"-"+variant)+".png");if(File.Exists(path))try{using(var proof=Banner.ReadArtwork(path)){}return path;}catch(IOException){}catch(ArgumentException){}var bytes=Fetch(url,5*1024*1024,token,true);Directory.CreateDirectory(root);string temp=path+"."+Guid.NewGuid().ToString("N")+".tmp";try{using(var source=new MemoryStream(bytes))using(var image=Image.FromStream(source,true,true)){if(image.Width<8||image.Height<8||image.Width>2048||image.Height>2048)throw new IOException("Unsupported Roblox artwork");using(var bitmap=new Bitmap(image))bitmap.Save(temp,ImageFormat.Png);}token.ThrowIfCancellationRequested();SteamArtworkCache.Trim(root,path,new FileInfo(temp).Length,SteamArtworkCache.Budget,@"^rbx-[0-9]{1,19}-(icon|banner)(-[A-F0-9]{20})?\.png$");if(File.Exists(path))File.Delete(path);File.Move(temp,path);return path;}finally{if(File.Exists(temp))File.Delete(temp);}}
-    internal static string DescriptionText(string raw){if(String.IsNullOrWhiteSpace(raw))return "";string text=new String(UiText.WindowsLines(raw).Where(c=>!Char.IsControl(c)||c=='\r'||c=='\n'||c=='\t').Take(16000).ToArray()).Trim();if(text.Length>0&&Char.IsHighSurrogate(text[text.Length-1]))text=text.Substring(0,text.Length-1);return text;}
-    internal static string ExperienceDescription(CustomGame game){string text=DescriptionText(game.RobloxDescription);return text.Length==0?"No description is available for this experience. Open its game page to read more.":text;}
-    internal static ProcessStartInfo LaunchInfo(string id){long place;if(!Positive(id,out place))throw new IOException("Invalid Roblox Place ID");return new ProcessStartInfo(DeepLink(place)){UseShellExecute=true};}
-}
+
+namespace Astera
+{
+    sealed class RobloxExperience
+    {
+        internal long PlaceId, UniverseId;
+        internal string Name, Description, Icon, Banner;
+        internal string[] Banners = new string[0];
+    }
+
+    static partial class RobloxSupport
+    {
+        internal static bool Positive(string value, out long id)
+        {
+            return Int64.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out id) && id > 0;
+        }
+
+        internal static bool TryParsePlaceId(string value, out long id)
+        {
+            id = 0;
+            value = (value ?? "").Trim();
+            if (value.Length > 2048)
+                return false;
+            if (Positive(value, out id))
+                return true;
+            var direct = Regex.Match(value, @"^roblox://placeId=([0-9]+)$", RegexOptions.IgnoreCase);
+            if (direct.Success)
+                return Positive(direct.Groups[1].Value, out id);
+            Uri u;
+            if (!Uri.TryCreate(value, UriKind.Absolute, out u) || u.Scheme != "https" || !u.IsDefaultPort || !String.IsNullOrEmpty(u.UserInfo) || !new[]
+            {
+                "roblox.com",
+                "www.roblox.com",
+                "web.roblox.com"
+            }.Contains(u.Host.ToLowerInvariant()))
+                return false;
+            var match = Regex.Match(u.AbsolutePath, @"^/games/([0-9]+)(?:/[^\r\n]*)?$", RegexOptions.IgnoreCase);
+            if (match.Success)
+                return Positive(match.Groups[1].Value, out id);
+            if (u.AbsolutePath == "/games/start")
+            {
+                foreach (string part in u.Query.TrimStart('?').Split('&'))
+                {
+                    var pair = part.Split(new[] { '=' }, 2);
+                    if (pair.Length == 2 && pair[0].Equals("placeId", StringComparison.OrdinalIgnoreCase))
+                        return Positive(pair[1], out id);
+                }
+            }
+
+            return false;
+        }
+
+        internal static string DeepLink(long id)
+        {
+            if (id <= 0)
+                throw new IOException("Invalid Roblox Place ID");
+            return "roblox://placeId=" + id.ToString(CultureInfo.InvariantCulture);
+        }
+
+        internal static string WebUrl(long id)
+        {
+            if (id <= 0)
+                throw new IOException("Invalid Roblox Place ID");
+            return "https://www.roblox.com/games/" + id.ToString(CultureInfo.InvariantCulture);
+        }
+
+        internal static bool ImageAddress(string value)
+        {
+            Uri u;
+            return Uri.TryCreate(value, UriKind.Absolute, out u) && u.Scheme == "https" && u.IsDefaultPort && String.IsNullOrEmpty(u.UserInfo) && String.IsNullOrEmpty(u.Fragment) && (u.Host == "rbxcdn.com" || u.Host.EndsWith(".rbxcdn.com", StringComparison.OrdinalIgnoreCase));
+        }
+
+        static byte[] Fetch(string url, int limit, CancellationToken token, bool image)
+        {
+            var u = new Uri(url);
+            for (int i = 0; i < 4; i++)
+            {
+                if (image ? !ImageAddress(u.AbsoluteUri) : u.Scheme != "https" || !new[]
+                {
+                    "apis.roblox.com",
+                    "games.roblox.com",
+                    "thumbnails.roblox.com"
+                }.Contains(u.Host))
+                    throw new IOException("Unexpected Roblox endpoint");
+                var response = WindowsHttps.Get(u, limit, token);
+                if (response.Status >= 300 && response.Status < 400)
+                {
+                    if (String.IsNullOrEmpty(response.Location))
+                        throw new IOException("Missing Roblox redirect");
+                    u = new Uri(u, response.Location);
+                    continue;
+                }
+
+                if (response.Status != 200)
+                    throw new IOException("Roblox returned HTTP " + response.Status);
+                return response.Body;
+            }
+
+            throw new IOException("Too many Roblox redirects");
+        }
+
+        static Dictionary<string, object> Map(object obj)
+        {
+            return obj as Dictionary<string, object>;
+        }
+
+        static object Field(object obj, string key)
+        {
+            var map = Map(obj);
+            object value;
+            return map != null && map.TryGetValue(key, out value) ? value : null;
+        }
+
+        static long Number(object obj, string key)
+        {
+            long id;
+            return Positive(Convert.ToString(Field(obj, key), CultureInfo.InvariantCulture), out id) ? id : 0;
+        }
+
+        static object Json(string url, CancellationToken token)
+        {
+            return new System.Web.Script.Serialization.JavaScriptSerializer
+            {
+                MaxJsonLength = 2 * 1024 * 1024
+            }.DeserializeObject(Encoding.UTF8.GetString(Fetch(url, 2 * 1024 * 1024, token, false)));
+        }
+
+        static object First(object obj)
+        {
+            var data = Field(obj, "data") as object[];
+            return data != null && data.Length > 0 ? data[0] : null;
+        }
+
+        static string FindImage(object obj)
+        {
+            return CompletedImages(obj).FirstOrDefault();
+        }
+
+        internal static RobloxExperience Lookup(long place, CancellationToken token)
+        {
+            var info = new RobloxExperience
+            {
+                PlaceId = place,
+                Name = "Roblox experience " + place
+            };
+            info.UniverseId = Number(Json("https://apis.roblox.com/universes/v1/places/" + place + "/universe", token), "universeId");
+            if (info.UniverseId <= 0)
+                throw new IOException("Roblox experience unavailable");
+            var details = First(Json("https://games.roblox.com/v1/games?universeIds=" + info.UniverseId, token));
+            if (Number(details, "id") != info.UniverseId)
+                throw new IOException("Roblox returned another experience");
+            info.Description = DescriptionText(Convert.ToString(Field(details, "description")));
+            string name = Convert.ToString(Field(details, "name"));
+            if (!String.IsNullOrWhiteSpace(name) && name.Length <= 100 && !name.Any(Char.IsControl))
+                info.Name = name;
+            try
+            {
+                info.Icon = FindImage(Json("https://thumbnails.roblox.com/v1/games/icons?universeIds=" + info.UniverseId + "&size=256x256&format=Png&isCircular=false", token));
+            }
+            catch (WebException)
+            {
+                token.ThrowIfCancellationRequested();
+            }
+            catch (IOException)
+            {
+                token.ThrowIfCancellationRequested();
+            }
+            catch (ArgumentException)
+            {
+                token.ThrowIfCancellationRequested();
+            }
+
+            try
+            {
+                info.Banners = Gallery(Json("https://thumbnails.roblox.com/v1/games/multiget/thumbnails?universeIds=" + info.UniverseId + "&countPerUniverse=10&defaults=false&size=768x432&format=Png&isCircular=false", token), info.UniverseId);
+                info.Banner = info.Banners.FirstOrDefault();
+            }
+            catch (WebException)
+            {
+                token.ThrowIfCancellationRequested();
+            }
+            catch (IOException)
+            {
+                token.ThrowIfCancellationRequested();
+            }
+            catch (ArgumentException)
+            {
+                token.ThrowIfCancellationRequested();
+            }
+
+            return info;
+        }
+
+        internal static string Cache(string url, string root, long universe, string kind, CancellationToken token, string variant = "")
+        {
+            if (variant != "" && !Regex.IsMatch(variant, "^[A-F0-9]{20}$"))
+                throw new IOException("Invalid artwork cache variant");
+            if (!ImageAddress(url) || url.IndexOf("/UnapprovedImage/", StringComparison.OrdinalIgnoreCase) >= 0 || universe <= 0 || kind != "icon" && kind != "banner")
+                return null;
+            string path = Path.Combine(root, "rbx-" + universe + "-" + kind + (variant == "" ? "" : "-" + variant) + ".png");
+            if (File.Exists(path))
+                try
+                {
+                    using (var proof = Banner.ReadArtwork(path))
+                    {
+                    }
+
+                    return path;
+                }
+                catch (IOException)
+                {
+                }
+                catch (ArgumentException)
+                {
+                }
+
+            var bytes = Fetch(url, 5 * 1024 * 1024, token, true);
+            Directory.CreateDirectory(root);
+            string temp = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            try
+            {
+                using (var source = new MemoryStream(bytes))
+                using (var image = Image.FromStream(source, true, true))
+                {
+                    if (image.Width < 8 || image.Height < 8 || image.Width > 2048 || image.Height > 2048)
+                        throw new IOException("Unsupported Roblox artwork");
+                    using (var bitmap = new Bitmap(image))
+                        bitmap.Save(temp, ImageFormat.Png);
+                }
+
+                token.ThrowIfCancellationRequested();
+                SteamArtworkCache.Trim(root, path, new FileInfo(temp).Length, SteamArtworkCache.Budget, @"^rbx-[0-9]{1,19}-(icon|banner)(-[A-F0-9]{20})?\.png$");
+                if (File.Exists(path))
+                    File.Delete(path);
+                File.Move(temp, path);
+                return path;
+            }
+            finally
+            {
+                if (File.Exists(temp))
+                    File.Delete(temp);
+            }
+        }
+
+        internal static string DescriptionText(string raw)
+        {
+            if (String.IsNullOrWhiteSpace(raw))
+                return "";
+            string text = new String(UiText.WindowsLines(raw).Where(c => !Char.IsControl(c) || c == '\r' || c == '\n' || c == '\t').Take(16000).ToArray()).Trim();
+            if (text.Length > 0 && Char.IsHighSurrogate(text[text.Length - 1]))
+                text = text.Substring(0, text.Length - 1);
+            return text;
+        }
+
+        internal static string ExperienceDescription(CustomGame game)
+        {
+            string text = DescriptionText(game.RobloxDescription);
+            return text.Length == 0 ? "No description is available for this experience. Open its game page to read more." : text;
+        }
+
+        internal static ProcessStartInfo LaunchInfo(string id)
+        {
+            long place;
+            if (!Positive(id, out place))
+                throw new IOException("Invalid Roblox Place ID");
+            return new ProcessStartInfo(DeepLink(place))
+            {
+                UseShellExecute = true
+            };
+        }
+    }
 }

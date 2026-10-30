@@ -8,16 +8,149 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using MC2Pack;
-namespace Astera {
-public sealed class SteamNewsEnvelope {public SteamNewsApp appnews;}
-public sealed class SteamNewsApp {public long appid;public List<SteamNewsPost> newsitems;}
-public sealed class SteamNewsPost {public string title,contents,feedname;public long date;}
-static class SteamNews {
-    internal static string Text(string appId,byte[] bytes){if(!PlatformLibraries.Id(appId)||bytes.Length>2*1024*1024)throw new IOException("Invalid Steam news response");var response=new System.Web.Script.Serialization.JavaScriptSerializer{MaxJsonLength=2*1024*1024}.Deserialize<SteamNewsEnvelope>(Encoding.UTF8.GetString(bytes));if(response==null||response.appnews==null||response.appnews.appid.ToString()!=appId||response.appnews.newsitems==null)throw new IOException("Steam news belongs to another game");var posts=response.appnews.newsitems.Where(n=>n!=null&&n.feedname=="steam_community_announcements").OrderByDescending(n=>n.date).Take(4).ToArray();if(posts.Length==0)return "No official Steam posts available yet.";var text=new StringBuilder();foreach(var post in posts){string body=YouTubeLinks.SteamTags(post.contents??"");body=Regex.Replace(body,@"\[(img|previewyoutube|video|table)[^\]]*\].*?\[/\1\]","",RegexOptions.IgnoreCase|RegexOptions.Singleline);body=Regex.Replace(body,@"\[/?(?:h[1-6]|list|olist|quote|p|hr)[^\]]*\]",Environment.NewLine,RegexOptions.IgnoreCase);body=body.Replace("[*]",Environment.NewLine+"- ").Replace("[/*]","");body=Regex.Replace(body,@"\[/?(?:b|i|u|url|code|spoiler)[^\]]*\]","",RegexOptions.IgnoreCase);body=Regex.Replace(body,@"</?(?:p|div|h[1-6]|br|li|ul|ol)\b[^>]*>",Environment.NewLine,RegexOptions.IgnoreCase);body=Regex.Replace(body,@"(?:\r?\n){3,}",Environment.NewLine+Environment.NewLine);body=Regex.Replace(body,@"<[^>]{0,2000}>","");body=WebUtility.HtmlDecode(body).Trim();body=Regex.Replace(body,@"(?m)^-[\t ]*(?:\r?\n)[\t ]*","- ");if(body.Length>12000)body=body.Substring(0,12000)+"…";text.AppendLine(post.title??"Steam post");if(post.date>0&&post.date<253402300799L)text.AppendLine(DateTimeOffset.FromUnixTimeSeconds(post.date).ToLocalTime().ToString("d MMM yyyy"));text.AppendLine();text.AppendLine(body);text.AppendLine();}text.Append("Read on Steam: https://store.steampowered.com/news/app/"+appId);return UiText.WindowsLines(text.ToString());}
-}
-sealed partial class LibraryForm {
-    readonly Dictionary<string,string> steamNews=new Dictionary<string,string>();readonly HashSet<string> newsPending=new HashSet<string>();readonly Dictionary<string,DateTime> newsNext=new Dictionary<string,DateTime>();
-    string CustomNews(SteamGameArt art){string text;if(art==null)return "No patch notes available yet.";return steamNews.TryGetValue(art.AppId,out text)?text:"Loading official Steam posts…";}
-    async void QueueSteamNews(SteamGameArt art){DateTime next;if(previewMode||art==null||newsNext.TryGetValue(art.AppId,out next)&&next>DateTime.UtcNow||!newsPending.Add(art.AppId))return;string id=art.AppId;newsNext[id]=DateTime.UtcNow.AddMinutes(30);try{string result=await Task.Run(delegate{string root=Engine.Inside(store.Root,"steam-news");Directory.CreateDirectory(root);string cache=Engine.Inside(root,id+".json");byte[] previous=null;if(File.Exists(cache)&&new FileInfo(cache).Length<2*1024*1024){previous=File.ReadAllBytes(cache);if(File.GetLastWriteTimeUtc(cache)>DateTime.UtcNow.AddMinutes(-30))return SteamNews.Text(id,previous);}try{using(var output=new MemoryStream()){new Transport().Get("https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid="+id+"&count=4&maxlength=0&feeds=steam_community_announcements",output,2*1024*1024,-1,CancellationToken.None,null);var bytes=output.ToArray();string text=SteamNews.Text(id,bytes);File.WriteAllBytes(cache,bytes);return text;}}catch{if(previous!=null)return SteamNews.Text(id,previous);throw;}});if(!IsDisposed){steamNews[id]=result;if(IsCustomGame&&CustomSteam(CurrentCustom)!=null&&CustomSteam(CurrentCustom).AppId==id){string text=CustomNews(art);if(notes.Text!=text)notes.Text=text;}}}catch(Exception error){newsNext[id]=DateTime.UtcNow.AddMinutes(2);if(!IsDisposed){steamNews[id]="Steam posts are unavailable right now. Open this game in Steam to check its latest news.";if(IsCustomGame&&CustomSteam(CurrentCustom)!=null&&CustomSteam(CurrentCustom).AppId==id)notes.Text=steamNews[id];}AsteraDiagnostics.Write("Steam public news unavailable",new IOException(error.GetType().Name));}finally{newsPending.Remove(id);}}
-}
+
+namespace Astera
+{
+    public sealed class SteamNewsEnvelope
+    {
+        public SteamNewsApp appnews;
+    }
+
+    public sealed class SteamNewsApp
+    {
+        public long appid;
+        public List<SteamNewsPost> newsitems;
+    }
+
+    public sealed class SteamNewsPost
+    {
+        public string title, contents, feedname;
+        public long date;
+    }
+
+    static class SteamNews
+    {
+        internal static string Text(string appId, byte[] bytes)
+        {
+            if (!PlatformLibraries.Id(appId) || bytes.Length > 2 * 1024 * 1024)
+                throw new IOException("Invalid Steam news response");
+            var response = new System.Web.Script.Serialization.JavaScriptSerializer
+            {
+                MaxJsonLength = 2 * 1024 * 1024
+            }.Deserialize<SteamNewsEnvelope>(Encoding.UTF8.GetString(bytes));
+            if (response == null || response.appnews == null || response.appnews.appid.ToString() != appId || response.appnews.newsitems == null)
+                throw new IOException("Steam news belongs to another game");
+            var posts = response.appnews.newsitems.Where(n => n != null && n.feedname == "steam_community_announcements").OrderByDescending(n => n.date).Take(4).ToArray();
+            if (posts.Length == 0)
+                return "No official Steam posts available yet.";
+            var text = new StringBuilder();
+            foreach (var post in posts)
+            {
+                string body = YouTubeLinks.SteamTags(post.contents ?? "");
+                body = Regex.Replace(body, @"\[(img|previewyoutube|video|table)[^\]]*\].*?\[/\1\]", "", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+                body = Regex.Replace(body, @"\[/?(?:h[1-6]|list|olist|quote|p|hr)[^\]]*\]", Environment.NewLine, RegexOptions.IgnoreCase);
+                body = body.Replace("[*]", Environment.NewLine + "- ").Replace("[/*]", "");
+                body = Regex.Replace(body, @"\[/?(?:b|i|u|url|code|spoiler)[^\]]*\]", "", RegexOptions.IgnoreCase);
+                body = Regex.Replace(body, @"</?(?:p|div|h[1-6]|br|li|ul|ol)\b[^>]*>", Environment.NewLine, RegexOptions.IgnoreCase);
+                body = Regex.Replace(body, @"(?:\r?\n){3,}", Environment.NewLine + Environment.NewLine);
+                body = Regex.Replace(body, @"<[^>]{0,2000}>", "");
+                body = WebUtility.HtmlDecode(body).Trim();
+                body = Regex.Replace(body, @"(?m)^-[\t ]*(?:\r?\n)[\t ]*", "- ");
+                if (body.Length > 12000)
+                    body = body.Substring(0, 12000) + "…";
+                text.AppendLine(post.title ?? "Steam post");
+                if (post.date > 0 && post.date < 253402300799L)
+                    text.AppendLine(DateTimeOffset.FromUnixTimeSeconds(post.date).ToLocalTime().ToString("d MMM yyyy"));
+                text.AppendLine();
+                text.AppendLine(body);
+                text.AppendLine();
+            }
+
+            text.Append("Read on Steam: https://store.steampowered.com/news/app/" + appId);
+            return UiText.WindowsLines(text.ToString());
+        }
+    }
+
+    sealed partial class LibraryForm
+    {
+        readonly Dictionary<string, string> steamNews = new Dictionary<string, string>();
+        readonly HashSet<string> newsPending = new HashSet<string>();
+        readonly Dictionary<string, DateTime> newsNext = new Dictionary<string, DateTime>();
+        string CustomNews(SteamGameArt art)
+        {
+            string text;
+            if (art == null)
+                return "No patch notes available yet.";
+            return steamNews.TryGetValue(art.AppId, out text) ? text : "Loading official Steam posts…";
+        }
+
+        async void QueueSteamNews(SteamGameArt art)
+        {
+            DateTime next;
+            if (previewMode || art == null || newsNext.TryGetValue(art.AppId, out next) && next > DateTime.UtcNow || !newsPending.Add(art.AppId))
+                return;
+            string id = art.AppId;
+            newsNext[id] = DateTime.UtcNow.AddMinutes(30);
+            try
+            {
+                string result = await Task.Run(delegate
+                {
+                    string root = Engine.Inside(store.Root, "steam-news");
+                    Directory.CreateDirectory(root);
+                    string cache = Engine.Inside(root, id + ".json");
+                    byte[] previous = null;
+                    if (File.Exists(cache) && new FileInfo(cache).Length < 2 * 1024 * 1024)
+                    {
+                        previous = File.ReadAllBytes(cache);
+                        if (File.GetLastWriteTimeUtc(cache) > DateTime.UtcNow.AddMinutes(-30))
+                            return SteamNews.Text(id, previous);
+                    }
+
+                    try
+                    {
+                        using (var output = new MemoryStream())
+                        {
+                            new Transport().Get("https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid=" + id + "&count=4&maxlength=0&feeds=steam_community_announcements", output, 2 * 1024 * 1024, -1, CancellationToken.None, null);
+                            var bytes = output.ToArray();
+                            string text = SteamNews.Text(id, bytes);
+                            File.WriteAllBytes(cache, bytes);
+                            return text;
+                        }
+                    }
+                    catch
+                    {
+                        if (previous != null)
+                            return SteamNews.Text(id, previous);
+                        throw;
+                    }
+                });
+                if (!IsDisposed)
+                {
+                    steamNews[id] = result;
+                    if (IsCustomGame && CustomSteam(CurrentCustom) != null && CustomSteam(CurrentCustom).AppId == id)
+                    {
+                        string text = CustomNews(art);
+                        if (notes.Text != text)
+                            notes.Text = text;
+                    }
+                }
+            }
+            catch (Exception error)
+            {
+                newsNext[id] = DateTime.UtcNow.AddMinutes(2);
+                if (!IsDisposed)
+                {
+                    steamNews[id] = "Steam posts are unavailable right now. Open this game in Steam to check its latest news.";
+                    if (IsCustomGame && CustomSteam(CurrentCustom) != null && CustomSteam(CurrentCustom).AppId == id)
+                        notes.Text = steamNews[id];
+                }
+
+                AsteraDiagnostics.Write("Steam public news unavailable", new IOException(error.GetType().Name));
+            }
+            finally
+            {
+                newsPending.Remove(id);
+            }
+        }
+    }
 }

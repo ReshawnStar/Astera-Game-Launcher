@@ -2,29 +2,368 @@ using System;
 using System.Drawing;
 using System.Threading;
 using System.Windows.Forms;
-namespace Astera {
-sealed class WorkMeter:Control {
-    readonly System.Windows.Forms.Timer animation=new System.Windows.Forms.Timer{Interval=10};readonly System.Diagnostics.Stopwatch elapsed=new System.Diagnostics.Stopwatch();
-    double fraction=-1;Form owner;bool disposed;internal int AnimatedPaints;internal bool AnimationRunning {get{return animation.Enabled;}}
-    internal double Fraction {get{return fraction;}set{if(fraction==value)return;fraction=value;UpdatePlayback();Invalidate();}}
-    public WorkMeter(){DoubleBuffered=true;Height=8;SetStyle(ControlStyles.UserPaint|ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.ResizeRedraw,true);animation.Tick+=delegate{Invalidate();};UiEffects.Changed+=EffectsChanged;}
-    void EffectsChanged(object sender,EventArgs e){UpdatePlayback();Invalidate();}
-    void OwnerChanged(object sender,EventArgs e){UpdatePlayback();}
-    void UpdatePlayback(){if(disposed||animation==null)return;bool active=fraction<0&&UiEffects.Enabled&&Visible&&IsHandleCreated&&owner!=null&&owner.Visible&&owner.WindowState!=FormWindowState.Minimized;animation.Enabled=active;if(active)elapsed.Start();else elapsed.Stop();}
-    protected override void OnHandleCreated(EventArgs e){base.OnHandleCreated(e);owner=FindForm();if(owner!=null){owner.Resize+=OwnerChanged;owner.VisibleChanged+=OwnerChanged;}UpdatePlayback();}
-    protected override void OnVisibleChanged(EventArgs e){base.OnVisibleChanged(e);UpdatePlayback();}
-    protected override void OnHandleDestroyed(EventArgs e){animation.Stop();DetachOwner();base.OnHandleDestroyed(e);}
-    void DetachOwner(){if(owner!=null){owner.Resize-=OwnerChanged;owner.VisibleChanged-=OwnerChanged;owner=null;}}
-    protected override void OnPaint(PaintEventArgs e){if(Width<2||Height<2)return;var g=e.Graphics;g.Clear(BackColor);g.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;var bounds=new Rectangle(0,0,Width-1,Height-1);using(var track=AsteraButton.Round(bounds,Math.Min(4,Height/2))){using(var brush=new SolidBrush(Color.FromArgb(31,40,64)))g.FillPath(brush,track);var state=g.Save();g.SetClip(track);Color accent=ButtonAtlas.AccentColor;if(fraction<0){int segment=Math.Max(65,Math.Min(190,Width/4));double phase=elapsed.Elapsed.TotalSeconds/2.0%1;int x=UiEffects.Enabled?(int)Math.Round((Width+segment)*phase)-segment:(Width-segment)/2;using(var glow=new System.Drawing.Drawing2D.LinearGradientBrush(new Rectangle(x,0,segment,Math.Max(1,Height)),Color.Transparent,accent,0F)){glow.InterpolationColors=new System.Drawing.Drawing2D.ColorBlend{Positions=new[]{0F,.25F,.65F,1F},Colors=new[]{Color.FromArgb(0,accent),Color.FromArgb(185,accent),Color.FromArgb(245,accent),Color.FromArgb(0,accent)}};g.FillRectangle(glow,x,0,segment,Height);}if(animation.Enabled)AnimatedPaints++;}else if(fraction>0){int width=Math.Max(1,(int)Math.Round(bounds.Width*Math.Min(1,fraction)));using(var fill=AsteraButton.Round(new Rectangle(0,0,width,Height-1),Math.Min(4,Height/2)))using(var brush=new SolidBrush(accent))g.FillPath(brush,fill);}g.Restore(state);}}
-    protected override void Dispose(bool disposing){if(disposing&&!disposed){disposed=true;UiEffects.Changed-=EffectsChanged;DetachOwner();animation.Dispose();}base.Dispose(disposing);}
-}
 
-sealed partial class LibraryForm {
-    readonly Panel workPanel=new Panel{Dock=DockStyle.Bottom,Height=48,Visible=false};readonly Label workFlavor=new Label{Dock=DockStyle.Fill,ForeColor=Color.LightSlateGray,AutoEllipsis=true,Visible=false,Font=UiTheme.Text(12)};readonly Label workLabel=new Label{Dock=DockStyle.Top,Height=20,ForeColor=Color.LightSteelBlue};readonly WorkMeter workMeter=new WorkMeter{Dock=DockStyle.Bottom};readonly System.Windows.Forms.Timer workHeartbeat=new System.Windows.Forms.Timer{Interval=250};Button workCancel;DateTime workStartedUtc;string workPhase="Working",workActivityKey;bool WorkBelongsToPage {get{return workActivityKey==null||workActivityKey=="app"||workActivityKey==SelectedActivityKey;}}long workDone,workTotal,lastProgressTicks;
-    internal static bool NeedsProfileCheck(Preferences before,Preferences after){return !String.IsNullOrWhiteSpace(after.Profile)&&(!String.Equals(before.Profile,after.Profile,StringComparison.OrdinalIgnoreCase)||!String.Equals(before.FeedUrl,after.FeedUrl,StringComparison.Ordinal));}
-    void BuildWorkProgress(TableLayoutPanel body){var footer=new Panel{Dock=DockStyle.Fill,Margin=Padding.Empty};releaseLabel.Dock=DockStyle.Fill;var gauge=new Panel{Dock=DockStyle.Fill,Padding=new Padding(0,4,14,7)};gauge.Controls.Add(workFlavor);gauge.Controls.Add(workLabel);gauge.Controls.Add(workMeter);workCancel=Button("Cancel",delegate{if(!busy&&MinecraftLaunchVisible){ShowMinecraftLaunchManager();return;}if(!busy&&SelectedLaunchWait!=null){DismissGameLaunchWait();return;}if(cancellation!=null&&!transaction)cancellation.Cancel();});workCancel.AutoSize=false;workCancel.MinimumSize=new Size(86,32);workCancel.Padding=new Padding(12,4,12,4);workCancel.SetBounds(0,8,86,32);var cancelHost=new Panel{Dock=DockStyle.Right,Width=86};cancelHost.Controls.Add(workCancel);workPanel.Controls.Add(gauge);workPanel.Controls.Add(cancelHost);workHeartbeat.Tick+=delegate{if(busy)UpdateWorkProgress();else workHeartbeat.Stop();};Disposed+=delegate{workHeartbeat.Dispose();};footer.Controls.Add(releaseLabel);footer.Controls.Add(workPanel);body.Controls.Add(footer,0,3);}
-    void UpdateWorkProgress(){ClearLateLaunchNotices();UpdateLaunchOverlay();if(!busy&&MinecraftLaunchVisible){PresentMinecraftLaunch();return;}if(!busy&&SelectedLaunchWait!=null){PresentGameLaunchWait(SelectedLaunchWait);return;}workFlavor.Visible=false;if(workCancel!=null){workCancel.Text=workCancel.AccessibleName="Cancel";workCancel.Parent.Width=86;workCancel.Width=86;}bool shown=busy&&WorkBelongsToPage;workPanel.Visible=shown;releaseLabel.Visible=!shown;workHeartbeat.Enabled=busy;if(workCancel!=null){workCancel.Visible=busy&&cancellation!=null&&!transaction;workCancel.Enabled=workCancel.Visible&&!cancellation.IsCancellationRequested;}if(gameBody!=null)gameBody.RowStyles[3].Height=shown?58:28;workMeter.Fraction=workTotal>0?(double)workDone/workTotal:-1;workMeter.Invalidate();workLabel.Text=(workActivityKey=="app"?"Astera: ":"")+workPhase+(workTotal>0?" · "+((double)workDone/workTotal*100).ToString("0")+"% · "+(workPhase.StartsWith("Preparing mod ",StringComparison.Ordinal)?workDone+" / "+workTotal+" mods":workPhase=="Installing"?workDone+" / "+workTotal+" files":(workDone/1048576D).ToString("0.0")+" / "+(workTotal/1048576D).ToString("0.0")+" MiB"):" · "+(DateTime.UtcNow-workStartedUtc).ToString(@"mm\:ss")+" elapsed");}
-    void ReportWorkProgress(string phase,long done,long total){if(IsDisposed||Disposing)return;long now=DateTime.UtcNow.Ticks;if(done>0&&done<total&&now-Interlocked.Read(ref lastProgressTicks)<TimeSpan.TicksPerMillisecond*200)return;Interlocked.Exchange(ref lastProgressTicks,now);if(InvokeRequired){try{BeginInvoke(new Action<string,long,long>(SetWorkProgress),phase,done,total);}catch(InvalidOperationException){}return;}SetWorkProgress(phase,done,total);}
-    void SetWorkProgress(string phase,long done,long total){if(IsDisposed||Disposing)return;workPhase=phase;workDone=done;workTotal=total;UpdateWorkProgress();}
-}
+namespace Astera
+{
+    sealed class WorkMeter : Control
+    {
+        readonly System.Windows.Forms.Timer animation = new System.Windows.Forms.Timer
+        {
+            Interval = 10
+        };
+        readonly System.Diagnostics.Stopwatch elapsed = new System.Diagnostics.Stopwatch();
+        double fraction = -1;
+        Form owner;
+        bool disposed;
+        internal int AnimatedPaints;
+        internal bool AnimationRunning
+        {
+            get
+            {
+                return animation.Enabled;
+            }
+        }
+
+        internal double Fraction
+        {
+            get
+            {
+                return fraction;
+            }
+
+            set
+            {
+                if (fraction == value)
+                    return;
+                fraction = value;
+                UpdatePlayback();
+                Invalidate();
+            }
+        }
+
+        public WorkMeter()
+        {
+            DoubleBuffered = true;
+            Height = 8;
+            SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw, true);
+            animation.Tick += delegate
+            {
+                Invalidate();
+            };
+            UiEffects.Changed += EffectsChanged;
+        }
+
+        void EffectsChanged(object sender, EventArgs e)
+        {
+            UpdatePlayback();
+            Invalidate();
+        }
+
+        void OwnerChanged(object sender, EventArgs e)
+        {
+            UpdatePlayback();
+        }
+
+        void UpdatePlayback()
+        {
+            if (disposed || animation == null)
+                return;
+            bool active = fraction < 0 && UiEffects.Enabled && Visible && IsHandleCreated && owner != null && owner.Visible && owner.WindowState != FormWindowState.Minimized;
+            animation.Enabled = active;
+            if (active)
+                elapsed.Start();
+            else
+                elapsed.Stop();
+        }
+
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+            owner = FindForm();
+            if (owner != null)
+            {
+                owner.Resize += OwnerChanged;
+                owner.VisibleChanged += OwnerChanged;
+            }
+
+            UpdatePlayback();
+        }
+
+        protected override void OnVisibleChanged(EventArgs e)
+        {
+            base.OnVisibleChanged(e);
+            UpdatePlayback();
+        }
+
+        protected override void OnHandleDestroyed(EventArgs e)
+        {
+            animation.Stop();
+            DetachOwner();
+            base.OnHandleDestroyed(e);
+        }
+
+        void DetachOwner()
+        {
+            if (owner != null)
+            {
+                owner.Resize -= OwnerChanged;
+                owner.VisibleChanged -= OwnerChanged;
+                owner = null;
+            }
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            if (Width < 2 || Height < 2)
+                return;
+            var g = e.Graphics;
+            g.Clear(BackColor);
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            var bounds = new Rectangle(0, 0, Width - 1, Height - 1);
+            using (var track = AsteraButton.Round(bounds, Math.Min(4, Height / 2)))
+            {
+                using (var brush = new SolidBrush(Color.FromArgb(31, 40, 64)))
+                    g.FillPath(brush, track);
+                var state = g.Save();
+                g.SetClip(track);
+                Color accent = ButtonAtlas.AccentColor;
+                if (fraction < 0)
+                {
+                    int segment = Math.Max(65, Math.Min(190, Width / 4));
+                    double phase = elapsed.Elapsed.TotalSeconds / 2.0 % 1;
+                    int x = UiEffects.Enabled ? (int)Math.Round((Width + segment) * phase) - segment : (Width - segment) / 2;
+                    using (var glow = new System.Drawing.Drawing2D.LinearGradientBrush(new Rectangle(x, 0, segment, Math.Max(1, Height)), Color.Transparent, accent, 0F))
+                    {
+                        glow.InterpolationColors = new System.Drawing.Drawing2D.ColorBlend
+                        {
+                            Positions = new[]
+                            {
+                                0F,
+                                .25F,
+                                .65F,
+                                1F
+                            },
+                            Colors = new[]
+                            {
+                                Color.FromArgb(0, accent),
+                                Color.FromArgb(185, accent),
+                                Color.FromArgb(245, accent),
+                                Color.FromArgb(0, accent)
+                            }
+                        };
+                        g.FillRectangle(glow, x, 0, segment, Height);
+                    }
+
+                    if (animation.Enabled)
+                        AnimatedPaints++;
+                }
+                else if (fraction > 0)
+                {
+                    int width = Math.Max(1, (int)Math.Round(bounds.Width * Math.Min(1, fraction)));
+                    using (var fill = AsteraButton.Round(new Rectangle(0, 0, width, Height - 1), Math.Min(4, Height / 2)))
+                    using (var brush = new SolidBrush(accent))
+                        g.FillPath(brush, fill);
+                }
+
+                g.Restore(state);
+            }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && !disposed)
+            {
+                disposed = true;
+                UiEffects.Changed -= EffectsChanged;
+                DetachOwner();
+                animation.Dispose();
+            }
+
+            base.Dispose(disposing);
+        }
+    }
+
+    sealed partial class LibraryForm
+    {
+        readonly Panel workPanel = new Panel
+        {
+            Dock = DockStyle.Bottom,
+            Height = 48,
+            Visible = false
+        };
+        readonly Label workFlavor = new Label
+        {
+            Dock = DockStyle.Fill,
+            ForeColor = Color.LightSlateGray,
+            AutoEllipsis = true,
+            Visible = false,
+            Font = UiTheme.Text(12)
+        };
+        readonly Label workLabel = new Label
+        {
+            Dock = DockStyle.Top,
+            Height = 20,
+            ForeColor = Color.LightSteelBlue
+        };
+        readonly WorkMeter workMeter = new WorkMeter
+        {
+            Dock = DockStyle.Bottom
+        };
+        readonly System.Windows.Forms.Timer workHeartbeat = new System.Windows.Forms.Timer
+        {
+            Interval = 250
+        };
+        Button workCancel;
+        DateTime workStartedUtc;
+        string workPhase = "Working", workActivityKey;
+        bool WorkBelongsToPage
+        {
+            get
+            {
+                return workActivityKey == null || workActivityKey == "app" || workActivityKey == SelectedActivityKey;
+            }
+        }
+
+        long workDone, workTotal, lastProgressTicks;
+        internal static bool NeedsProfileCheck(Preferences before, Preferences after)
+        {
+            return !String.IsNullOrWhiteSpace(after.Profile) && (!String.Equals(before.Profile, after.Profile, StringComparison.OrdinalIgnoreCase) || !String.Equals(before.FeedUrl, after.FeedUrl, StringComparison.Ordinal));
+        }
+
+        void BuildWorkProgress(TableLayoutPanel body)
+        {
+            var footer = new Panel
+            {
+                Dock = DockStyle.Fill,
+                Margin = Padding.Empty
+            };
+            releaseLabel.Dock = DockStyle.Fill;
+            var gauge = new Panel
+            {
+                Dock = DockStyle.Fill,
+                Padding = new Padding(0, 4, 14, 7)
+            };
+            gauge.Controls.Add(workFlavor);
+            gauge.Controls.Add(workLabel);
+            gauge.Controls.Add(workMeter);
+            workCancel = Button("Cancel", delegate
+            {
+                if (!busy && MinecraftLaunchVisible)
+                {
+                    ShowMinecraftLaunchManager();
+                    return;
+                }
+
+                if (!busy && SelectedLaunchWait != null)
+                {
+                    DismissGameLaunchWait();
+                    return;
+                }
+
+                if (cancellation != null && !transaction)
+                    cancellation.Cancel();
+            });
+            workCancel.AutoSize = false;
+            workCancel.MinimumSize = new Size(86, 32);
+            workCancel.Padding = new Padding(12, 4, 12, 4);
+            workCancel.SetBounds(0, 8, 86, 32);
+            var cancelHost = new Panel
+            {
+                Dock = DockStyle.Right,
+                Width = 86
+            };
+            cancelHost.Controls.Add(workCancel);
+            workPanel.Controls.Add(gauge);
+            workPanel.Controls.Add(cancelHost);
+            workHeartbeat.Tick += delegate
+            {
+                if (busy)
+                    UpdateWorkProgress();
+                else
+                    workHeartbeat.Stop();
+            };
+            Disposed += delegate
+            {
+                workHeartbeat.Dispose();
+            };
+            footer.Controls.Add(releaseLabel);
+            footer.Controls.Add(workPanel);
+            body.Controls.Add(footer, 0, 3);
+        }
+
+        void UpdateWorkProgress()
+        {
+            ClearLateLaunchNotices();
+            UpdateLaunchOverlay();
+            if (!busy && MinecraftLaunchVisible)
+            {
+                PresentMinecraftLaunch();
+                return;
+            }
+
+            if (!busy && SelectedLaunchWait != null)
+            {
+                PresentGameLaunchWait(SelectedLaunchWait);
+                return;
+            }
+
+            workFlavor.Visible = false;
+            if (workCancel != null)
+            {
+                workCancel.Text = workCancel.AccessibleName = "Cancel";
+                workCancel.Parent.Width = 86;
+                workCancel.Width = 86;
+            }
+
+            bool shown = busy && WorkBelongsToPage;
+            workPanel.Visible = shown;
+            releaseLabel.Visible = !shown;
+            workHeartbeat.Enabled = busy;
+            if (workCancel != null)
+            {
+                workCancel.Visible = busy && cancellation != null && !transaction;
+                workCancel.Enabled = workCancel.Visible && !cancellation.IsCancellationRequested;
+            }
+
+            if (gameBody != null)
+                gameBody.RowStyles[3].Height = shown ? 58 : 28;
+            workMeter.Fraction = workTotal > 0 ? (double)workDone / workTotal : -1;
+            workMeter.Invalidate();
+            workLabel.Text = (workActivityKey == "app" ? "Astera: " : "") + workPhase + (workTotal > 0 ? " · " + ((double)workDone / workTotal * 100).ToString("0") + "% · " + (workPhase.StartsWith("Preparing mod ", StringComparison.Ordinal) ? workDone + " / " + workTotal + " mods" : workPhase == "Installing" ? workDone + " / " + workTotal + " files" : (workDone / 1048576D).ToString("0.0") + " / " + (workTotal / 1048576D).ToString("0.0") + " MiB") : " · " + (DateTime.UtcNow - workStartedUtc).ToString(@"mm\:ss") + " elapsed");
+        }
+
+        void ReportWorkProgress(string phase, long done, long total)
+        {
+            if (IsDisposed || Disposing)
+                return;
+            long now = DateTime.UtcNow.Ticks;
+            if (done > 0 && done < total && now - Interlocked.Read(ref lastProgressTicks) < TimeSpan.TicksPerMillisecond * 200)
+                return;
+            Interlocked.Exchange(ref lastProgressTicks, now);
+            if (InvokeRequired)
+            {
+                try
+                {
+                    BeginInvoke(new Action<string, long, long>(SetWorkProgress), phase, done, total);
+                }
+                catch (InvalidOperationException)
+                {
+                }
+
+                return;
+            }
+
+            SetWorkProgress(phase, done, total);
+        }
+
+        void SetWorkProgress(string phase, long done, long total)
+        {
+            if (IsDisposed || Disposing)
+                return;
+            workPhase = phase;
+            workDone = done;
+            workTotal = total;
+            UpdateWorkProgress();
+        }
+    }
 }

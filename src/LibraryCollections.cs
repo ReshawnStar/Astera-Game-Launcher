@@ -3,23 +3,367 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-namespace Astera {
-public sealed class LibraryFolder {public string Id=Guid.NewGuid().ToString("N"),Name="";public List<string> Games=new List<string>();}
-sealed partial class LibraryForm {
-    string libraryFilter="all";Button libraryFilterButton;ContextMenuStrip libraryFilterMenu,libraryEntryMenu;string lastDoubleLaunch;long lastDoubleLaunchAt;
-    internal static string LibraryKey(LibraryEntry entry){return entry==null?null:entry.Custom==null?"builtin:"+entry.Kind:"custom:"+entry.Custom.Id;}
-    void EnsureCollections(){if(store.Settings.FavoriteGames==null)store.Settings.FavoriteGames=new List<string>();if(store.Settings.HiddenGames==null)store.Settings.HiddenGames=new List<string>();if(store.Settings.LibraryFolders==null)store.Settings.LibraryFolders=new List<LibraryFolder>();store.Settings.LibraryFolders.RemoveAll(f=>f==null);foreach(var folder in store.Settings.LibraryFolders)if(folder.Games==null)folder.Games=new List<string>();}
-    bool CollectionMatches(LibraryEntry entry){string key=LibraryKey(entry);bool hidden=store.Settings.HiddenGames.Contains(key);if(libraryFilter=="hidden")return hidden;if(hidden)return false;if(libraryFilter=="favorites")return store.Settings.FavoriteGames.Contains(key);if(libraryFilter=="astera")return entry.Custom==null||!String.IsNullOrEmpty(entry.Custom.ManagedProjectId);if(libraryFilter.StartsWith("folder:",StringComparison.Ordinal)){var folder=store.Settings.LibraryFolders.FirstOrDefault(f=>"folder:"+f.Id==libraryFilter);return folder!=null&&folder.Games.Contains(key);}return true;}
-    void BuildLibraryFilters(Control sidebar){EnsureCollections();libraryFilterButton=Button("All games ▾",delegate{ShowLibraryFilters();});libraryFilterButton.Dock=DockStyle.Top;libraryFilterButton.MinimumSize=new Size(80,36);libraryFilterButton.Height=36;libraryFilterButton.AccessibleName="Library filter";sidebar.Controls.Add(libraryFilterButton);libraryFilterMenu=AsteraMenuRenderer.Create(menuComponents);libraryEntryMenu=AsteraMenuRenderer.Create(menuComponents);games.MouseUp+=delegate(object sender,MouseEventArgs e){if(e.Button!=MouseButtons.Right||busy)return;int index=games.IndexFromPoint(e.Location);if(index<0||!games.GetItemRectangle(index).Contains(e.Location))return;ShowEntryMenu((LibraryEntry)games.Items[index],e.Location);};games.MouseDoubleClick+=delegate(object sender,MouseEventArgs e){if(e.Button!=MouseButtons.Left)return;int index=games.IndexFromPoint(e.Location);if(index>=0&&games.GetItemRectangle(index).Contains(e.Location))TryLibraryDoubleLaunch((LibraryEntry)games.Items[index],null);};}
-    static void ClearLibraryMenu(ContextMenuStrip menu){foreach(ToolStripItem item in menu.Items.Cast<ToolStripItem>().ToArray()){menu.Items.Remove(item);item.Dispose();}}
-    void ShowLibraryFilters(){ClearLibraryMenu(libraryFilterMenu);Action<string,string> add=delegate(string title,string id){var item=new ToolStripMenuItem(title){Checked=libraryFilter==id};item.Click+=delegate{SelectLibraryFilter(id);};libraryFilterMenu.Items.Add(item);};add("All games","all");add("Favorites","favorites");add("Astera","astera");foreach(var folder in store.Settings.LibraryFolders)add(folder.Name,"folder:"+folder.Id);libraryFilterMenu.Items.Add(new ToolStripSeparator());add("Hidden","hidden");libraryFilterMenu.Items.Add("New folder…",null,delegate{CreateLibraryFolder(null);});var selected=store.Settings.LibraryFolders.FirstOrDefault(f=>"folder:"+f.Id==libraryFilter);if(selected!=null){libraryFilterMenu.Items.Add("Rename folder…",null,delegate{string name=FolderName(selected.Name);if(name!=null)SaveCollections(delegate{selected.Name=name;});});libraryFilterMenu.Items.Add("Delete folder",null,delegate{SaveCollections(delegate{store.Settings.LibraryFolders.Remove(selected);libraryFilter="all";});});}libraryFilterMenu.Show(libraryFilterButton,new Point(0,libraryFilterButton.Height));}
-    void SelectLibraryFilter(string filter){if(busy)return;libraryFilter=filter;ReloadGames(null,true,true);}
-    void ShowEntryMenu(LibraryEntry entry,Point point){ClearLibraryMenu(libraryEntryMenu);string key=LibraryKey(entry);bool favorite=store.Settings.FavoriteGames.Contains(key),hidden=store.Settings.HiddenGames.Contains(key);libraryEntryMenu.Items.Add(favorite?"Remove from Favorites":"Add to Favorites",null,delegate{SaveCollections(delegate{if(favorite)store.Settings.FavoriteGames.Remove(key);else store.Settings.FavoriteGames.Add(key);});});libraryEntryMenu.Items.Add(hidden?"Unhide game":"Hide game",null,delegate{SaveCollections(delegate{if(hidden)store.Settings.HiddenGames.Remove(key);else store.Settings.HiddenGames.Add(key);});});var folders=new ToolStripMenuItem("Folders");foreach(var folder in store.Settings.LibraryFolders){var target=folder;var item=new ToolStripMenuItem(folder.Name){Checked=folder.Games.Contains(key)};item.Click+=delegate{SaveCollections(delegate{if(target.Games.Contains(key))target.Games.Remove(key);else target.Games.Add(key);});};folders.DropDownItems.Add(item);}folders.DropDownItems.Add("New folder…",null,delegate{CreateLibraryFolder(key);});libraryEntryMenu.Items.Add(folders);libraryEntryMenu.Show(games,point);}
-    void SaveCollections(Action change){var backup=MC2Pack.Engine.Json.Serialize(store.Settings);string oldFilter=libraryFilter;try{change();store.Save();}catch(Exception error){store.Settings=MC2Pack.Engine.Json.Deserialize<Preferences>(backup);libraryFilter=oldFilter;MessageBox.Show(this,error.Message,"Library changes could not be saved");}ReloadGames(null,true,true);}
-    void CreateLibraryFolder(string key){string name=FolderName("");if(name==null)return;SaveCollections(delegate{var folder=new LibraryFolder{Name=name};if(key!=null)folder.Games.Add(key);store.Settings.LibraryFolders.Add(folder);});}
-    string FolderName(string before){using(var dialog=new AsteraDialog{Text=before.Length==0?"New library folder":"Rename library folder",Size=new Size(440,210),StartPosition=FormStartPosition.CenterParent}){var label=new Label{Text="Folder name",Left=20,Top=50,AutoSize=true};var input=new TextBox{Text=before,Left=20,Top=80,Width=390,MaxLength=60,BackColor=Base,ForeColor=Color.White};var save=Button("Save",delegate{string name=input.Text.Trim();if(name.Length==0||name.Any(Char.IsControl))return;dialog.DialogResult=DialogResult.OK;});save.SetBounds(290,115,120,40);dialog.Controls.AddRange(new Control[]{label,input,save});dialog.AcceptButton=save;return dialog.ShowDialog(this)==DialogResult.OK?input.Text.Trim():null;}}
-    void UpdateLibraryFilterCaption(){if(libraryFilterButton==null)return;var folder=store.Settings.LibraryFolders.FirstOrDefault(f=>"folder:"+f.Id==libraryFilter);libraryFilterButton.Text=(libraryFilter=="all"?"All games":libraryFilter=="favorites"?"Favorites":libraryFilter=="hidden"?"Hidden":libraryFilter=="astera"?"Astera":folder==null?"All games":folder.Name)+" ▾";}
-    bool TryLibraryDoubleLaunch(LibraryEntry entry,Action launch){if(busy||startupScreen!=null||entry==null||LibraryKey(entry)!=LibraryKey(games.SelectedItem as LibraryEntry??activeLibraryEntry))return false;RefreshView();if(!play.Enabled||play.Text!="PLAY")return false;string key=LibraryKey(entry);long now=System.Diagnostics.Stopwatch.GetTimestamp();if(key==lastDoubleLaunch&&(now-lastDoubleLaunchAt)/(double)System.Diagnostics.Stopwatch.Frequency<1)return false;lastDoubleLaunch=key;lastDoubleLaunchAt=now;if(launch==null)PrimaryGameAction();else launch();return true;}
-    void RefreshEmptyLibrary(){CancelGameTransition();UpdateRobloxSlidePlayback();banner.Game="empty";banner.Artwork("","");banner.LiveSkin(null);heroTitle.Text="Your library";if(playtimeStats!=null)playtimeStats.Visible=false;heroSubtitle.Text="Choose a game from your library.";heroTagline.Text="";profileLabel.Text="";status.Text="No game selected";notes.Text="";latestHeading.Text="Latest update";installationPath.Text="";artLabel.Text="";releaseLabel.Text="Choose a library filter or add a game.";gameSettingsTitle.Text="Game settings";gameSettingsDescription.Text="Choose a game from your library.";gameSettingsLocation.Text="";gameSettingsEdit.Enabled=gameSettingsArtwork.Enabled=gameSettingsFolder.Enabled=false;play.Text="PLAY";play.Enabled=check.Enabled=download.Enabled=install.Enabled=restore.Enabled=cancel.Enabled=openFolder.Enabled=chooseBackground.Enabled=chooseCharacter.Enabled=chooseLibraryIcon.Enabled=false;foreach(var action in new[]{download,install,restore,cancel})action.Visible=false;var old=artPreview.Image;artPreview.Image=null;previewScene.Artwork=null;if(old!=null)old.Dispose();previewArtwork="";previewScene.Invalidate();LayoutHeroContent();banner.Invalidate();}
-}
+
+namespace Astera
+{
+    public sealed class LibraryFolder
+    {
+        public string Id = Guid.NewGuid().ToString("N"), Name = "";
+        public List<string> Games = new List<string>();
+    }
+
+    sealed partial class LibraryForm
+    {
+        string libraryFilter = "all";
+        Button libraryFilterButton;
+        ContextMenuStrip libraryFilterMenu, libraryEntryMenu;
+        string lastDoubleLaunch;
+        long lastDoubleLaunchAt;
+        internal static string LibraryKey(LibraryEntry entry)
+        {
+            return entry == null ? null : entry.Custom == null ? "builtin:" + entry.Kind : "custom:" + entry.Custom.Id;
+        }
+
+        void EnsureCollections()
+        {
+            if (store.Settings.FavoriteGames == null)
+                store.Settings.FavoriteGames = new List<string>();
+            if (store.Settings.HiddenGames == null)
+                store.Settings.HiddenGames = new List<string>();
+            if (store.Settings.LibraryFolders == null)
+                store.Settings.LibraryFolders = new List<LibraryFolder>();
+            store.Settings.LibraryFolders.RemoveAll(f => f == null);
+            foreach (var folder in store.Settings.LibraryFolders)
+                if (folder.Games == null)
+                    folder.Games = new List<string>();
+        }
+
+        bool CollectionMatches(LibraryEntry entry)
+        {
+            string key = LibraryKey(entry);
+            bool hidden = store.Settings.HiddenGames.Contains(key);
+            if (libraryFilter == "hidden")
+                return hidden;
+            if (hidden)
+                return false;
+            if (libraryFilter == "favorites")
+                return store.Settings.FavoriteGames.Contains(key);
+            if (libraryFilter == "astera")
+                return entry.Custom == null || !String.IsNullOrEmpty(entry.Custom.ManagedProjectId);
+            if (libraryFilter.StartsWith("folder:", StringComparison.Ordinal))
+            {
+                var folder = store.Settings.LibraryFolders.FirstOrDefault(f => "folder:" + f.Id == libraryFilter);
+                return folder != null && folder.Games.Contains(key);
+            }
+
+            return true;
+        }
+
+        void BuildLibraryFilters(Control sidebar)
+        {
+            EnsureCollections();
+            libraryFilterButton = Button("All games ▾", delegate
+            {
+                ShowLibraryFilters();
+            });
+            libraryFilterButton.Dock = DockStyle.Top;
+            libraryFilterButton.MinimumSize = new Size(80, 36);
+            libraryFilterButton.Height = 36;
+            libraryFilterButton.AccessibleName = "Library filter";
+            sidebar.Controls.Add(libraryFilterButton);
+            libraryFilterMenu = AsteraMenuRenderer.Create(menuComponents);
+            libraryEntryMenu = AsteraMenuRenderer.Create(menuComponents);
+            games.MouseUp += delegate (object sender, MouseEventArgs e)
+            {
+                if (e.Button != MouseButtons.Right || busy)
+                    return;
+                int index = games.IndexFromPoint(e.Location);
+                if (index < 0 || !games.GetItemRectangle(index).Contains(e.Location))
+                    return;
+                ShowEntryMenu((LibraryEntry)games.Items[index], e.Location);
+            };
+            games.MouseDoubleClick += delegate (object sender, MouseEventArgs e)
+            {
+                if (e.Button != MouseButtons.Left)
+                    return;
+                int index = games.IndexFromPoint(e.Location);
+                if (index >= 0 && games.GetItemRectangle(index).Contains(e.Location))
+                    TryLibraryDoubleLaunch((LibraryEntry)games.Items[index], null);
+            };
+        }
+
+        static void ClearLibraryMenu(ContextMenuStrip menu)
+        {
+            foreach (ToolStripItem item in menu.Items.Cast<ToolStripItem>().ToArray())
+            {
+                menu.Items.Remove(item);
+                item.Dispose();
+            }
+        }
+
+        void ShowLibraryFilters()
+        {
+            ClearLibraryMenu(libraryFilterMenu);
+            Action<string, string> add = delegate (string title, string id)
+            {
+                var item = new ToolStripMenuItem(title)
+                {
+                    Checked = libraryFilter == id
+                };
+                item.Click += delegate
+                {
+                    SelectLibraryFilter(id);
+                };
+                libraryFilterMenu.Items.Add(item);
+            };
+            add("All games", "all");
+            add("Favorites", "favorites");
+            add("Astera", "astera");
+            foreach (var folder in store.Settings.LibraryFolders)
+                add(folder.Name, "folder:" + folder.Id);
+            libraryFilterMenu.Items.Add(new ToolStripSeparator());
+            add("Hidden", "hidden");
+            libraryFilterMenu.Items.Add("New folder…", null, delegate
+            {
+                CreateLibraryFolder(null);
+            });
+            var selected = store.Settings.LibraryFolders.FirstOrDefault(f => "folder:" + f.Id == libraryFilter);
+            if (selected != null)
+            {
+                libraryFilterMenu.Items.Add("Rename folder…", null, delegate
+                {
+                    string name = FolderName(selected.Name);
+                    if (name != null)
+                        SaveCollections(delegate
+                        {
+                            selected.Name = name;
+                        });
+                });
+                libraryFilterMenu.Items.Add("Delete folder", null, delegate
+                {
+                    SaveCollections(delegate
+                    {
+                        store.Settings.LibraryFolders.Remove(selected);
+                        libraryFilter = "all";
+                    });
+                });
+            }
+
+            libraryFilterMenu.Show(libraryFilterButton, new Point(0, libraryFilterButton.Height));
+        }
+
+        void SelectLibraryFilter(string filter)
+        {
+            if (busy)
+                return;
+            libraryFilter = filter;
+            ReloadGames(null, true, true);
+        }
+
+        void ShowEntryMenu(LibraryEntry entry, Point point)
+        {
+            ClearLibraryMenu(libraryEntryMenu);
+            string key = LibraryKey(entry);
+            bool favorite = store.Settings.FavoriteGames.Contains(key), hidden = store.Settings.HiddenGames.Contains(key);
+            libraryEntryMenu.Items.Add(favorite ? "Remove from Favorites" : "Add to Favorites", null, delegate
+            {
+                SaveCollections(delegate
+                {
+                    if (favorite)
+                        store.Settings.FavoriteGames.Remove(key);
+                    else
+                        store.Settings.FavoriteGames.Add(key);
+                });
+            });
+            libraryEntryMenu.Items.Add(hidden ? "Unhide game" : "Hide game", null, delegate
+            {
+                SaveCollections(delegate
+                {
+                    if (hidden)
+                        store.Settings.HiddenGames.Remove(key);
+                    else
+                        store.Settings.HiddenGames.Add(key);
+                });
+            });
+            var folders = new ToolStripMenuItem("Folders");
+            foreach (var folder in store.Settings.LibraryFolders)
+            {
+                var target = folder;
+                var item = new ToolStripMenuItem(folder.Name)
+                {
+                    Checked = folder.Games.Contains(key)
+                };
+                item.Click += delegate
+                {
+                    SaveCollections(delegate
+                    {
+                        if (target.Games.Contains(key))
+                            target.Games.Remove(key);
+                        else
+                            target.Games.Add(key);
+                    });
+                };
+                folders.DropDownItems.Add(item);
+            }
+
+            folders.DropDownItems.Add("New folder…", null, delegate
+            {
+                CreateLibraryFolder(key);
+            });
+            libraryEntryMenu.Items.Add(folders);
+            libraryEntryMenu.Show(games, point);
+        }
+
+        void SaveCollections(Action change)
+        {
+            var backup = MC2Pack.Engine.Json.Serialize(store.Settings);
+            string oldFilter = libraryFilter;
+            try
+            {
+                change();
+                store.Save();
+            }
+            catch (Exception error)
+            {
+                store.Settings = MC2Pack.Engine.Json.Deserialize<Preferences>(backup);
+                libraryFilter = oldFilter;
+                MessageBox.Show(this, error.Message, "Library changes could not be saved");
+            }
+
+            ReloadGames(null, true, true);
+        }
+
+        void CreateLibraryFolder(string key)
+        {
+            string name = FolderName("");
+            if (name == null)
+                return;
+            SaveCollections(delegate
+            {
+                var folder = new LibraryFolder
+                {
+                    Name = name
+                };
+                if (key != null)
+                    folder.Games.Add(key);
+                store.Settings.LibraryFolders.Add(folder);
+            });
+        }
+
+        string FolderName(string before)
+        {
+            using (var dialog = new AsteraDialog
+            {
+                Text = before.Length == 0 ? "New library folder" : "Rename library folder",
+                Size = new Size(440, 210),
+                StartPosition = FormStartPosition.CenterParent
+            }
+
+            )
+            {
+                var label = new Label
+                {
+                    Text = "Folder name",
+                    Left = 20,
+                    Top = 50,
+                    AutoSize = true
+                };
+                var input = new TextBox
+                {
+                    Text = before,
+                    Left = 20,
+                    Top = 80,
+                    Width = 390,
+                    MaxLength = 60,
+                    BackColor = Base,
+                    ForeColor = Color.White
+                };
+                var save = Button("Save", delegate
+                {
+                    string name = input.Text.Trim();
+                    if (name.Length == 0 || name.Any(Char.IsControl))
+                        return;
+                    dialog.DialogResult = DialogResult.OK;
+                });
+                save.SetBounds(290, 115, 120, 40);
+                dialog.Controls.AddRange(new Control[] { label, input, save });
+                dialog.AcceptButton = save;
+                return dialog.ShowDialog(this) == DialogResult.OK ? input.Text.Trim() : null;
+            }
+        }
+
+        void UpdateLibraryFilterCaption()
+        {
+            if (libraryFilterButton == null)
+                return;
+            var folder = store.Settings.LibraryFolders.FirstOrDefault(f => "folder:" + f.Id == libraryFilter);
+            libraryFilterButton.Text = (libraryFilter == "all" ? "All games" : libraryFilter == "favorites" ? "Favorites" : libraryFilter == "hidden" ? "Hidden" : libraryFilter == "astera" ? "Astera" : folder == null ? "All games" : folder.Name) + " ▾";
+        }
+
+        bool TryLibraryDoubleLaunch(LibraryEntry entry, Action launch)
+        {
+            if (busy || startupScreen != null || entry == null || LibraryKey(entry) != LibraryKey(games.SelectedItem as LibraryEntry ?? activeLibraryEntry))
+                return false;
+            RefreshView();
+            if (!play.Enabled || play.Text != "PLAY")
+                return false;
+            string key = LibraryKey(entry);
+            long now = System.Diagnostics.Stopwatch.GetTimestamp();
+            if (key == lastDoubleLaunch && (now - lastDoubleLaunchAt) / (double)System.Diagnostics.Stopwatch.Frequency < 1)
+                return false;
+            lastDoubleLaunch = key;
+            lastDoubleLaunchAt = now;
+            if (launch == null)
+                PrimaryGameAction();
+            else
+                launch();
+            return true;
+        }
+
+        void RefreshEmptyLibrary()
+        {
+            CancelGameTransition();
+            UpdateRobloxSlidePlayback();
+            banner.Game = "empty";
+            banner.Artwork("", "");
+            banner.LiveSkin(null);
+            heroTitle.Text = "Your library";
+            if (playtimeStats != null)
+                playtimeStats.Visible = false;
+            heroSubtitle.Text = "Choose a game from your library.";
+            heroTagline.Text = "";
+            profileLabel.Text = "";
+            status.Text = "No game selected";
+            notes.Text = "";
+            latestHeading.Text = "Latest update";
+            installationPath.Text = "";
+            artLabel.Text = "";
+            releaseLabel.Text = "Choose a library filter or add a game.";
+            gameSettingsTitle.Text = "Game settings";
+            gameSettingsDescription.Text = "Choose a game from your library.";
+            gameSettingsLocation.Text = "";
+            gameSettingsEdit.Enabled = gameSettingsArtwork.Enabled = gameSettingsFolder.Enabled = false;
+            play.Text = "PLAY";
+            play.Enabled = check.Enabled = download.Enabled = install.Enabled = restore.Enabled = cancel.Enabled = openFolder.Enabled = chooseBackground.Enabled = chooseCharacter.Enabled = chooseLibraryIcon.Enabled = false;
+            foreach (var action in new[]
+            {
+                download,
+                install,
+                restore,
+                cancel
+            }
+
+            )
+                action.Visible = false;
+            var old = artPreview.Image;
+            artPreview.Image = null;
+            previewScene.Artwork = null;
+            if (old != null)
+                old.Dispose();
+            previewArtwork = "";
+            previewScene.Invalidate();
+            LayoutHeroContent();
+            banner.Invalidate();
+        }
+    }
 }

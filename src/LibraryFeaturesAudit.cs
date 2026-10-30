@@ -8,25 +8,410 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using MC2Pack;
-namespace Astera {
-sealed partial class LibraryForm {
-    static void ReceiptFixture(string folder,long id,string title,string cover){Directory.CreateDirectory(Path.Combine(folder,".itch"));using(var output=File.Create(Path.Combine(folder,".itch","receipt.json.gz")))using(var gzip=new GZipStream(output,CompressionMode.Compress))using(var writer=new StreamWriter(gzip,new UTF8Encoding(false)))writer.Write(Engine.Json.Serialize(new{game=new{id=id,title=title,coverUrl=cover},unusedSecret="ignored fixture field"}));}
-    internal static int AuditLibraryFeatures(string root){try{
-        if(Directory.Exists(root))throw new IOException("Use a new library audit directory");Directory.CreateDirectory(root);Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);var checks=new List<string>();
-        var state=new Store(Path.Combine(root,"state"));state.Settings.Profile="C:/Astera-fixture-unavailable";state.Settings.StarDashExecutable="C:/Astera-fixture-unavailable/StarDash.exe";state.Settings.CheckOnStart=false;state.Settings.AnimatedEffects=false;state.Settings.UseMinecraftSkin=false;
-        using(var form=new LibraryForm(state,new Channel(),true)){
-            form.Location=new Point(-30000,-30000);form.Show();Application.DoEvents();
-            string exe=Path.Combine(root,"Example Game.exe");File.Copy(Application.ExecutablePath,exe);var custom=new CustomGame{Name="Monster Game Example",Executable=exe};state.Settings.CustomGames.Add(custom);form.ReloadGames(custom);form.librarySearch.Text="minecraft 2";Application.DoEvents();AuditAssert(form.games.Items.Count==1&&((LibraryEntry)form.games.Items[0]).Kind==0,"Visible search did not match Minecraft squared");AuditAssert(form.CurrentCustom==custom,"Filtering discarded the active game identity");form.librarySearch.Text="no matching title";AuditAssert(form.games.Items.Count==0&&form.noLibraryMatches.Visible&&form.CurrentCustom==custom,"Empty search lost active game or no-results state");form.librarySearch.Clear();AuditAssert(form.games.Items.Count==4&&form.CurrentCustom==custom,"Clearing search did not restore full library and selection");checks.Add("Visible library search filters names, preserves selected-game identity and restores A-Z results");
-            string itch=Path.Combine(root,"itch-game"),cover="https://img.itch.zone/aW1nL2ZpeHR1cmUucG5n/315x250%23c/test.png";ReceiptFixture(itch,123,"An itch game",cover);var itchGame=new CustomGame{Name="An itch game",Executable=itch,Platform="itch",PlatformId="123"};var meta=ItchMetadata.Find(itchGame);AuditAssert(meta!=null&&meta.coverUrl==cover&&meta.id==123,"Receipt cover metadata missing");AuditAssert(ItchMetadata.Find(new CustomGame{Executable=itch,Platform="itch",PlatformId="456"})==null,"Another game's receipt was accepted");foreach(string invalid in new[]{"http://img.itch.zone/x","https://127.0.0.1/x","file:///x","https://img.itch.zone.evil/x","https://u:p@img.itch.zone/x","https://img.itch.zone:444/x"})AuditAssert(!ItchArtwork.Address(invalid),"Unsafe image endpoint accepted");checks.Add("itch cover metadata is read from bounded local receipts; game identity and public CDN addresses are checked");
-            string cache=Path.Combine(root,"cache"),image=ItchArtwork.Cached(cache,meta);Directory.CreateDirectory(cache);using(var bmp=new Bitmap(160,100)){using(var g=Graphics.FromImage(bmp))g.Clear(Color.Red);bmp.Save(image);}AuditAssert(ItchArtwork.Resolve(itchGame,cache,CancellationToken.None)==image,"Valid cached cover was not reused offline");state.Settings.CustomGames.Add(itchGame);form.ApplyItchArtwork(itchGame,image);form.ReloadGames(itchGame);AuditAssert(form.CustomLibraryIcon(itchGame)!=null&&form.AutomaticGameBackground(itchGame)==image&&form.artLabel.Text=="itch.io cover artwork","itch game did not expose automatic icon and background");string own=Path.Combine(root,"my-art.png");using(var bmp=new Bitmap(100,70)){using(var g=Graphics.FromImage(bmp))g.Clear(Color.Blue);bmp.Save(own);}itchGame.Background=own;itchGame.Icon=own;form.CacheCustomIcon(itchGame);form.UpdateCustomLayout();AuditAssert(form.artLabel.Text=="my-art.png"&&ReferenceEquals(form.CustomLibraryIcon(itchGame),form.customIcons[own]),"Automatic itch cover replaced manual artwork");checks.Add("Cached itch covers render as icons/backgrounds while manual artwork stays in control");
-            form.notes.Text=String.Join(Environment.NewLine,Enumerable.Range(0,100).Select(n=>"Patch note "+n));form.notes.MoveTo(15);int first=form.notes.FirstLine;form.notes.Text=form.notes.Text;AuditAssert(form.notes.FirstLine==first&&first>0,"Unchanged patch notes reset their scroll position");AuditAssert(!RunningNeedsRefresh(true,false,false,false)&&RunningNeedsRefresh(true,false,true,false)&&RunningNeedsRefresh(true,false,false,true),"Unchanged running polls still request a refresh");checks.Add("Unchanged patch notes retain native scroll position and unchanged running polls do not refresh the page");
-            var art=new SteamGameArt{AppId="42",Name="Steam example",Hero=image,Icon=image};form.ApplySteamArtwork(exe,art);var icon=form.AutomaticSteamIcon(custom);int invalidations=0;InvalidateEventHandler invalidated=delegate{invalidations++;};form.games.Invalidated+=invalidated;form.ApplySteamArtwork(exe,new SteamGameArt{AppId="42",Name="Steam example",Hero=image,Icon=image});form.ApplySteamArtwork(exe,null);form.games.Invalidated-=invalidated;AuditAssert(invalidations==0&&ReferenceEquals(icon,form.AutomaticSteamIcon(custom)),"Identical or temporarily unavailable art replaced/redrew the icon");checks.Add("Repeated identical metadata and temporary misses retain icon objects without invalidating the library");form.ReloadGames(custom);form.UpdatePublicArtworkSelection();var oldSelection=form.selectedPublicArtwork.Token;form.ReloadGames(itchGame);AuditAssert(oldSelection.IsCancellationRequested,"Switching games did not cancel prior public artwork work");AuditAssert(!form.ApplyPublicSteamResult(exe,"42",image,image),"Late Steam artwork was accepted for another selected game");checks.Add("Switching games cancels the prior artwork token and stale Steam artwork cannot change the new selection");form.ReloadGames(custom);custom.Background=own;custom.Icon=own;form.CacheCustomIcon(custom);form.ApplyPublicSteamResult(exe,"42",image,image);form.UpdateCustomLayout();AuditAssert(form.artLabel.Text=="my-art.png"&&ReferenceEquals(form.CustomLibraryIcon(custom),form.customIcons[own]),"Steam results replaced user artwork");checks.Add("Custom Steam game icons and backgrounds retain priority after automatic artwork completes");form.ReloadGames(itchGame);form.UpdatePublicArtworkSelection();var itchToken=form.selectedPublicArtwork.Token;form.ReloadGames(custom);AuditAssert(itchToken.IsCancellationRequested&&!form.ApplyCurrentItchArtwork(itchGame,image),"A stale itch cover survived selection cancellation");checks.Add("itch requests share selection cancellation and late covers cannot replace another selected game");for(int i=0;i<35;i++)state.Settings.CustomGames.Add(new CustomGame{Name="Library scroll example "+i,Executable=exe});form.ReloadGames(custom);Application.DoEvents();AuditAssert(form.libraryScrollbar.Maximum>0&&!form.libraryScrollbar.Thumb.IsEmpty,"Library scrollbar missing for a long list");int selectedIndex=form.games.SelectedIndex;form.libraryScrollbar.MoveTo(form.libraryScrollbar.Maximum);AuditAssert(form.games.TopIndex>0&&form.games.SelectedIndex==selectedIndex,"Scrolling changed selection or did not move");form.libraryScrollbar.MoveTo(0);AuditAssert(form.games.TopIndex==0&&form.LibraryRowRight<form.games.Width,"Native scrollbar not clipped or top not restored");checks.Add("Themed library scrollbar moves a long native list without changing selection and reserves a separate text gutter");form.librarySearch.Text="no matching title";AuditAssert(form.libraryScrollbar.Maximum==0,"Empty search retained a scrollbar range");form.librarySearch.Clear();checks.Add("Filtering clears the library scrollbar range and clearing search restores it");form.Close();
+
+namespace Astera
+{
+    sealed partial class LibraryForm
+    {
+        static void ReceiptFixture(string folder, long id, string title, string cover)
+        {
+            Directory.CreateDirectory(Path.Combine(folder, ".itch"));
+            using (var output = File.Create(Path.Combine(folder, ".itch", "receipt.json.gz")))
+            using (var gzip = new GZipStream(output, CompressionMode.Compress))
+            using (var writer = new StreamWriter(gzip, new UTF8Encoding(false)))
+                writer.Write(Engine.Json.Serialize(new
+                {
+                    game = new
+                    {
+                        id = id,
+                        title = title,
+                        coverUrl = cover
+                    },
+                    unusedSecret = "ignored fixture field"
+                }));
         }
-        string scan=Path.Combine(root,"games");Directory.CreateDirectory(scan);foreach(string name in new[]{"Adventure.exe","Another Game.exe","unins000.exe","UnityCrashHandler64.exe","setup.exe"})File.Copy(Application.ExecutablePath,Path.Combine(scan,name));string ignored=Path.Combine(scan,"_CommonRedist");Directory.CreateDirectory(ignored);File.Copy(Application.ExecutablePath,Path.Combine(ignored,"Some Tool.exe"));string steam=Path.Combine(scan,"Steam Game");Directory.CreateDirectory(steam);File.Copy(Application.ExecutablePath,Path.Combine(steam,"Helper.exe"));ReceiptFixture(Path.Combine(scan,"Itch Game"),789,"Itch Example","https://img.itch.zone/example.png");var found=BatchGames.Scan(new[]{scan},new[]{new InstalledGame{Name="Steam Example",Platform="steam",Id="42",Folder=steam}},CancellationToken.None);AuditAssert(found.Games.Count==4&&found.Games.Count(g=>g.Platform=="steam")==1&&found.Games.Count(g=>g.Platform=="itch")==1&&!found.Games.Any(g=>g.Executable.Contains("_CommonRedist")),"Batch scan included helpers or missed primary/platform games");checks.Add("Batch scan finds EXEs and one Steam/itch entry per install, excluding known helpers and redistributable folders");var imported=BatchGames.NewSelections(new List<CustomGame>(),found.Games);AuditAssert(imported.Count==4&&BatchGames.NewSelections(imported,found.Games).Count==0,"Repeated batch import duplicated library entries");using(var cancel=new CancellationTokenSource()){cancel.Cancel();bool stopped=false;try{BatchGames.Scan(new[]{scan},new InstalledGame[0],cancel.Token);}catch(OperationCanceledException){stopped=true;}AuditAssert(stopped,"Folder scan ignored cancellation");}checks.Add("Reviewed batches deduplicate existing games and scans can be cancelled without executing or moving games");
-        string publicJson="{\"3527290\":{\"success\":true,\"data\":{\"header_image\":\"https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3527290/hash/header.jpg\"}}}";AuditAssert(SteamPublicArtwork.Header("3527290",Encoding.UTF8.GetBytes(publicJson))!=null,"Steam store header metadata not parsed");AuditAssert(SteamPublicArtwork.Header("42",Encoding.UTF8.GetBytes(publicJson))==null,"Another Steam game's metadata accepted");foreach(string bad in new[]{"http://shared.akamai.steamstatic.com/x","https://shared.akamai.steamstatic.com.evil/x","https://127.0.0.1/x","https://u:p@shared.akamai.steamstatic.com/x","https://shared.akamai.steamstatic.com:444/x"})AuditAssert(!SteamPublicArtwork.Address(bad),"Untrusted Steam image host accepted");checks.Add("Steam public artwork metadata checks the exact app ID and HTTPS CDN host");string steamCache=Path.Combine(root,"steam-public-cache"),steamImage=SteamPublicArtwork.CachePath(steamCache,"3527290");Directory.CreateDirectory(steamCache);using(var bitmap=new Bitmap(460,215))bitmap.Save(steamImage,System.Drawing.Imaging.ImageFormat.Png);AuditAssert(SteamPublicArtwork.Resolve("3527290",steamCache,CancellationToken.None)==steamImage,"Cached public Steam artwork did not work offline");checks.Add("Downloaded Steam background cache is reused offline without a network request");string budgetRoot=Path.Combine(root,"art-budget");Directory.CreateDirectory(budgetRoot);string oldArt=Path.Combine(budgetRoot,"1-background.png"),newArt=Path.Combine(budgetRoot,"2-portrait.png"),unrelated=Path.Combine(budgetRoot,"personal.png");File.WriteAllBytes(oldArt,new byte[1000]);File.WriteAllBytes(newArt,new byte[1000]);File.WriteAllBytes(unrelated,new byte[2000]);File.SetLastWriteTimeUtc(oldArt,DateTime.UtcNow.AddDays(-1));SteamArtworkCache.Trim(budgetRoot,Path.Combine(budgetRoot,"3-background.png"),200,1300);AuditAssert(!File.Exists(oldArt)&&File.Exists(newArt)&&File.Exists(unrelated),"Artwork budget did not prune the oldest owned file while preserving unrelated files");checks.Add("Artwork cache budget prunes only oldest owned cache files and leaves unrelated files untouched");string portrait=Path.Combine(steamCache,"3527290-portrait.png");using(var bmp=new Bitmap(600,900))bmp.Save(portrait,System.Drawing.Imaging.ImageFormat.Png);AuditAssert(SteamPublicArtwork.ResolvePortrait("3527290",steamCache,CancellationToken.None)==portrait,"Cached portrait did not resolve offline");checks.Add("Steam portrait fallback reuses a decoded cached image offline");AuditAssert(SteamPublicArtwork.Optional(delegate{throw new System.Net.WebException("Offline fixture");},CancellationToken.None)==null,"An unavailable image escaped its independent fallback");using(var stop=new CancellationTokenSource()){stop.Cancel();bool cancelled=false;try{SteamPublicArtwork.Optional(()=>steamImage,stop.Token);}catch(OperationCanceledException){cancelled=true;}AuditAssert(cancelled,"Optional image fallback swallowed cancellation");}checks.Add("Individual artwork failures stay optional while selection cancellation is propagated");string receiptRoot=Path.Combine(root,"plain-receipts"),plainGame=Path.Combine(receiptRoot,"Plain Game"),corruptGame=Path.Combine(receiptRoot,"Broken Game");Directory.CreateDirectory(Path.Combine(plainGame,".itch"));Directory.CreateDirectory(Path.Combine(corruptGame,".itch"));string still="https://img.itch.zone/still.png";File.WriteAllText(Path.Combine(plainGame,".itch","receipt.json"),Engine.Json.Serialize(new{game=new{id=999,title="Plain Example",cover_url="https://img.itch.zone/animated.gif",still_cover_url=still}}));File.WriteAllText(Path.Combine(corruptGame,".itch","receipt.json"),"{bad metadata");var plainMeta=ItchMetadata.Read(plainGame);AuditAssert(plainMeta!=null&&plainMeta.id==999&&ItchMetadata.Cover(plainMeta,true)==still&&ItchMetadata.Cover(plainMeta)=="https://img.itch.zone/animated.gif","Plain receipt aliases or preferred still cover missing");AuditAssert(PlatformLibraries.Itch(receiptRoot).Count==1&&PlatformLibraries.Itch(plainGame).Count==1,"Plain/direct receipt scanning failed or corrupt metadata stopped discovery");checks.Add("Plain itch receipts, snake-case cover fields and direct install roots work while corrupt receipts are skipped");AuditAssert(ItchArtwork.Address("https://img.itch.io/example.png")&&!ItchArtwork.Address("https://img.itch.io.evil/example.png"),"Alternate itch CDN checks failed");var animated=Convert.FromBase64String("R0lGODlhEAAQAIEAAP8AAAAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQACgAAACwAAAAAEAAQAAAIHQABCBxIsKDBgwgTKlzIsKHDhxAjSpxIsaLFgQEBACH5BAEKAAEALAAAAAAQABAAgQAA/wAAAAAAAAAAAAgdAAEIHEiwoMGDCBMqXMiwocOHECNKnEixosWBAQEAOw==");using(var mem=new MemoryStream(animated))using(var gif=Image.FromStream(mem))AuditAssert(gif.GetFrameCount(System.Drawing.Imaging.FrameDimension.Time)==2,"GIF fixture is not animated");string normalized=Path.Combine(root,"static-cover.png");ItchArtwork.WriteCover(animated,normalized);using(var bitmap=new Bitmap(normalized))AuditAssert(bitmap.RawFormat.Guid==System.Drawing.Imaging.ImageFormat.Gif.Guid&&bitmap.GetFrameCount(System.Drawing.Imaging.FrameDimension.Time)==2&&bitmap.GetPixel(4,4).R>200,"Animated cover lost its GIF frames");checks.Add("Animated GIF covers retain frames and still-cover metadata remains available");File.WriteAllText(Path.Combine(root,"result.json"),Engine.Json.Serialize(new{Passed=true,Checks=checks,GamesExecuted=false,LivePreferencesChanged=false}));return 0;
-    }catch(Exception error){Directory.CreateDirectory(root);File.WriteAllText(Path.Combine(root,"failure.txt"),error.ToString());return 1;}}
-    internal static int AuditItchArtwork(string root,string folder){try{
-        if(Directory.Exists(root))throw new IOException("Use a new itch artwork audit directory");Directory.CreateDirectory(root);var receipt=ItchMetadata.Read(folder);if(receipt==null)throw new IOException("No installed itch receipt");var game=new CustomGame{Name=receipt.title,Executable=folder,Platform="itch",PlatformId=receipt.id.ToString()};string image=ItchArtwork.Resolve(game,Path.Combine(root,"cover-cache"),CancellationToken.None);if(String.IsNullOrEmpty(image))throw new IOException("No cover available");Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);var store=new Store(Path.Combine(root,"state"));store.Settings.CheckOnStart=false;store.Settings.KeepInTray=false;store.Settings.UseMinecraftSkin=false;store.Settings.CustomGames.Add(game);using(var form=new LibraryForm(store,new Channel(),true))using(var timer=new System.Windows.Forms.Timer{Interval=650}){form.TopMost=true;form.StartPosition=FormStartPosition.Manual;form.Location=Screen.PrimaryScreen.WorkingArea.Location;form.ApplyItchArtwork(game,image);form.ReloadGames(game);int code=1;timer.Tick+=delegate{timer.Stop();try{form.CaptureVisibleUi(root,"itch-artwork");File.WriteAllText(Path.Combine(root,"result.json"),Engine.Json.Serialize(new{Passed=true,GameId=game.PlatformId,CachedCover=image,GameExecuted=false,LivePreferencesChanged=false}));code=0;}catch(Exception error){File.WriteAllText(Path.Combine(root,"failure.txt"),error.ToString());}form.Close();};form.Shown+=delegate{timer.Start();};Application.Run(form);return code;}
-    }catch(Exception error){Directory.CreateDirectory(root);File.WriteAllText(Path.Combine(root,"failure.txt"),error.ToString());return 1;}}
-}
+
+        internal static int AuditLibraryFeatures(string root)
+        {
+            try
+            {
+                if (Directory.Exists(root))
+                    throw new IOException("Use a new library audit directory");
+                Directory.CreateDirectory(root);
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                var checks = new List<string>();
+                var state = new Store(Path.Combine(root, "state"));
+                state.Settings.Profile = "C:/Astera-fixture-unavailable";
+                state.Settings.StarDashExecutable = "C:/Astera-fixture-unavailable/StarDash.exe";
+                state.Settings.CheckOnStart = false;
+                state.Settings.AnimatedEffects = false;
+                state.Settings.UseMinecraftSkin = false;
+                using (var form = new LibraryForm(state, new Channel(), true))
+                {
+                    form.Location = new Point(-30000, -30000);
+                    form.Show();
+                    Application.DoEvents();
+                    string exe = Path.Combine(root, "Example Game.exe");
+                    File.Copy(Application.ExecutablePath, exe);
+                    var custom = new CustomGame
+                    {
+                        Name = "Monster Game Example",
+                        Executable = exe
+                    };
+                    state.Settings.CustomGames.Add(custom);
+                    form.ReloadGames(custom);
+                    form.librarySearch.Text = "minecraft 2";
+                    Application.DoEvents();
+                    AuditAssert(form.games.Items.Count == 1 && ((LibraryEntry)form.games.Items[0]).Kind == 0, "Visible search did not match Minecraft squared");
+                    AuditAssert(form.CurrentCustom == custom, "Filtering discarded the active game identity");
+                    form.librarySearch.Text = "no matching title";
+                    AuditAssert(form.games.Items.Count == 0 && form.noLibraryMatches.Visible && form.CurrentCustom == custom, "Empty search lost active game or no-results state");
+                    form.librarySearch.Clear();
+                    AuditAssert(form.games.Items.Count == 4 && form.CurrentCustom == custom, "Clearing search did not restore full library and selection");
+                    checks.Add("Visible library search filters names, preserves selected-game identity and restores A-Z results");
+                    string itch = Path.Combine(root, "itch-game"), cover = "https://img.itch.zone/aW1nL2ZpeHR1cmUucG5n/315x250%23c/test.png";
+                    ReceiptFixture(itch, 123, "An itch game", cover);
+                    var itchGame = new CustomGame
+                    {
+                        Name = "An itch game",
+                        Executable = itch,
+                        Platform = "itch",
+                        PlatformId = "123"
+                    };
+                    var meta = ItchMetadata.Find(itchGame);
+                    AuditAssert(meta != null && meta.coverUrl == cover && meta.id == 123, "Receipt cover metadata missing");
+                    AuditAssert(ItchMetadata.Find(new CustomGame { Executable = itch, Platform = "itch", PlatformId = "456" }) == null, "Another game's receipt was accepted");
+                    foreach (string invalid in new[]
+                    {
+                        "http://img.itch.zone/x",
+                        "https://127.0.0.1/x",
+                        "file:///x",
+                        "https://img.itch.zone.evil/x",
+                        "https://u:p@img.itch.zone/x",
+                        "https://img.itch.zone:444/x"
+                    }
+
+                    )
+                        AuditAssert(!ItchArtwork.Address(invalid), "Unsafe image endpoint accepted");
+                    checks.Add("itch cover metadata is read from bounded local receipts; game identity and public CDN addresses are checked");
+                    string cache = Path.Combine(root, "cache"), image = ItchArtwork.Cached(cache, meta);
+                    Directory.CreateDirectory(cache);
+                    using (var bmp = new Bitmap(160, 100))
+                    {
+                        using (var g = Graphics.FromImage(bmp))
+                            g.Clear(Color.Red);
+                        bmp.Save(image);
+                    }
+
+                    AuditAssert(ItchArtwork.Resolve(itchGame, cache, CancellationToken.None) == image, "Valid cached cover was not reused offline");
+                    state.Settings.CustomGames.Add(itchGame);
+                    form.ApplyItchArtwork(itchGame, image);
+                    form.ReloadGames(itchGame);
+                    AuditAssert(form.CustomLibraryIcon(itchGame) != null && form.AutomaticGameBackground(itchGame) == image && form.artLabel.Text == "itch.io cover artwork", "itch game did not expose automatic icon and background");
+                    string own = Path.Combine(root, "my-art.png");
+                    using (var bmp = new Bitmap(100, 70))
+                    {
+                        using (var g = Graphics.FromImage(bmp))
+                            g.Clear(Color.Blue);
+                        bmp.Save(own);
+                    }
+
+                    itchGame.Background = own;
+                    itchGame.Icon = own;
+                    form.CacheCustomIcon(itchGame);
+                    form.UpdateCustomLayout();
+                    AuditAssert(form.artLabel.Text == "my-art.png" && ReferenceEquals(form.CustomLibraryIcon(itchGame), form.customIcons[own]), "Automatic itch cover replaced manual artwork");
+                    checks.Add("Cached itch covers render as icons/backgrounds while manual artwork stays in control");
+                    form.notes.Text = String.Join(Environment.NewLine, Enumerable.Range(0, 100).Select(n => "Patch note " + n));
+                    form.notes.MoveTo(15);
+                    int first = form.notes.FirstLine;
+                    form.notes.Text = form.notes.Text;
+                    AuditAssert(form.notes.FirstLine == first && first > 0, "Unchanged patch notes reset their scroll position");
+                    AuditAssert(!RunningNeedsRefresh(true, false, false, false) && RunningNeedsRefresh(true, false, true, false) && RunningNeedsRefresh(true, false, false, true), "Unchanged running polls still request a refresh");
+                    checks.Add("Unchanged patch notes retain native scroll position and unchanged running polls do not refresh the page");
+                    var art = new SteamGameArt
+                    {
+                        AppId = "42",
+                        Name = "Steam example",
+                        Hero = image,
+                        Icon = image
+                    };
+                    form.ApplySteamArtwork(exe, art);
+                    var icon = form.AutomaticSteamIcon(custom);
+                    int invalidations = 0;
+                    InvalidateEventHandler invalidated = delegate
+                    {
+                        invalidations++;
+                    };
+                    form.games.Invalidated += invalidated;
+                    form.ApplySteamArtwork(exe, new SteamGameArt { AppId = "42", Name = "Steam example", Hero = image, Icon = image });
+                    form.ApplySteamArtwork(exe, null);
+                    form.games.Invalidated -= invalidated;
+                    AuditAssert(invalidations == 0 && ReferenceEquals(icon, form.AutomaticSteamIcon(custom)), "Identical or temporarily unavailable art replaced/redrew the icon");
+                    checks.Add("Repeated identical metadata and temporary misses retain icon objects without invalidating the library");
+                    form.ReloadGames(custom);
+                    form.UpdatePublicArtworkSelection();
+                    var oldSelection = form.selectedPublicArtwork.Token;
+                    form.ReloadGames(itchGame);
+                    AuditAssert(oldSelection.IsCancellationRequested, "Switching games did not cancel prior public artwork work");
+                    AuditAssert(!form.ApplyPublicSteamResult(exe, "42", image, image), "Late Steam artwork was accepted for another selected game");
+                    checks.Add("Switching games cancels the prior artwork token and stale Steam artwork cannot change the new selection");
+                    form.ReloadGames(custom);
+                    custom.Background = own;
+                    custom.Icon = own;
+                    form.CacheCustomIcon(custom);
+                    form.ApplyPublicSteamResult(exe, "42", image, image);
+                    form.UpdateCustomLayout();
+                    AuditAssert(form.artLabel.Text == "my-art.png" && ReferenceEquals(form.CustomLibraryIcon(custom), form.customIcons[own]), "Steam results replaced user artwork");
+                    checks.Add("Custom Steam game icons and backgrounds retain priority after automatic artwork completes");
+                    form.ReloadGames(itchGame);
+                    form.UpdatePublicArtworkSelection();
+                    var itchToken = form.selectedPublicArtwork.Token;
+                    form.ReloadGames(custom);
+                    AuditAssert(itchToken.IsCancellationRequested && !form.ApplyCurrentItchArtwork(itchGame, image), "A stale itch cover survived selection cancellation");
+                    checks.Add("itch requests share selection cancellation and late covers cannot replace another selected game");
+                    for (int i = 0; i < 35; i++)
+                        state.Settings.CustomGames.Add(new CustomGame { Name = "Library scroll example " + i, Executable = exe });
+                    form.ReloadGames(custom);
+                    Application.DoEvents();
+                    AuditAssert(form.libraryScrollbar.Maximum > 0 && !form.libraryScrollbar.Thumb.IsEmpty, "Library scrollbar missing for a long list");
+                    int selectedIndex = form.games.SelectedIndex;
+                    form.libraryScrollbar.MoveTo(form.libraryScrollbar.Maximum);
+                    AuditAssert(form.games.TopIndex > 0 && form.games.SelectedIndex == selectedIndex, "Scrolling changed selection or did not move");
+                    form.libraryScrollbar.MoveTo(0);
+                    AuditAssert(form.games.TopIndex == 0 && form.LibraryRowRight < form.games.Width, "Native scrollbar not clipped or top not restored");
+                    checks.Add("Themed library scrollbar moves a long native list without changing selection and reserves a separate text gutter");
+                    form.librarySearch.Text = "no matching title";
+                    AuditAssert(form.libraryScrollbar.Maximum == 0, "Empty search retained a scrollbar range");
+                    form.librarySearch.Clear();
+                    checks.Add("Filtering clears the library scrollbar range and clearing search restores it");
+                    form.Close();
+                }
+
+                string scan = Path.Combine(root, "games");
+                Directory.CreateDirectory(scan);
+                foreach (string name in new[]
+                {
+                    "Adventure.exe",
+                    "Another Game.exe",
+                    "unins000.exe",
+                    "UnityCrashHandler64.exe",
+                    "setup.exe"
+                }
+
+                )
+                    File.Copy(Application.ExecutablePath, Path.Combine(scan, name));
+                string ignored = Path.Combine(scan, "_CommonRedist");
+                Directory.CreateDirectory(ignored);
+                File.Copy(Application.ExecutablePath, Path.Combine(ignored, "Some Tool.exe"));
+                string steam = Path.Combine(scan, "Steam Game");
+                Directory.CreateDirectory(steam);
+                File.Copy(Application.ExecutablePath, Path.Combine(steam, "Helper.exe"));
+                ReceiptFixture(Path.Combine(scan, "Itch Game"), 789, "Itch Example", "https://img.itch.zone/example.png");
+                var found = BatchGames.Scan(new[] { scan }, new[] { new InstalledGame { Name = "Steam Example", Platform = "steam", Id = "42", Folder = steam } }, CancellationToken.None);
+                AuditAssert(found.Games.Count == 4 && found.Games.Count(g => g.Platform == "steam") == 1 && found.Games.Count(g => g.Platform == "itch") == 1 && !found.Games.Any(g => g.Executable.Contains("_CommonRedist")), "Batch scan included helpers or missed primary/platform games");
+                checks.Add("Batch scan finds EXEs and one Steam/itch entry per install, excluding known helpers and redistributable folders");
+                var imported = BatchGames.NewSelections(new List<CustomGame>(), found.Games);
+                AuditAssert(imported.Count == 4 && BatchGames.NewSelections(imported, found.Games).Count == 0, "Repeated batch import duplicated library entries");
+                using (var cancel = new CancellationTokenSource())
+                {
+                    cancel.Cancel();
+                    bool stopped = false;
+                    try
+                    {
+                        BatchGames.Scan(new[] { scan }, new InstalledGame[0], cancel.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        stopped = true;
+                    }
+
+                    AuditAssert(stopped, "Folder scan ignored cancellation");
+                }
+
+                checks.Add("Reviewed batches deduplicate existing games and scans can be cancelled without executing or moving games");
+                string publicJson = "{\"3527290\":{\"success\":true,\"data\":{\"header_image\":\"https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3527290/hash/header.jpg\"}}}";
+                AuditAssert(SteamPublicArtwork.Header("3527290", Encoding.UTF8.GetBytes(publicJson)) != null, "Steam store header metadata not parsed");
+                AuditAssert(SteamPublicArtwork.Header("42", Encoding.UTF8.GetBytes(publicJson)) == null, "Another Steam game's metadata accepted");
+                foreach (string bad in new[]
+                {
+                    "http://shared.akamai.steamstatic.com/x",
+                    "https://shared.akamai.steamstatic.com.evil/x",
+                    "https://127.0.0.1/x",
+                    "https://u:p@shared.akamai.steamstatic.com/x",
+                    "https://shared.akamai.steamstatic.com:444/x"
+                }
+
+                )
+                    AuditAssert(!SteamPublicArtwork.Address(bad), "Untrusted Steam image host accepted");
+                checks.Add("Steam public artwork metadata checks the exact app ID and HTTPS CDN host");
+                string steamCache = Path.Combine(root, "steam-public-cache"), steamImage = SteamPublicArtwork.CachePath(steamCache, "3527290");
+                Directory.CreateDirectory(steamCache);
+                using (var bitmap = new Bitmap(460, 215))
+                    bitmap.Save(steamImage, System.Drawing.Imaging.ImageFormat.Png);
+                AuditAssert(SteamPublicArtwork.Resolve("3527290", steamCache, CancellationToken.None) == steamImage, "Cached public Steam artwork did not work offline");
+                checks.Add("Downloaded Steam background cache is reused offline without a network request");
+                string budgetRoot = Path.Combine(root, "art-budget");
+                Directory.CreateDirectory(budgetRoot);
+                string oldArt = Path.Combine(budgetRoot, "1-background.png"), newArt = Path.Combine(budgetRoot, "2-portrait.png"), unrelated = Path.Combine(budgetRoot, "personal.png");
+                File.WriteAllBytes(oldArt, new byte[1000]);
+                File.WriteAllBytes(newArt, new byte[1000]);
+                File.WriteAllBytes(unrelated, new byte[2000]);
+                File.SetLastWriteTimeUtc(oldArt, DateTime.UtcNow.AddDays(-1));
+                SteamArtworkCache.Trim(budgetRoot, Path.Combine(budgetRoot, "3-background.png"), 200, 1300);
+                AuditAssert(!File.Exists(oldArt) && File.Exists(newArt) && File.Exists(unrelated), "Artwork budget did not prune the oldest owned file while preserving unrelated files");
+                checks.Add("Artwork cache budget prunes only oldest owned cache files and leaves unrelated files untouched");
+                string portrait = Path.Combine(steamCache, "3527290-portrait.png");
+                using (var bmp = new Bitmap(600, 900))
+                    bmp.Save(portrait, System.Drawing.Imaging.ImageFormat.Png);
+                AuditAssert(SteamPublicArtwork.ResolvePortrait("3527290", steamCache, CancellationToken.None) == portrait, "Cached portrait did not resolve offline");
+                checks.Add("Steam portrait fallback reuses a decoded cached image offline");
+                AuditAssert(SteamPublicArtwork.Optional(delegate
+                {
+                    throw new System.Net.WebException("Offline fixture");
+                }, CancellationToken.None) == null, "An unavailable image escaped its independent fallback");
+                using (var stop = new CancellationTokenSource())
+                {
+                    stop.Cancel();
+                    bool cancelled = false;
+                    try
+                    {
+                        SteamPublicArtwork.Optional(() => steamImage, stop.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        cancelled = true;
+                    }
+
+                    AuditAssert(cancelled, "Optional image fallback swallowed cancellation");
+                }
+
+                checks.Add("Individual artwork failures stay optional while selection cancellation is propagated");
+                string receiptRoot = Path.Combine(root, "plain-receipts"), plainGame = Path.Combine(receiptRoot, "Plain Game"), corruptGame = Path.Combine(receiptRoot, "Broken Game");
+                Directory.CreateDirectory(Path.Combine(plainGame, ".itch"));
+                Directory.CreateDirectory(Path.Combine(corruptGame, ".itch"));
+                string still = "https://img.itch.zone/still.png";
+                File.WriteAllText(Path.Combine(plainGame, ".itch", "receipt.json"), Engine.Json.Serialize(new
+                {
+                    game = new
+                    {
+                        id = 999,
+                        title = "Plain Example",
+                        cover_url = "https://img.itch.zone/animated.gif",
+                        still_cover_url = still
+                    }
+                }));
+                File.WriteAllText(Path.Combine(corruptGame, ".itch", "receipt.json"), "{bad metadata");
+                var plainMeta = ItchMetadata.Read(plainGame);
+                AuditAssert(plainMeta != null && plainMeta.id == 999 && ItchMetadata.Cover(plainMeta, true) == still && ItchMetadata.Cover(plainMeta) == "https://img.itch.zone/animated.gif", "Plain receipt aliases or preferred still cover missing");
+                AuditAssert(PlatformLibraries.Itch(receiptRoot).Count == 1 && PlatformLibraries.Itch(plainGame).Count == 1, "Plain/direct receipt scanning failed or corrupt metadata stopped discovery");
+                checks.Add("Plain itch receipts, snake-case cover fields and direct install roots work while corrupt receipts are skipped");
+                AuditAssert(ItchArtwork.Address("https://img.itch.io/example.png") && !ItchArtwork.Address("https://img.itch.io.evil/example.png"), "Alternate itch CDN checks failed");
+                var animated = Convert.FromBase64String("R0lGODlhEAAQAIEAAP8AAAAAAAAAAAAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQACgAAACwAAAAAEAAQAAAIHQABCBxIsKDBgwgTKlzIsKHDhxAjSpxIsaLFgQEBACH5BAEKAAEALAAAAAAQABAAgQAA/wAAAAAAAAAAAAgdAAEIHEiwoMGDCBMqXMiwocOHECNKnEixosWBAQEAOw==");
+                using (var mem = new MemoryStream(animated))
+                using (var gif = Image.FromStream(mem))
+                    AuditAssert(gif.GetFrameCount(System.Drawing.Imaging.FrameDimension.Time) == 2, "GIF fixture is not animated");
+                string normalized = Path.Combine(root, "static-cover.png");
+                ItchArtwork.WriteCover(animated, normalized);
+                using (var bitmap = new Bitmap(normalized))
+                    AuditAssert(bitmap.RawFormat.Guid == System.Drawing.Imaging.ImageFormat.Gif.Guid && bitmap.GetFrameCount(System.Drawing.Imaging.FrameDimension.Time) == 2 && bitmap.GetPixel(4, 4).R > 200, "Animated cover lost its GIF frames");
+                checks.Add("Animated GIF covers retain frames and still-cover metadata remains available");
+                File.WriteAllText(Path.Combine(root, "result.json"), Engine.Json.Serialize(new
+                {
+                    Passed = true,
+                    Checks = checks,
+                    GamesExecuted = false,
+                    LivePreferencesChanged = false
+                }));
+                return 0;
+            }
+            catch (Exception error)
+            {
+                Directory.CreateDirectory(root);
+                File.WriteAllText(Path.Combine(root, "failure.txt"), error.ToString());
+                return 1;
+            }
+        }
+
+        internal static int AuditItchArtwork(string root, string folder)
+        {
+            try
+            {
+                if (Directory.Exists(root))
+                    throw new IOException("Use a new itch artwork audit directory");
+                Directory.CreateDirectory(root);
+                var receipt = ItchMetadata.Read(folder);
+                if (receipt == null)
+                    throw new IOException("No installed itch receipt");
+                var game = new CustomGame
+                {
+                    Name = receipt.title,
+                    Executable = folder,
+                    Platform = "itch",
+                    PlatformId = receipt.id.ToString()
+                };
+                string image = ItchArtwork.Resolve(game, Path.Combine(root, "cover-cache"), CancellationToken.None);
+                if (String.IsNullOrEmpty(image))
+                    throw new IOException("No cover available");
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                var store = new Store(Path.Combine(root, "state"));
+                store.Settings.CheckOnStart = false;
+                store.Settings.KeepInTray = false;
+                store.Settings.UseMinecraftSkin = false;
+                store.Settings.CustomGames.Add(game);
+                using (var form = new LibraryForm(store, new Channel(), true))
+                using (var timer = new System.Windows.Forms.Timer
+                {
+                    Interval = 650
+                }
+
+                )
+                {
+                    form.TopMost = true;
+                    form.StartPosition = FormStartPosition.Manual;
+                    form.Location = Screen.PrimaryScreen.WorkingArea.Location;
+                    form.ApplyItchArtwork(game, image);
+                    form.ReloadGames(game);
+                    int code = 1;
+                    timer.Tick += delegate
+                    {
+                        timer.Stop();
+                        try
+                        {
+                            form.CaptureVisibleUi(root, "itch-artwork");
+                            File.WriteAllText(Path.Combine(root, "result.json"), Engine.Json.Serialize(new
+                            {
+                                Passed = true,
+                                GameId = game.PlatformId,
+                                CachedCover = image,
+                                GameExecuted = false,
+                                LivePreferencesChanged = false
+                            }));
+                            code = 0;
+                        }
+                        catch (Exception error)
+                        {
+                            File.WriteAllText(Path.Combine(root, "failure.txt"), error.ToString());
+                        }
+
+                        form.Close();
+                    };
+                    form.Shown += delegate
+                    {
+                        timer.Start();
+                    };
+                    Application.Run(form);
+                    return code;
+                }
+            }
+            catch (Exception error)
+            {
+                Directory.CreateDirectory(root);
+                File.WriteAllText(Path.Combine(root, "failure.txt"), error.ToString());
+                return 1;
+            }
+        }
+    }
 }

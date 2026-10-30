@@ -8,99 +8,812 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using MC2Pack;
-namespace Astera {
-public sealed class FtlAsset {public string Name,Url,Sha256,Id;public long Size;}
-public sealed class FtlFile {public string Name,Before,After;public bool Existed;}
-public sealed class FtlState {public string Root,DataVersion,AssetsVersion,HyperspaceVersion,OriginalBackup,LastBackup,GibsVersion,TrcVersion,TrcGibsVersion;public Dictionary<string,string> Files=new Dictionary<string,string>();}
-public sealed class FtlJournal {public string Root,Status,PreviousState;public List<FtlFile> Files=new List<FtlFile>();}
-public sealed class FtlPlan {public string Root,Workspace,DataVersion,AssetsVersion,HyperspaceVersion,Stage,OfficialNotes,GibsVersion,TrcVersion,TrcGibsVersion;public FtlAsset Data,Assets,Tool,Gibs,Trc,TrcGibs;public Dictionary<string,string> Downloads=new Dictionary<string,string>(),Guards=new Dictionary<string,string>();public FtlState Previous;public Dictionary<string,string> Candidate=new Dictionary<string,string>();}
-static partial class Multiverse {
-    internal const string Marker="Astera-multiverse.json",ToolHash="660BDE715C036391C049084FFDA4D91B69C9BD8026E5CC8923B00B95AC2696BB";
-    static readonly string[] Repos={"FTL-Multiverse-Team/FTL-Multiverse-Releases","FTL-Hyperspace/FTL-Hyperspace"};
-    static readonly object JsonGate=new object();
-    static T Json<T>(string text){lock(JsonGate)return Engine.Json.Deserialize<T>(text);}
-    static string Encode(object value){lock(JsonGate)return Engine.Json.Serialize(value);}
-    static Dictionary<string,object> Map(object value){return value as Dictionary<string,object>;}
-    static string Str(Dictionary<string,object> value,string key){object item;return value!=null&&value.TryGetValue(key,out item)?Convert.ToString(item):"";}
-    static IEnumerable<object> Items(Dictionary<string,object> value,string key){object item;return value.TryGetValue(key,out item)&&item is System.Collections.IEnumerable?((System.Collections.IEnumerable)item).Cast<object>():Enumerable.Empty<object>();}
-    static Version VersionOf(string text){Version version;if(!Version.TryParse((text??"").TrimStart('v'),out version))throw new Exception("Unsupported upstream version: "+text);return version;}
-    internal static void WriteJson(string path,object value){AtomicBytes(path,Encoding.UTF8.GetBytes(Encode(value)));}
-    static void AtomicBytes(string path,byte[] bytes){Engine.Plain(path);string temp=path+"."+Guid.NewGuid().ToString("N")+".next";try{File.WriteAllBytes(temp,bytes);if(File.Exists(path))File.Replace(temp,path,null);else File.Move(temp,path);}finally{if(File.Exists(temp))File.Delete(temp);}}
-    static void AtomicCopy(string source,string path){Engine.Plain(path);string temp=path+"."+Guid.NewGuid().ToString("N")+".next";try{File.Copy(source,temp);if(File.Exists(path))File.Replace(temp,path,null);else File.Move(temp,path);}finally{if(File.Exists(temp))File.Delete(temp);}}
-    internal static string DefaultWorkspace(Store store){return Path.Combine(store.Root,"multiverse");}
-    internal static void ValidateRoot(string folder){string root=Engine.Root(folder);var exe=Engine.Inside(root,"FTLGame.exe");var dat=Engine.Inside(root,"ftl.dat");if(!File.Exists(exe)||!File.Exists(dat))throw new Exception("Choose the FTL folder containing FTLGame.exe and ftl.dat.");using(var f=File.OpenRead(exe))if(f.ReadByte()!=77||f.ReadByte()!=90)throw new Exception("FTLGame.exe is not a Windows executable.");ArchiveNames(dat);}
-    internal static FtlState State(string folder){if(String.IsNullOrWhiteSpace(folder))return null;string path=Engine.Inside(Engine.Root(folder),Marker);if(!File.Exists(path))return null;var state=Json<FtlState>(File.ReadAllText(path));if(state==null||!String.Equals(Engine.Root(state.Root),Engine.Root(folder),StringComparison.OrdinalIgnoreCase)||state.Files==null)throw new Exception("The Multiverse installation record does not match this folder.");return state;}
-    internal static HashSet<string> ArchiveNames(string path){
-        using(var f=File.OpenRead(path))using(var r=new BinaryReader(f)){
-            if(Encoding.ASCII.GetString(r.ReadBytes(4))!="PKG\n")throw new Exception("FTL data is not a recognised SIL archive.");byte[] header=r.ReadBytes(12);if(header.Length!=12||header[0]!=0||header[1]!=16||header[2]!=0||header[3]!=20)throw new Exception("Unsupported FTL archive layout.");
-            uint count=Big(header,4),namesSize=Big(header,8);if(count>1000000||namesSize>64*1024*1024||16L+20L*count+namesSize>f.Length)throw new Exception("Invalid FTL archive index.");
-            var offsets=new List<int>();for(int i=0;i<count;i++){var entry=r.ReadBytes(20);uint position=Big(entry,8),length=Big(entry,12);if(position==0)continue;if((long)position+length>f.Length)throw new Exception("Invalid FTL entry range.");offsets.Add((int)(Big(entry,4)&0xffffff));}var names=r.ReadBytes((int)namesSize);var result=new HashSet<string>(StringComparer.OrdinalIgnoreCase);foreach(int offset in offsets){if(offset<0||offset>=names.Length)throw new Exception("Invalid FTL path offset.");int end=Array.IndexOf(names,(byte)0,offset);if(end<0)throw new Exception("Unterminated FTL archive path.");result.Add(Encoding.ASCII.GetString(names,offset,end-offset));}return result;
+
+namespace Astera
+{
+    public sealed class FtlAsset
+    {
+        public string Name, Url, Sha256, Id;
+        public long Size;
+    }
+
+    public sealed class FtlFile
+    {
+        public string Name, Before, After;
+        public bool Existed;
+    }
+
+    public sealed class FtlState
+    {
+        public string Root, DataVersion, AssetsVersion, HyperspaceVersion, OriginalBackup, LastBackup, GibsVersion, TrcVersion, TrcGibsVersion;
+        public Dictionary<string, string> Files = new Dictionary<string, string>();
+    }
+
+    public sealed class FtlJournal
+    {
+        public string Root, Status, PreviousState;
+        public List<FtlFile> Files = new List<FtlFile>();
+    }
+
+    public sealed class FtlPlan
+    {
+        public string Root, Workspace, DataVersion, AssetsVersion, HyperspaceVersion, Stage, OfficialNotes, GibsVersion, TrcVersion, TrcGibsVersion;
+        public FtlAsset Data, Assets, Tool, Gibs, Trc, TrcGibs;
+        public Dictionary<string, string> Downloads = new Dictionary<string, string>(), Guards = new Dictionary<string, string>();
+        public FtlState Previous;
+        public Dictionary<string, string> Candidate = new Dictionary<string, string>();
+    }
+
+    static partial class Multiverse
+    {
+        internal const string Marker = "Astera-multiverse.json", ToolHash = "660BDE715C036391C049084FFDA4D91B69C9BD8026E5CC8923B00B95AC2696BB";
+        static readonly string[] Repos =
+        {
+            "FTL-Multiverse-Team/FTL-Multiverse-Releases",
+            "FTL-Hyperspace/FTL-Hyperspace"
+        };
+        static readonly object JsonGate = new object();
+        static T Json<T>(string text)
+        {
+            lock (JsonGate)
+                return Engine.Json.Deserialize<T>(text);
+        }
+
+        static string Encode(object value)
+        {
+            lock (JsonGate)
+                return Engine.Json.Serialize(value);
+        }
+
+        static Dictionary<string, object> Map(object value)
+        {
+            return value as Dictionary<string, object>;
+        }
+
+        static string Str(Dictionary<string, object> value, string key)
+        {
+            object item;
+            return value != null && value.TryGetValue(key, out item) ? Convert.ToString(item) : "";
+        }
+
+        static IEnumerable<object> Items(Dictionary<string, object> value, string key)
+        {
+            object item;
+            return value.TryGetValue(key, out item) && item is System.Collections.IEnumerable ? ((System.Collections.IEnumerable)item).Cast<object>() : Enumerable.Empty<object>();
+        }
+
+        static Version VersionOf(string text)
+        {
+            Version version;
+            if (!Version.TryParse((text ?? "").TrimStart('v'), out version))
+                throw new Exception("Unsupported upstream version: " + text);
+            return version;
+        }
+
+        internal static void WriteJson(string path, object value)
+        {
+            AtomicBytes(path, Encoding.UTF8.GetBytes(Encode(value)));
+        }
+
+        static void AtomicBytes(string path, byte[] bytes)
+        {
+            Engine.Plain(path);
+            string temp = path + "." + Guid.NewGuid().ToString("N") + ".next";
+            try
+            {
+                File.WriteAllBytes(temp, bytes);
+                if (File.Exists(path))
+                    File.Replace(temp, path, null);
+                else
+                    File.Move(temp, path);
+            }
+            finally
+            {
+                if (File.Exists(temp))
+                    File.Delete(temp);
+            }
+        }
+
+        static void AtomicCopy(string source, string path)
+        {
+            Engine.Plain(path);
+            string temp = path + "." + Guid.NewGuid().ToString("N") + ".next";
+            try
+            {
+                File.Copy(source, temp);
+                if (File.Exists(path))
+                    File.Replace(temp, path, null);
+                else
+                    File.Move(temp, path);
+            }
+            finally
+            {
+                if (File.Exists(temp))
+                    File.Delete(temp);
+            }
+        }
+
+        internal static string DefaultWorkspace(Store store)
+        {
+            return Path.Combine(store.Root, "multiverse");
+        }
+
+        internal static void ValidateRoot(string folder)
+        {
+            string root = Engine.Root(folder);
+            var exe = Engine.Inside(root, "FTLGame.exe");
+            var dat = Engine.Inside(root, "ftl.dat");
+            if (!File.Exists(exe) || !File.Exists(dat))
+                throw new Exception("Choose the FTL folder containing FTLGame.exe and ftl.dat.");
+            using (var f = File.OpenRead(exe))
+                if (f.ReadByte() != 77 || f.ReadByte() != 90)
+                    throw new Exception("FTLGame.exe is not a Windows executable.");
+            ArchiveNames(dat);
+        }
+
+        internal static FtlState State(string folder)
+        {
+            if (String.IsNullOrWhiteSpace(folder))
+                return null;
+            string path = Engine.Inside(Engine.Root(folder), Marker);
+            if (!File.Exists(path))
+                return null;
+            var state = Json<FtlState>(File.ReadAllText(path));
+            if (state == null || !String.Equals(Engine.Root(state.Root), Engine.Root(folder), StringComparison.OrdinalIgnoreCase) || state.Files == null)
+                throw new Exception("The Multiverse installation record does not match this folder.");
+            return state;
+        }
+
+        internal static HashSet<string> ArchiveNames(string path)
+        {
+            using (var f = File.OpenRead(path))
+            using (var r = new BinaryReader(f))
+            {
+                if (Encoding.ASCII.GetString(r.ReadBytes(4)) != "PKG\n")
+                    throw new Exception("FTL data is not a recognised SIL archive.");
+                byte[] header = r.ReadBytes(12);
+                if (header.Length != 12 || header[0] != 0 || header[1] != 16 || header[2] != 0 || header[3] != 20)
+                    throw new Exception("Unsupported FTL archive layout.");
+                uint count = Big(header, 4), namesSize = Big(header, 8);
+                if (count > 1000000 || namesSize > 64 * 1024 * 1024 || 16L + 20L * count + namesSize > f.Length)
+                    throw new Exception("Invalid FTL archive index.");
+                var offsets = new List<int>();
+                for (int i = 0; i < count; i++)
+                {
+                    var entry = r.ReadBytes(20);
+                    uint position = Big(entry, 8), length = Big(entry, 12);
+                    if (position == 0)
+                        continue;
+                    if ((long)position + length > f.Length)
+                        throw new Exception("Invalid FTL entry range.");
+                    offsets.Add((int)(Big(entry, 4) & 0xffffff));
+                }
+
+                var names = r.ReadBytes((int)namesSize);
+                var result = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (int offset in offsets)
+                {
+                    if (offset < 0 || offset >= names.Length)
+                        throw new Exception("Invalid FTL path offset.");
+                    int end = Array.IndexOf(names, (byte)0, offset);
+                    if (end < 0)
+                        throw new Exception("Unterminated FTL archive path.");
+                    result.Add(Encoding.ASCII.GetString(names, offset, end - offset));
+                }
+
+                return result;
+            }
+        }
+
+        static uint Big(byte[] b, int i)
+        {
+            return (uint)(b[i] << 24 | b[i + 1] << 16 | b[i + 2] << 8 | b[i + 3]);
+        }
+
+        static bool ManagedName(string name)
+        {
+            return name == "FTLGame.exe" || name == "ftl.dat" || Regex.IsMatch(name, @"^[A-Za-z0-9_.-]+\.dll$", RegexOptions.IgnoreCase);
+        }
+
+        static string Current(string root, string name)
+        {
+            string path = Engine.Inside(root, name);
+            return File.Exists(path) ? Engine.Hash(path) : null;
+        }
+
+        internal static void Closed(string root)
+        {
+            string expected = PhysicalExecutable(Path.Combine(Engine.Root(root), "FTLGame.exe"));
+            foreach (var p in Process.GetProcessesByName("FTLGame"))
+                using (p)
+                {
+                    try
+                    {
+                        if (!p.HasExited && String.Equals(PhysicalExecutable(p.MainModule.FileName), expected, StringComparison.OrdinalIgnoreCase))
+                            throw new IOException("Close this FTL installation before preparing, installing or restoring Multiverse.");
+                    }
+                    catch (System.ComponentModel.Win32Exception)
+                    {
+                        throw new IOException("Could not verify the running FTL location. Close FTL before continuing.");
+                    }
+                    catch (InvalidOperationException)
+                    {
+                    }
+                }
+        }
+
+        static FileStream Lock(string root)
+        {
+            string path = Engine.Inside(Engine.Root(root), "Astera-multiverse.lock");
+            if (File.Exists(path) && new FileInfo(path).Length != 0)
+                throw new Exception("Unexpected Multiverse lock file; inspect it before continuing.");
+            try
+            {
+                return new FileStream(path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            }
+            catch (IOException)
+            {
+                throw new Exception("Another Multiverse installation or restore is already using this folder.");
+            }
+        }
+
+        internal static string Pending(string root, string workspace)
+        {
+            if (String.IsNullOrWhiteSpace(root) || String.IsNullOrWhiteSpace(workspace))
+                return null;
+            string folder = Engine.Inside(Engine.Root(workspace), "backups");
+            if (!Directory.Exists(folder))
+                return null;
+            foreach (string item in Directory.GetDirectories(folder).OrderByDescending(p => p))
+            {
+                Engine.Plain(item);
+                string path = Path.Combine(item, "transaction.json");
+                if (!File.Exists(path))
+                    continue;
+                var journal = Json<FtlJournal>(File.ReadAllText(path));
+                if (journal != null && String.Equals(journal.Root, Engine.Root(root), StringComparison.OrdinalIgnoreCase) && (journal.Status == "prepared" || journal.Status == "restoring"))
+                    return item;
+            }
+
+            return null;
+        }
+
+        internal static void Recover(string root, string workspace, Action<string> log)
+        {
+            Closed(root);
+            using (Lock(root))
+            {
+                string folder = Pending(root, workspace);
+                if (folder == null)
+                    throw new Exception("No interrupted Multiverse transaction found.");
+                var journal = Json<FtlJournal>(File.ReadAllText(Path.Combine(folder, "transaction.json")));
+                foreach (var file in journal.Files)
+                {
+                    string actual = Current(root, file.Name);
+                    if (!ManagedName(file.Name) || (actual != file.Before && actual != file.After) || file.Existed && Current(folder, file.Name) != file.Before)
+                        throw new Exception("A file changed outside the interrupted transaction; automatic recovery refused: " + file.Name);
+                }
+
+                foreach (var file in journal.Files)
+                {
+                    if (Current(root, file.Name) == file.Before)
+                        continue;
+                    if (file.Existed)
+                        AtomicCopy(Engine.Inside(folder, file.Name), Engine.Inside(root, file.Name));
+                    else
+                        File.Delete(Engine.Inside(root, file.Name));
+                }
+
+                if (journal.PreviousState == null)
+                {
+                    if (File.Exists(Path.Combine(root, Marker)))
+                        File.Delete(Path.Combine(root, Marker));
+                }
+                else
+                    AtomicBytes(Path.Combine(root, Marker), Encoding.UTF8.GetBytes(journal.PreviousState));
+                journal.Status = journal.Status == "restoring" ? "restored" : "recovered";
+                WriteJson(Path.Combine(folder, "transaction.json"), journal);
+                log("Interrupted operation recovered; the previous FTL files are restored.");
+            }
+        }
+
+        static void Guards(FtlPlan plan)
+        {
+            ValidateRoot(plan.Root);
+            foreach (var pair in plan.Guards)
+                if (!String.Equals(Current(plan.Root, pair.Key), pair.Value, StringComparison.OrdinalIgnoreCase))
+                    throw new Exception("FTL changed after preparation: " + pair.Key + ". Check and prepare again.");
+        }
+
+        static byte[] Metadata(string repo, string suffix, CancellationToken cancel)
+        {
+            if (!Repos.Contains(repo))
+                throw new Exception("Unknown official repository");
+            return new Transport().Metadata("https://api.github.com/repos/" + repo + "/releases" + suffix, cancel);
+        }
+
+        static FtlAsset Asset(Dictionary<string, object> entry, string repo)
+        {
+            string name = Str(entry, "name"), url = Str(entry, "browser_download_url"), digest = Str(entry, "digest");
+            var uri = new Transport().Address(url);
+            if (uri.Host != "github.com" || !uri.AbsolutePath.StartsWith("/" + repo + "/releases/download/", StringComparison.Ordinal) || Path.GetFileName(name) != name)
+                throw new Exception("Unexpected upstream download address");
+            long size = Convert.ToInt64(entry["size"]);
+            if (size < 1 || size > 2L * 1024 * 1024 * 1024)
+                throw new Exception("Unsupported upstream download size");
+            return new FtlAsset
+            {
+                Name = name,
+                Url = url,
+                Size = size,
+                Id = Str(entry, "id"),
+                Sha256 = digest.StartsWith("sha256:", StringComparison.OrdinalIgnoreCase) ? digest.Substring(7) : null
+            };
+        }
+
+        internal static FtlPlan Check(string root, string workspace, CancellationToken cancel)
+        {
+            ValidateRoot(root);
+            root = Engine.Root(root);
+            workspace = Engine.Root(workspace);
+            if (workspace.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) || root.StartsWith(workspace + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) || workspace.Equals(root, StringComparison.OrdinalIgnoreCase))
+                throw new Exception("Keep Multiverse work/downloads outside the FTL installation.");
+            if (Pending(root, workspace) != null)
+                throw new Exception("An interrupted Multiverse operation needs recovery. Use Restore backup before checking again.");
+            var plan = new FtlPlan
+            {
+                Root = root,
+                Workspace = workspace,
+                Previous = State(root)
+            };
+            plan.Guards["FTLGame.exe"] = Current(root, "FTLGame.exe");
+            plan.Guards["ftl.dat"] = Current(root, "ftl.dat");
+            plan.Guards[Marker] = Current(root, Marker);
+            if (plan.Previous != null)
+            {
+                foreach (var pair in plan.Previous.Files)
+                {
+                    if (!ManagedName(pair.Key) || Current(root, pair.Key) != pair.Value)
+                        throw new Exception("Managed FTL files were changed outside Astera. Restore/review that installation first: " + pair.Key);
+                    plan.Guards[pair.Key] = pair.Value;
+                }
+            }
+            else if (ArchiveNames(Path.Combine(root, "ftl.dat")).Contains("data/hyperspace.xml") || File.Exists(Path.Combine(root, "Hyperspace.dll")))
+                throw new Exception("This FTL copy already has unmanaged mods. Restore it to vanilla with its existing manager first; Astera will not remove those mods.");
+            string repo = Repos[0];
+            var releases = Json<object[]>(Encoding.UTF8.GetString(Metadata(repo, "?per_page=30", cancel))).Select(Map).Where(r => Str(r, "draft") != "True" && Str(r, "prerelease") != "True").ToArray();
+            foreach (var release in releases.OrderByDescending(r => VersionOf(Str(r, "tag_name"))))
+            {
+                var data = Items(release, "assets").Select(Map).FirstOrDefault(a => Regex.IsMatch(Str(a, "name"), @"Multiverse.*Data.*\.zip$", RegexOptions.IgnoreCase));
+                if (data != null)
+                {
+                    plan.Data = Asset(data, repo);
+                    plan.DataVersion = Str(release, "tag_name").TrimStart('v');
+                    plan.OfficialNotes = Str(release, "body");
+                    break;
+                }
+            }
+
+            if (plan.Data == null)
+                throw new Exception("No official Multiverse Data ZIP found. Upstream may have changed its installer format.");
+            var target = VersionOf(plan.DataVersion);
+            foreach (var release in releases.OrderByDescending(r => VersionOf(Str(r, "tag_name"))))
+            {
+                var version = VersionOf(Str(release, "tag_name"));
+                if (version > target || version.Major != target.Major || version.Minor != target.Minor)
+                    continue;
+                var assets = Items(release, "assets").Select(Map).FirstOrDefault(a => Regex.IsMatch(Str(a, "name"), @"Multiverse.*Assets.*\.zip$", RegexOptions.IgnoreCase));
+                if (assets != null)
+                {
+                    plan.Assets = Asset(assets, repo);
+                    plan.AssetsVersion = Str(release, "tag_name").TrimStart('v');
+                    break;
+                }
+            }
+
+            if (plan.Assets == null)
+                throw new Exception("No matching official Multiverse Assets ZIP found.");
+            var hs = Json<Dictionary<string, object>>(Encoding.UTF8.GetString(Metadata(Repos[1], "/latest", cancel)));
+            plan.HyperspaceVersion = Str(hs, "tag_name").TrimStart('v');
+            if (VersionOf(plan.HyperspaceVersion) < new Version(1, 19, 0))
+                throw new Exception("Multiverse requires a newer Hyperspace release.");
+            plan.Tool = new FtlAsset
+            {
+                Name = "ftlman-x86_64-pc-windows-gnu.zip",
+                Url = "https://github.com/afishhh/ftlman/releases/download/v0.7.4/ftlman-x86_64-pc-windows-gnu.zip",
+                Size = 6997222,
+                Id = "v0.7.4",
+                Sha256 = ToolHash
+            };
+            return plan;
+        }
+
+        internal static string Download(FtlAsset asset, string workspace, CancellationToken cancel, Action<string> log, Action<string, long, long> progress = null)
+        {
+            if (progress != null)
+                progress("Checking cached " + asset.Name, 0, 0);
+            string cache = Engine.Inside(workspace, "downloads");
+            Directory.CreateDirectory(cache);
+            string key = Engine.Hash(Encoding.UTF8.GetBytes(asset.Url + "\n" + asset.Id)), path = Engine.Inside(cache, key + ".bin"), receipt = path + ".json";
+            if (File.Exists(path) && File.Exists(receipt))
+            {
+                var known = Json<Dictionary<string, string>>(File.ReadAllText(receipt));
+                if (new FileInfo(path).Length == asset.Size && known["Sha256"] == Engine.Hash(path) && (!String.IsNullOrEmpty(asset.Sha256) ? known["Sha256"].Equals(asset.Sha256, StringComparison.OrdinalIgnoreCase) : true))
+                {
+                    log("Using cached " + asset.Name);
+                    if (progress != null)
+                        progress("Verified cached " + asset.Name, asset.Size, asset.Size);
+                    return path;
+                }
+            }
+
+            string temp = path + "." + Guid.NewGuid().ToString("N") + ".partial";
+            try
+            {
+                log("Downloading " + asset.Name + " (" + (asset.Size / 1048576D).ToString("0.0") + " MiB)");
+                using (var output = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                    new Transport().Get(asset.Url, output, asset.Size, asset.Size, cancel, done =>
+                    {
+                        if (progress != null)
+                            progress("Downloading " + asset.Name, done, asset.Size);
+                    });
+                if (progress != null)
+                    progress("Verifying " + asset.Name, 0, 0);
+                string hash = Engine.Hash(temp);
+                if (!String.IsNullOrEmpty(asset.Sha256) && !hash.Equals(asset.Sha256, StringComparison.OrdinalIgnoreCase))
+                    throw new Exception("Upstream checksum mismatch: " + asset.Name);
+                if (File.Exists(path))
+                    File.Delete(path);
+                File.Move(temp, path);
+                WriteJson(receipt, new Dictionary<string, string> { { "Url", asset.Url }, { "Sha256", hash } });
+                log("Verified download: " + asset.Name + (String.IsNullOrEmpty(asset.Sha256) ? " (HTTPS source, recorded local SHA256; upstream supplies no digest)" : " (upstream SHA256)"));
+                return path;
+            }
+            finally
+            {
+                if (File.Exists(temp))
+                    File.Delete(temp);
+            }
+        }
+
+        internal static void Fetch(FtlPlan plan, CancellationToken cancel, Action<string> log, Action<string, long, long> progress = null)
+        {
+            cancel.ThrowIfCancellationRequested();
+            Directory.CreateDirectory(plan.Workspace);
+            long need = plan.Data.Size + plan.Assets.Size + plan.Tool.Size + (plan.Gibs == null ? 0 : plan.Gibs.Size) + new FileInfo(Path.Combine(plan.Root, "ftl.dat")).Length * 6 + 512L * 1024 * 1024;
+            if (new DriveInfo(Path.GetPathRoot(plan.Workspace)).AvailableFreeSpace < need)
+                throw new Exception("Not enough workspace disk space for downloads, staging and rollback.");
+            foreach (var asset in Payloads(plan))
+            {
+                cancel.ThrowIfCancellationRequested();
+                plan.Downloads[asset.Name] = Download(asset, plan.Workspace, cancel, log, progress);
+            }
+        }
+
+        static string Tool(FtlPlan plan)
+        {
+            string archive = plan.Downloads[plan.Tool.Name];
+            if (!Engine.Hash(archive).Equals(ToolHash, StringComparison.OrdinalIgnoreCase))
+                throw new Exception("ftlman checksum mismatch");
+            string folder = Engine.Inside(plan.Workspace, "tools/ftlman-0.7.4");
+            if (!Directory.Exists(folder))
+            {
+                Directory.CreateDirectory(folder);
+                using (var zip = ZipFile.OpenRead(archive))
+                    foreach (var entry in zip.Entries)
+                    {
+                        string relative = entry.FullName.Replace('\\', '/');
+                        if (relative.EndsWith("/"))
+                            continue;
+                        string target = Engine.Inside(folder, relative);
+                        Directory.CreateDirectory(Path.GetDirectoryName(target));
+                        using (var input = entry.Open())
+                        using (var output = new FileStream(target, FileMode.CreateNew))
+                            input.CopyTo(output);
+                    }
+            }
+
+            var exe = Directory.GetFiles(folder, "ftlman.exe", SearchOption.AllDirectories).Single();
+            using (var zip = ZipFile.OpenRead(archive))
+            {
+                var entry = zip.Entries.Single(e => e.FullName.Replace('\\', '/').EndsWith("/ftlman.exe", StringComparison.OrdinalIgnoreCase) || e.FullName == "ftlman.exe");
+                using (var input = entry.Open())
+                    if (Engine.Hash(input) != Engine.Hash(exe))
+                        throw new Exception("Extracted ftlman was modified");
+            }
+
+            return exe;
+        }
+
+        internal static string Quote(string arg)
+        {
+            if (arg.IndexOf('\0') >= 0 || arg.IndexOf('\r') >= 0 || arg.IndexOf('\n') >= 0)
+                throw new Exception("Invalid process argument");
+            return "\"" + Regex.Replace(arg, @"(\\*)""", m => new string('\\', m.Groups[1].Length * 2) + "\\\"").TrimEnd('\\') + new string('\\', arg.Reverse().TakeWhile(c => c == '\\').Count() * 2) + "\"";
+        }
+
+        internal static void Run(string exe, string[] args, string outputLog, CancellationToken cancel, Action<string> log, Action<string, long, long> progress = null)
+        {
+            string phase = args.Length > 0 && args[0] == "patch" ? "Patching Multiverse" : "Preparing Hyperspace";
+            var info = new ProcessStartInfo(exe, String.Join(" ", args.Select(Quote)))
+            {
+                WorkingDirectory = Path.GetDirectoryName(exe),
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+            using (var writer = new StreamWriter(outputLog, false, Encoding.UTF8))
+            using (var process = new Process
+            {
+                StartInfo = info
+            }
+
+            )
+            {
+                writer.AutoFlush = true;
+                object gate = new object();
+                string lastLine = "";
+                long lastOutput = 0;
+                var elapsed = Stopwatch.StartNew();
+                DataReceivedEventHandler output = delegate (object sender, DataReceivedEventArgs e)
+                {
+                    if (e.Data != null)
+                        lock (gate)
+                        {
+                            writer.WriteLine(e.Data);
+                            lastLine = Regex.Replace(e.Data, @"\x1B\[[0-?]*[ -/]*[@-~]", "");
+                            if (lastLine.Length > 160)
+                                lastLine = lastLine.Substring(0, 160);
+                            lastOutput = elapsed.ElapsedMilliseconds;
+                        }
+                };
+                process.OutputDataReceived += output;
+                process.ErrorDataReceived += output;
+                cancel.ThrowIfCancellationRequested();
+                process.Start();
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+                log(phase + " started (PID " + process.Id + "). Tool log: " + outputLog);
+                long lastReport = -1000, lastLog = 0;
+                while (!process.WaitForExit(150))
+                {
+                    if (cancel.IsCancellationRequested)
+                    {
+                        try
+                        {
+                            process.Kill();
+                        }
+                        catch (InvalidOperationException)
+                        {
+                        }
+
+                        process.WaitForExit();
+                        cancel.ThrowIfCancellationRequested();
+                    }
+
+                    if (elapsed.ElapsedMilliseconds - lastReport >= 1000)
+                    {
+                        lastReport = elapsed.ElapsedMilliseconds;
+                        string line;
+                        long quiet;
+                        lock (gate)
+                        {
+                            line = lastLine;
+                            quiet = elapsed.ElapsedMilliseconds - lastOutput;
+                        }
+
+                        if (progress != null)
+                            progress(phase + (String.IsNullOrWhiteSpace(line) ? "" : " · " + line), 0, 0);
+                        if (elapsed.ElapsedMilliseconds - lastLog >= 15000)
+                        {
+                            lastLog = elapsed.ElapsedMilliseconds;
+                            log(phase + " still running · " + elapsed.Elapsed.ToString(@"mm\:ss") + " elapsed · last tool output " + (quiet / 1000) + "s ago");
+                        }
+                    }
+                }
+
+                process.WaitForExit();
+                cancel.ThrowIfCancellationRequested();
+                if (process.ExitCode != 0)
+                    throw new Exception("ftlman stopped (exit " + process.ExitCode + "). Details: " + outputLog);
+                log("ftlman completed: " + args[0]);
+            }
+        }
+
+        internal static void Prepare(FtlPlan plan, CancellationToken cancel, Action<string> log, Action<string, long, long> progress = null)
+        {
+            if (progress != null)
+                progress("Checking base FTL files", 0, 0);
+            Guards(plan);
+            Closed(plan.Root);
+            if (plan.Downloads.Count != Payloads(plan).Count())
+                throw new Exception("Download the selected release first.");
+            string runs = Engine.Inside(plan.Workspace, "staging");
+            Directory.CreateDirectory(runs);
+            plan.Stage = Engine.Inside(runs, Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(plan.Stage);
+            string baseRoot = plan.Root;
+            if (plan.Previous != null)
+            {
+                baseRoot = Engine.Inside(plan.Workspace, plan.Previous.OriginalBackup);
+                if (!Directory.Exists(baseRoot))
+                    throw new Exception("The original FTL backup is missing.");
+            }
+
+            if (progress != null)
+                progress("Copying base FTL files into staging", 0, 0);
+            foreach (string name in new[]
+            {
+                "FTLGame.exe",
+                "ftl.dat"
+            }
+
+            )
+                File.Copy(Engine.Inside(baseRoot, name), Engine.Inside(plan.Stage, name));
+            string exe = Tool(plan);
+            log("Installing Hyperspace into staging...");
+            Run(exe, new[] { "hyperspace-install", "--data-dir", plan.Stage, plan.HyperspaceVersion }, Path.Combine(plan.Stage, "hyperspace-install.log"), cancel, log, progress);
+            using (var zip = ZipFile.OpenRead(plan.Downloads[plan.Data.Name]))
+                if (zip.GetEntry("data/hyperspace.xml") == null || zip.GetEntry("mod-appendix/metadata.xml") == null)
+                    throw new Exception("Multiverse Data archive is missing its required manifests.");
+            log("Applying Multiverse Assets, Data" + (plan.Trc == null ? "" : ", The Renegade Collection") + (plan.Gibs == null ? "" : ", Generated Gibs") + (plan.TrcGibs == null ? "" : ", TRC Generated Gibs") + " in staging...");
+            Run(exe, PatchArguments(plan), Path.Combine(plan.Stage, "multiverse-patch.log"), cancel, log, progress);
+            if (progress != null)
+                progress("Verifying patched Multiverse files", 0, 0);
+            var names = ArchiveNames(Path.Combine(plan.Stage, "ftl.dat"));
+            if (!names.Contains("data/hyperspace.xml") || !names.Contains("data/blueprints.xml") || !File.Exists(Path.Combine(plan.Stage, "Hyperspace.dll")))
+                throw new Exception("The staged Multiverse installation failed verification.");
+            VerifyContent(plan, names);
+            VerifyTrc(plan, names);
+            VerifyGibs(plan, names);
+            foreach (var file in Directory.GetFiles(plan.Stage).Where(p => ManagedName(Path.GetFileName(p))))
+            {
+                string name = Path.GetFileName(file);
+                plan.Candidate[name] = Engine.Hash(file);
+                if (!plan.Guards.ContainsKey(name))
+                    plan.Guards[name] = Current(plan.Root, name);
+            }
+
+            if (plan.Previous != null && plan.Previous.Files.Keys.Except(plan.Candidate.Keys).Any())
+                throw new Exception("The update retired a managed file. Review required rather than silently removing it.");
+            Guards(plan);
+            log("Ready: " + plan.Candidate.Count + " verified files. Live installation has not been changed.");
+        }
+
+        internal static string Apply(FtlPlan plan, Action<string> log, int failAfter = -1)
+        {
+            using (Lock(plan.Root))
+                return ApplyLocked(plan, log, failAfter);
+        }
+
+        static string ApplyLocked(FtlPlan plan, Action<string> log, int failAfter)
+        {
+            Closed(plan.Root);
+            Guards(plan);
+            if (plan.Candidate.Count < 3)
+                throw new Exception("Prepare the installation first.");
+            string backups = Engine.Inside(plan.Workspace, "backups");
+            Directory.CreateDirectory(backups);
+            string relative = "backups/" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N");
+            string backup = Engine.Inside(plan.Workspace, relative);
+            Directory.CreateDirectory(backup);
+            var journal = new FtlJournal
+            {
+                Root = plan.Root,
+                Status = "prepared",
+                PreviousState = File.Exists(Path.Combine(plan.Root, Marker)) ? File.ReadAllText(Path.Combine(plan.Root, Marker)) : null
+            };
+            foreach (var pair in plan.Candidate)
+            {
+                if (!ManagedName(pair.Key) || Current(plan.Stage, pair.Key) != pair.Value)
+                    throw new Exception("Staged file changed");
+                string old = Current(plan.Root, pair.Key);
+                journal.Files.Add(new FtlFile { Name = pair.Key, Before = old, After = pair.Value, Existed = old != null });
+                if (old != null)
+                    File.Copy(Engine.Inside(plan.Root, pair.Key), Engine.Inside(backup, pair.Key));
+            }
+
+            WriteJson(Path.Combine(backup, "transaction.json"), journal);
+            Guards(plan);
+            var applied = new List<FtlFile>();
+            try
+            {
+                foreach (var file in journal.Files)
+                {
+                    if (Current(plan.Root, file.Name) != file.Before)
+                        throw new Exception("Destination changed during installation");
+                    AtomicCopy(Engine.Inside(plan.Stage, file.Name), Engine.Inside(plan.Root, file.Name));
+                    applied.Add(file);
+                    if (failAfter >= 0 && applied.Count == failAfter)
+                        throw new Exception("Injected transaction failure");
+                    if (Current(plan.Root, file.Name) != file.After)
+                        throw new Exception("Installed checksum mismatch");
+                }
+
+                var state = new FtlState
+                {
+                    Root = plan.Root,
+                    DataVersion = plan.DataVersion,
+                    AssetsVersion = plan.AssetsVersion,
+                    HyperspaceVersion = plan.HyperspaceVersion,
+                    GibsVersion = plan.GibsVersion,
+                    TrcVersion = plan.TrcVersion,
+                    TrcGibsVersion = plan.TrcGibsVersion,
+                    OriginalBackup = plan.Previous == null ? relative : plan.Previous.OriginalBackup,
+                    LastBackup = relative,
+                    Files = plan.Candidate
+                };
+                WriteJson(Path.Combine(plan.Root, Marker), state);
+                journal.Status = "installed";
+                WriteJson(Path.Combine(backup, "transaction.json"), journal);
+                log("Multiverse " + state.DataVersion + " installed. Backup: " + backup);
+                return backup;
+            }
+            catch
+            {
+                foreach (var file in applied.AsEnumerable().Reverse())
+                {
+                    if (Current(plan.Root, file.Name) != file.After)
+                        throw new Exception("A file changed during rollback; backup retained for manual recovery: " + backup);
+                    if (file.Existed)
+                        File.Copy(Engine.Inside(backup, file.Name), Engine.Inside(plan.Root, file.Name), true);
+                    else
+                        File.Delete(Engine.Inside(plan.Root, file.Name));
+                }
+
+                if (journal.PreviousState == null)
+                {
+                    if (File.Exists(Path.Combine(plan.Root, Marker)))
+                        File.Delete(Path.Combine(plan.Root, Marker));
+                }
+                else
+                    AtomicBytes(Path.Combine(plan.Root, Marker), Encoding.UTF8.GetBytes(journal.PreviousState));
+                journal.Status = "rolled-back";
+                WriteJson(Path.Combine(backup, "transaction.json"), journal);
+                throw;
+            }
+        }
+
+        internal static void Restore(string root, string workspace, Action<string> log)
+        {
+            using (Lock(root))
+                RestoreLocked(root, workspace, log);
+        }
+
+        static void RestoreLocked(string root, string workspace, Action<string> log)
+        {
+            Closed(root);
+            var state = State(root);
+            if (state == null)
+                throw new Exception("No Astera-managed Multiverse installation to restore.");
+            string backup = Engine.Inside(Engine.Root(workspace), state.LastBackup);
+            var journal = Json<FtlJournal>(File.ReadAllText(Path.Combine(backup, "transaction.json")));
+            if (journal.Root != Engine.Root(root) || journal.Status != "installed")
+                throw new Exception("Rollback record does not match the installation.");
+            foreach (var file in journal.Files)
+            {
+                if (!ManagedName(file.Name) || Current(root, file.Name) != file.After || file.Existed && Current(backup, file.Name) != file.Before)
+                    throw new Exception("A game/backup file changed; automatic restore refused: " + file.Name);
+            }
+
+            journal.Status = "restoring";
+            WriteJson(Path.Combine(backup, "transaction.json"), journal);
+            foreach (var file in journal.Files)
+            {
+                if (file.Existed)
+                    AtomicCopy(Engine.Inside(backup, file.Name), Engine.Inside(root, file.Name));
+                else
+                    File.Delete(Engine.Inside(root, file.Name));
+            }
+
+            if (journal.PreviousState == null)
+                File.Delete(Path.Combine(root, Marker));
+            else
+                AtomicBytes(Path.Combine(root, Marker), Encoding.UTF8.GetBytes(journal.PreviousState));
+            journal.Status = "restored";
+            WriteJson(Path.Combine(backup, "transaction.json"), journal);
+            log("Previous FTL installation restored; saves and unrelated files preserved.");
         }
     }
-    static uint Big(byte[] b,int i){return (uint)(b[i]<<24|b[i+1]<<16|b[i+2]<<8|b[i+3]);}
-    static bool ManagedName(string name){return name=="FTLGame.exe"||name=="ftl.dat"||Regex.IsMatch(name,@"^[A-Za-z0-9_.-]+\.dll$",RegexOptions.IgnoreCase);}
-    static string Current(string root,string name){string path=Engine.Inside(root,name);return File.Exists(path)?Engine.Hash(path):null;}
-    internal static void Closed(string root){string expected=PhysicalExecutable(Path.Combine(Engine.Root(root),"FTLGame.exe"));foreach(var p in Process.GetProcessesByName("FTLGame"))using(p){try{if(!p.HasExited&&String.Equals(PhysicalExecutable(p.MainModule.FileName),expected,StringComparison.OrdinalIgnoreCase))throw new IOException("Close this FTL installation before preparing, installing or restoring Multiverse.");}catch(System.ComponentModel.Win32Exception){throw new IOException("Could not verify the running FTL location. Close FTL before continuing.");}catch(InvalidOperationException){}}}
-    static FileStream Lock(string root){string path=Engine.Inside(Engine.Root(root),"Astera-multiverse.lock");if(File.Exists(path)&&new FileInfo(path).Length!=0)throw new Exception("Unexpected Multiverse lock file; inspect it before continuing.");try{return new FileStream(path,FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None);}catch(IOException){throw new Exception("Another Multiverse installation or restore is already using this folder.");}}
-    internal static string Pending(string root,string workspace){if(String.IsNullOrWhiteSpace(root)||String.IsNullOrWhiteSpace(workspace))return null;string folder=Engine.Inside(Engine.Root(workspace),"backups");if(!Directory.Exists(folder))return null;foreach(string item in Directory.GetDirectories(folder).OrderByDescending(p=>p)){Engine.Plain(item);string path=Path.Combine(item,"transaction.json");if(!File.Exists(path))continue;var journal=Json<FtlJournal>(File.ReadAllText(path));if(journal!=null&&String.Equals(journal.Root,Engine.Root(root),StringComparison.OrdinalIgnoreCase)&&(journal.Status=="prepared"||journal.Status=="restoring"))return item;}return null;}
-    internal static void Recover(string root,string workspace,Action<string> log){Closed(root);using(Lock(root)){string folder=Pending(root,workspace);if(folder==null)throw new Exception("No interrupted Multiverse transaction found.");var journal=Json<FtlJournal>(File.ReadAllText(Path.Combine(folder,"transaction.json")));foreach(var file in journal.Files){string actual=Current(root,file.Name);if(!ManagedName(file.Name)||(actual!=file.Before&&actual!=file.After)||file.Existed&&Current(folder,file.Name)!=file.Before)throw new Exception("A file changed outside the interrupted transaction; automatic recovery refused: "+file.Name);}foreach(var file in journal.Files){if(Current(root,file.Name)==file.Before)continue;if(file.Existed)AtomicCopy(Engine.Inside(folder,file.Name),Engine.Inside(root,file.Name));else File.Delete(Engine.Inside(root,file.Name));}if(journal.PreviousState==null){if(File.Exists(Path.Combine(root,Marker)))File.Delete(Path.Combine(root,Marker));}else AtomicBytes(Path.Combine(root,Marker),Encoding.UTF8.GetBytes(journal.PreviousState));journal.Status=journal.Status=="restoring"?"restored":"recovered";WriteJson(Path.Combine(folder,"transaction.json"),journal);log("Interrupted operation recovered; the previous FTL files are restored.");}}
-    static void Guards(FtlPlan plan){ValidateRoot(plan.Root);foreach(var pair in plan.Guards)if(!String.Equals(Current(plan.Root,pair.Key),pair.Value,StringComparison.OrdinalIgnoreCase))throw new Exception("FTL changed after preparation: "+pair.Key+". Check and prepare again.");}
-    static byte[] Metadata(string repo,string suffix,CancellationToken cancel){if(!Repos.Contains(repo))throw new Exception("Unknown official repository");return new Transport().Metadata("https://api.github.com/repos/"+repo+"/releases"+suffix,cancel);}
-    static FtlAsset Asset(Dictionary<string,object> entry,string repo){string name=Str(entry,"name"),url=Str(entry,"browser_download_url"),digest=Str(entry,"digest");var uri=new Transport().Address(url);if(uri.Host!="github.com"||!uri.AbsolutePath.StartsWith("/"+repo+"/releases/download/",StringComparison.Ordinal)||Path.GetFileName(name)!=name)throw new Exception("Unexpected upstream download address");long size=Convert.ToInt64(entry["size"]);if(size<1||size>2L*1024*1024*1024)throw new Exception("Unsupported upstream download size");return new FtlAsset{Name=name,Url=url,Size=size,Id=Str(entry,"id"),Sha256=digest.StartsWith("sha256:",StringComparison.OrdinalIgnoreCase)?digest.Substring(7):null};}
-    internal static FtlPlan Check(string root,string workspace,CancellationToken cancel){
-        ValidateRoot(root);root=Engine.Root(root);workspace=Engine.Root(workspace);if(workspace.StartsWith(root+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase)||root.StartsWith(workspace+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase)||workspace.Equals(root,StringComparison.OrdinalIgnoreCase))throw new Exception("Keep Multiverse work/downloads outside the FTL installation.");
-        if(Pending(root,workspace)!=null)throw new Exception("An interrupted Multiverse operation needs recovery. Use Restore backup before checking again.");var plan=new FtlPlan{Root=root,Workspace=workspace,Previous=State(root)};plan.Guards["FTLGame.exe"]=Current(root,"FTLGame.exe");plan.Guards["ftl.dat"]=Current(root,"ftl.dat");plan.Guards[Marker]=Current(root,Marker);
-        if(plan.Previous!=null){foreach(var pair in plan.Previous.Files){if(!ManagedName(pair.Key)||Current(root,pair.Key)!=pair.Value)throw new Exception("Managed FTL files were changed outside Astera. Restore/review that installation first: "+pair.Key);plan.Guards[pair.Key]=pair.Value;}}
-        else if(ArchiveNames(Path.Combine(root,"ftl.dat")).Contains("data/hyperspace.xml")||File.Exists(Path.Combine(root,"Hyperspace.dll")))throw new Exception("This FTL copy already has unmanaged mods. Restore it to vanilla with its existing manager first; Astera will not remove those mods.");
-        string repo=Repos[0];var releases=Json<object[]>(Encoding.UTF8.GetString(Metadata(repo,"?per_page=30",cancel))).Select(Map).Where(r=>Str(r,"draft")!="True"&&Str(r,"prerelease")!="True").ToArray();
-        foreach(var release in releases.OrderByDescending(r=>VersionOf(Str(r,"tag_name")))){var data=Items(release,"assets").Select(Map).FirstOrDefault(a=>Regex.IsMatch(Str(a,"name"),@"Multiverse.*Data.*\.zip$",RegexOptions.IgnoreCase));if(data!=null){plan.Data=Asset(data,repo);plan.DataVersion=Str(release,"tag_name").TrimStart('v');plan.OfficialNotes=Str(release,"body");break;}}
-        if(plan.Data==null)throw new Exception("No official Multiverse Data ZIP found. Upstream may have changed its installer format.");var target=VersionOf(plan.DataVersion);
-        foreach(var release in releases.OrderByDescending(r=>VersionOf(Str(r,"tag_name")))){var version=VersionOf(Str(release,"tag_name"));if(version>target||version.Major!=target.Major||version.Minor!=target.Minor)continue;var assets=Items(release,"assets").Select(Map).FirstOrDefault(a=>Regex.IsMatch(Str(a,"name"),@"Multiverse.*Assets.*\.zip$",RegexOptions.IgnoreCase));if(assets!=null){plan.Assets=Asset(assets,repo);plan.AssetsVersion=Str(release,"tag_name").TrimStart('v');break;}}
-        if(plan.Assets==null)throw new Exception("No matching official Multiverse Assets ZIP found.");var hs=Json<Dictionary<string,object>>(Encoding.UTF8.GetString(Metadata(Repos[1],"/latest",cancel)));plan.HyperspaceVersion=Str(hs,"tag_name").TrimStart('v');if(VersionOf(plan.HyperspaceVersion)<new Version(1,19,0))throw new Exception("Multiverse requires a newer Hyperspace release.");
-        plan.Tool=new FtlAsset{Name="ftlman-x86_64-pc-windows-gnu.zip",Url="https://github.com/afishhh/ftlman/releases/download/v0.7.4/ftlman-x86_64-pc-windows-gnu.zip",Size=6997222,Id="v0.7.4",Sha256=ToolHash};return plan;
-    }
-    internal static string Download(FtlAsset asset,string workspace,CancellationToken cancel,Action<string> log,Action<string,long,long> progress=null){
-        if(progress!=null)progress("Checking cached "+asset.Name,0,0);string cache=Engine.Inside(workspace,"downloads");Directory.CreateDirectory(cache);string key=Engine.Hash(Encoding.UTF8.GetBytes(asset.Url+"\n"+asset.Id)),path=Engine.Inside(cache,key+".bin"),receipt=path+".json";
-        if(File.Exists(path)&&File.Exists(receipt)){var known=Json<Dictionary<string,string>>(File.ReadAllText(receipt));if(new FileInfo(path).Length==asset.Size&&known["Sha256"]==Engine.Hash(path)&&(!String.IsNullOrEmpty(asset.Sha256)?known["Sha256"].Equals(asset.Sha256,StringComparison.OrdinalIgnoreCase):true)){log("Using cached "+asset.Name);if(progress!=null)progress("Verified cached "+asset.Name,asset.Size,asset.Size);return path;}}
-        string temp=path+"."+Guid.NewGuid().ToString("N")+".partial";try{log("Downloading "+asset.Name+" ("+(asset.Size/1048576D).ToString("0.0")+" MiB)");using(var output=new FileStream(temp,FileMode.CreateNew,FileAccess.Write,FileShare.None))new Transport().Get(asset.Url,output,asset.Size,asset.Size,cancel,done=>{if(progress!=null)progress("Downloading "+asset.Name,done,asset.Size);});if(progress!=null)progress("Verifying "+asset.Name,0,0);string hash=Engine.Hash(temp);if(!String.IsNullOrEmpty(asset.Sha256)&&!hash.Equals(asset.Sha256,StringComparison.OrdinalIgnoreCase))throw new Exception("Upstream checksum mismatch: "+asset.Name);if(File.Exists(path))File.Delete(path);File.Move(temp,path);WriteJson(receipt,new Dictionary<string,string>{{"Url",asset.Url},{"Sha256",hash}});log("Verified download: "+asset.Name+(String.IsNullOrEmpty(asset.Sha256)?" (HTTPS source, recorded local SHA256; upstream supplies no digest)":" (upstream SHA256)"));return path;}finally{if(File.Exists(temp))File.Delete(temp);}
-    }
-    internal static void Fetch(FtlPlan plan,CancellationToken cancel,Action<string> log,Action<string,long,long> progress=null){cancel.ThrowIfCancellationRequested();Directory.CreateDirectory(plan.Workspace);long need=plan.Data.Size+plan.Assets.Size+plan.Tool.Size+(plan.Gibs==null?0:plan.Gibs.Size)+new FileInfo(Path.Combine(plan.Root,"ftl.dat")).Length*6+512L*1024*1024;if(new DriveInfo(Path.GetPathRoot(plan.Workspace)).AvailableFreeSpace<need)throw new Exception("Not enough workspace disk space for downloads, staging and rollback.");foreach(var asset in Payloads(plan)){cancel.ThrowIfCancellationRequested();plan.Downloads[asset.Name]=Download(asset,plan.Workspace,cancel,log,progress);}}
-    static string Tool(FtlPlan plan){string archive=plan.Downloads[plan.Tool.Name];if(!Engine.Hash(archive).Equals(ToolHash,StringComparison.OrdinalIgnoreCase))throw new Exception("ftlman checksum mismatch");string folder=Engine.Inside(plan.Workspace,"tools/ftlman-0.7.4");if(!Directory.Exists(folder)){Directory.CreateDirectory(folder);using(var zip=ZipFile.OpenRead(archive))foreach(var entry in zip.Entries){string relative=entry.FullName.Replace('\\','/');if(relative.EndsWith("/"))continue;string target=Engine.Inside(folder,relative);Directory.CreateDirectory(Path.GetDirectoryName(target));using(var input=entry.Open())using(var output=new FileStream(target,FileMode.CreateNew))input.CopyTo(output);}}
-        var exe=Directory.GetFiles(folder,"ftlman.exe",SearchOption.AllDirectories).Single();using(var zip=ZipFile.OpenRead(archive)){var entry=zip.Entries.Single(e=>e.FullName.Replace('\\','/').EndsWith("/ftlman.exe",StringComparison.OrdinalIgnoreCase)||e.FullName=="ftlman.exe");using(var input=entry.Open())if(Engine.Hash(input)!=Engine.Hash(exe))throw new Exception("Extracted ftlman was modified");}return exe;
-    }
-    internal static string Quote(string arg){if(arg.IndexOf('\0')>=0||arg.IndexOf('\r')>=0||arg.IndexOf('\n')>=0)throw new Exception("Invalid process argument");return "\""+Regex.Replace(arg,@"(\\*)""",m=>new string('\\',m.Groups[1].Length*2)+"\\\"").TrimEnd('\\')+new string('\\',arg.Reverse().TakeWhile(c=>c=='\\').Count()*2)+"\"";}
-    internal static void Run(string exe,string[] args,string outputLog,CancellationToken cancel,Action<string> log,Action<string,long,long> progress=null){
-        string phase=args.Length>0&&args[0]=="patch"?"Patching Multiverse":"Preparing Hyperspace";
-        var info=new ProcessStartInfo(exe,String.Join(" ",args.Select(Quote))){WorkingDirectory=Path.GetDirectoryName(exe),UseShellExecute=false,CreateNoWindow=true,RedirectStandardOutput=true,RedirectStandardError=true};
-        using(var writer=new StreamWriter(outputLog,false,Encoding.UTF8))using(var process=new Process{StartInfo=info}){writer.AutoFlush=true;object gate=new object();string lastLine="";long lastOutput=0;var elapsed=Stopwatch.StartNew();
-            DataReceivedEventHandler output=delegate(object sender,DataReceivedEventArgs e){if(e.Data!=null)lock(gate){writer.WriteLine(e.Data);lastLine=Regex.Replace(e.Data,@"\x1B\[[0-?]*[ -/]*[@-~]","");if(lastLine.Length>160)lastLine=lastLine.Substring(0,160);lastOutput=elapsed.ElapsedMilliseconds;}};
-            process.OutputDataReceived+=output;process.ErrorDataReceived+=output;cancel.ThrowIfCancellationRequested();process.Start();process.BeginOutputReadLine();process.BeginErrorReadLine();log(phase+" started (PID "+process.Id+"). Tool log: "+outputLog);long lastReport=-1000,lastLog=0;
-            while(!process.WaitForExit(150)){if(cancel.IsCancellationRequested){try{process.Kill();}catch(InvalidOperationException){}process.WaitForExit();cancel.ThrowIfCancellationRequested();}if(elapsed.ElapsedMilliseconds-lastReport>=1000){lastReport=elapsed.ElapsedMilliseconds;string line;long quiet;lock(gate){line=lastLine;quiet=elapsed.ElapsedMilliseconds-lastOutput;}if(progress!=null)progress(phase+(String.IsNullOrWhiteSpace(line)?"":" · "+line),0,0);if(elapsed.ElapsedMilliseconds-lastLog>=15000){lastLog=elapsed.ElapsedMilliseconds;log(phase+" still running · "+elapsed.Elapsed.ToString(@"mm\:ss")+" elapsed · last tool output "+(quiet/1000)+"s ago");}}}
-            process.WaitForExit();cancel.ThrowIfCancellationRequested();if(process.ExitCode!=0)throw new Exception("ftlman stopped (exit "+process.ExitCode+"). Details: "+outputLog);log("ftlman completed: "+args[0]);
-        }
-    }
-    internal static void Prepare(FtlPlan plan,CancellationToken cancel,Action<string> log,Action<string,long,long> progress=null){
-        if(progress!=null)progress("Checking base FTL files",0,0);Guards(plan);Closed(plan.Root);if(plan.Downloads.Count!=Payloads(plan).Count())throw new Exception("Download the selected release first.");string runs=Engine.Inside(plan.Workspace,"staging");Directory.CreateDirectory(runs);plan.Stage=Engine.Inside(runs,Guid.NewGuid().ToString("N"));Directory.CreateDirectory(plan.Stage);string baseRoot=plan.Root;
-        if(plan.Previous!=null){baseRoot=Engine.Inside(plan.Workspace,plan.Previous.OriginalBackup);if(!Directory.Exists(baseRoot))throw new Exception("The original FTL backup is missing.");}
-        if(progress!=null)progress("Copying base FTL files into staging",0,0);foreach(string name in new[]{"FTLGame.exe","ftl.dat"})File.Copy(Engine.Inside(baseRoot,name),Engine.Inside(plan.Stage,name));string exe=Tool(plan);log("Installing Hyperspace into staging...");Run(exe,new[]{"hyperspace-install","--data-dir",plan.Stage,plan.HyperspaceVersion},Path.Combine(plan.Stage,"hyperspace-install.log"),cancel,log,progress);
-        using(var zip=ZipFile.OpenRead(plan.Downloads[plan.Data.Name]))if(zip.GetEntry("data/hyperspace.xml")==null||zip.GetEntry("mod-appendix/metadata.xml")==null)throw new Exception("Multiverse Data archive is missing its required manifests.");
-        log("Applying Multiverse Assets, Data"+(plan.Trc==null?"":", The Renegade Collection")+(plan.Gibs==null?"":", Generated Gibs")+(plan.TrcGibs==null?"":", TRC Generated Gibs")+" in staging...");Run(exe,PatchArguments(plan),Path.Combine(plan.Stage,"multiverse-patch.log"),cancel,log,progress);
-        if(progress!=null)progress("Verifying patched Multiverse files",0,0);var names=ArchiveNames(Path.Combine(plan.Stage,"ftl.dat"));if(!names.Contains("data/hyperspace.xml")||!names.Contains("data/blueprints.xml")||!File.Exists(Path.Combine(plan.Stage,"Hyperspace.dll")))throw new Exception("The staged Multiverse installation failed verification.");
-        VerifyContent(plan,names);VerifyTrc(plan,names);VerifyGibs(plan,names);
-        foreach(var file in Directory.GetFiles(plan.Stage).Where(p=>ManagedName(Path.GetFileName(p)))){string name=Path.GetFileName(file);plan.Candidate[name]=Engine.Hash(file);if(!plan.Guards.ContainsKey(name))plan.Guards[name]=Current(plan.Root,name);}if(plan.Previous!=null&&plan.Previous.Files.Keys.Except(plan.Candidate.Keys).Any())throw new Exception("The update retired a managed file. Review required rather than silently removing it.");Guards(plan);log("Ready: "+plan.Candidate.Count+" verified files. Live installation has not been changed.");
-    }
-    internal static string Apply(FtlPlan plan,Action<string> log,int failAfter=-1){
-        using(Lock(plan.Root))return ApplyLocked(plan,log,failAfter);
-    }
-    static string ApplyLocked(FtlPlan plan,Action<string> log,int failAfter){
-        Closed(plan.Root);Guards(plan);if(plan.Candidate.Count<3)throw new Exception("Prepare the installation first.");string backups=Engine.Inside(plan.Workspace,"backups");Directory.CreateDirectory(backups);string relative="backups/"+DateTime.UtcNow.ToString("yyyyMMdd-HHmmss")+"-"+Guid.NewGuid().ToString("N");string backup=Engine.Inside(plan.Workspace,relative);Directory.CreateDirectory(backup);
-        var journal=new FtlJournal{Root=plan.Root,Status="prepared",PreviousState=File.Exists(Path.Combine(plan.Root,Marker))?File.ReadAllText(Path.Combine(plan.Root,Marker)):null};
-        foreach(var pair in plan.Candidate){if(!ManagedName(pair.Key)||Current(plan.Stage,pair.Key)!=pair.Value)throw new Exception("Staged file changed");string old=Current(plan.Root,pair.Key);journal.Files.Add(new FtlFile{Name=pair.Key,Before=old,After=pair.Value,Existed=old!=null});if(old!=null)File.Copy(Engine.Inside(plan.Root,pair.Key),Engine.Inside(backup,pair.Key));}WriteJson(Path.Combine(backup,"transaction.json"),journal);Guards(plan);
-        var applied=new List<FtlFile>();try{foreach(var file in journal.Files){if(Current(plan.Root,file.Name)!=file.Before)throw new Exception("Destination changed during installation");AtomicCopy(Engine.Inside(plan.Stage,file.Name),Engine.Inside(plan.Root,file.Name));applied.Add(file);if(failAfter>=0&&applied.Count==failAfter)throw new Exception("Injected transaction failure");if(Current(plan.Root,file.Name)!=file.After)throw new Exception("Installed checksum mismatch");}
-            var state=new FtlState{Root=plan.Root,DataVersion=plan.DataVersion,AssetsVersion=plan.AssetsVersion,HyperspaceVersion=plan.HyperspaceVersion,GibsVersion=plan.GibsVersion,TrcVersion=plan.TrcVersion,TrcGibsVersion=plan.TrcGibsVersion,OriginalBackup=plan.Previous==null?relative:plan.Previous.OriginalBackup,LastBackup=relative,Files=plan.Candidate};WriteJson(Path.Combine(plan.Root,Marker),state);journal.Status="installed";WriteJson(Path.Combine(backup,"transaction.json"),journal);log("Multiverse "+state.DataVersion+" installed. Backup: "+backup);return backup;
-        }catch{foreach(var file in applied.AsEnumerable().Reverse()){if(Current(plan.Root,file.Name)!=file.After)throw new Exception("A file changed during rollback; backup retained for manual recovery: "+backup);if(file.Existed)File.Copy(Engine.Inside(backup,file.Name),Engine.Inside(plan.Root,file.Name),true);else File.Delete(Engine.Inside(plan.Root,file.Name));}if(journal.PreviousState==null){if(File.Exists(Path.Combine(plan.Root,Marker)))File.Delete(Path.Combine(plan.Root,Marker));}else AtomicBytes(Path.Combine(plan.Root,Marker),Encoding.UTF8.GetBytes(journal.PreviousState));journal.Status="rolled-back";WriteJson(Path.Combine(backup,"transaction.json"),journal);throw;}
-    }
-    internal static void Restore(string root,string workspace,Action<string> log){using(Lock(root))RestoreLocked(root,workspace,log);}
-    static void RestoreLocked(string root,string workspace,Action<string> log){Closed(root);var state=State(root);if(state==null)throw new Exception("No Astera-managed Multiverse installation to restore.");string backup=Engine.Inside(Engine.Root(workspace),state.LastBackup);var journal=Json<FtlJournal>(File.ReadAllText(Path.Combine(backup,"transaction.json")));if(journal.Root!=Engine.Root(root)||journal.Status!="installed")throw new Exception("Rollback record does not match the installation.");foreach(var file in journal.Files){if(!ManagedName(file.Name)||Current(root,file.Name)!=file.After||file.Existed&&Current(backup,file.Name)!=file.Before)throw new Exception("A game/backup file changed; automatic restore refused: "+file.Name);}journal.Status="restoring";WriteJson(Path.Combine(backup,"transaction.json"),journal);foreach(var file in journal.Files){if(file.Existed)AtomicCopy(Engine.Inside(backup,file.Name),Engine.Inside(root,file.Name));else File.Delete(Engine.Inside(root,file.Name));}if(journal.PreviousState==null)File.Delete(Path.Combine(root,Marker));else AtomicBytes(Path.Combine(root,Marker),Encoding.UTF8.GetBytes(journal.PreviousState));journal.Status="restored";WriteJson(Path.Combine(backup,"transaction.json"),journal);log("Previous FTL installation restored; saves and unrelated files preserved.");}
-}
 }

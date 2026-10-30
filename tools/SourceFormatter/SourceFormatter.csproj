@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <FormatterAssemblies>$(MSBuildSDKsPath)/../DotnetTools/dotnet-format</FormatterAssemblies>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CodeAnalysis" HintPath="$(FormatterAssemblies)/Microsoft.CodeAnalysis.dll" />
+    <Reference Include="Microsoft.CodeAnalysis.CSharp" HintPath="$(FormatterAssemblies)/Microsoft.CodeAnalysis.CSharp.dll" />
+    <Reference Include="Microsoft.CodeAnalysis.Workspaces" HintPath="$(FormatterAssemblies)/Microsoft.CodeAnalysis.Workspaces.dll" />
+    <Reference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" HintPath="$(FormatterAssemblies)/Microsoft.CodeAnalysis.CSharp.Workspaces.dll" />
+    <Reference Include="System.Composition.AttributedModel" HintPath="$(FormatterAssemblies)/System.Composition.AttributedModel.dll" />
+    <Reference Include="System.Composition.Runtime" HintPath="$(FormatterAssemblies)/System.Composition.Runtime.dll" />
+    <Reference Include="System.Composition.TypedParts" HintPath="$(FormatterAssemblies)/System.Composition.TypedParts.dll" />
+    <Reference Include="System.Composition.Hosting" HintPath="$(FormatterAssemblies)/System.Composition.Hosting.dll" />
+    <Reference Include="System.Composition.Convention" HintPath="$(FormatterAssemblies)/System.Composition.Convention.dll" />
+  </ItemGroup>
+</Project>

@@ -8,25 +8,329 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using MC2Pack;
-namespace Astera {
-sealed class InstalledGame {internal string Platform,Id,Name,Folder;public override string ToString(){return Name;}}
-static class PlatformLibraries {
-    internal static bool Id(string value){return value!=null&&Regex.IsMatch(value,"^[0-9]{1,12}$");}
-    internal static List<InstalledGame> Steam(IEnumerable<string> initial){var roots=new HashSet<string>(initial,StringComparer.OrdinalIgnoreCase);foreach(string root in roots.ToArray())try{string path=Path.Combine(root,"steamapps","libraryfolders.vdf");if(File.Exists(path)&&new FileInfo(path).Length<1024*1024)foreach(Match match in Regex.Matches(File.ReadAllText(path),"\"path\"\\s+\"([^\"]+)\""))roots.Add(Path.GetFullPath(match.Groups[1].Value.Replace("\\\\","\\")));}catch(IOException){}catch(UnauthorizedAccessException){}catch(ArgumentException){}var result=new List<InstalledGame>();foreach(string root in roots)try{string apps=Path.Combine(root,"steamapps");if(!Directory.Exists(apps))continue;foreach(string path in Directory.EnumerateFiles(apps,"appmanifest_*.acf")){try{if(new FileInfo(path).Length>512*1024)continue;string text=File.ReadAllText(path),id=SteamArtwork.Field(text,"appid"),name=SteamArtwork.Field(text,"name"),folder=SteamArtwork.Field(text,"installdir");if(!Id(id)||String.IsNullOrWhiteSpace(name)||String.IsNullOrWhiteSpace(folder)||folder=="."||folder==".."||folder.IndexOfAny(new[]{'/', '\\', ':'})>=0)continue;folder=Path.Combine(apps,"common",folder);if(Directory.Exists(folder))result.Add(new InstalledGame{Platform="steam",Id=id,Name=name,Folder=Path.GetFullPath(folder)});}catch(IOException){}catch(UnauthorizedAccessException){}}}catch(IOException){}catch(UnauthorizedAccessException){}return result.GroupBy(g=>g.Id).Select(g=>g.First()).OrderBy(g=>g.Name,StringComparer.OrdinalIgnoreCase).ToList();}
-    internal static List<InstalledGame> Itch(string root){var result=new List<InstalledGame>();if(!Directory.Exists(root))return result;foreach(string folder in new[]{root}.Concat(Directory.EnumerateDirectories(root).Take(3000))){try{if((File.GetAttributes(folder)&FileAttributes.ReparsePoint)!=0||Path.GetFileName(folder).Equals("downloads",StringComparison.OrdinalIgnoreCase))continue;var receipt=ItchMetadata.Read(folder);if(receipt!=null)result.Add(new InstalledGame{Platform="itch",Id=receipt.id.ToString(),Name=receipt.title,Folder=folder});}catch(IOException){}catch(UnauthorizedAccessException){}}return result.GroupBy(g=>g.Id).Select(g=>g.First()).OrderBy(g=>g.Name,StringComparer.OrdinalIgnoreCase).ToList();}
-    internal static string Folder(CustomGame game){return game.Platform=="roblox"?"":String.IsNullOrEmpty(game.Platform)?Path.GetDirectoryName(game.Executable):game.Executable;}
-    internal static bool Available(CustomGame game){if(game.Platform=="roblox"){long place;return RobloxSupport.Positive(game.PlatformId,out place);}return String.IsNullOrEmpty(game.Platform)?File.Exists(game.Executable):Directory.Exists(game.Executable);}
-    internal static SteamGameArt SteamArt(CustomGame game){if(game.Platform=="itch"||game.Platform=="roblox")return null;var art=SteamArtwork.Find(game.Platform=="steam"?Path.Combine(game.Executable,".astera-metadata-probe"):game.Executable,SteamArtwork.Roots());return game.Platform=="steam"&&(art==null||art.AppId!=game.PlatformId)?null:art;}
-    internal static ProcessStartInfo Start(CustomGame game){if(!Id(game.PlatformId))throw new IOException("Invalid installed game ID");return game.Platform=="steam"?SteamArtwork.Launch(game.PlatformId):new ProcessStartInfo("itch://games/"+game.PlatformId){UseShellExecute=true};}
-}
-public sealed class ItchReceipt {public ItchReceiptGame game;public ItchUpload upload;public string[] files;}
-public sealed class ItchReceiptGame {public long id;public string title,coverUrl,cover_url,stillCoverUrl,still_cover_url;}
-sealed partial class LibraryForm {
-    ContextMenuStrip addSourceMenu;
-    void AddCustomGame(){if(busy)return;if(addSourceMenu==null){addSourceMenu=AsteraMenuRenderer.Create(menuComponents);addSourceMenu.Items.Add("Thunderstore profiles…",null,delegate{PickThunderstoreGame();});addSourceMenu.Items.Add("Steam library…",null,async delegate{await PickInstalledGame("steam");});addSourceMenu.Items.Add("itch.io games…",null,async delegate{await PickInstalledGame("itch");});addSourceMenu.Items.Add("Roblox experience…",null,delegate{AddRoblox();});addSourceMenu.Items.Add("Scan a games folder…",null,delegate{AddGamesFolder();});addSourceMenu.Items.Add("Choose an EXE…",null,delegate{AddCustomExeGame();});}addSourceMenu.Show(Cursor.Position);}
-    Task PickInstalledGame(string platform){using(var dialog=new AsteraDialog{Text=platform=="steam"?"Add a Steam game":"Add an itch.io game",Size=new System.Drawing.Size(650,530),StartPosition=FormStartPosition.CenterParent,BackColor=Base,ForeColor=System.Drawing.Color.White,Font=Font}){
-        var list=new ListBox{Dock=DockStyle.Fill,BackColor=Base,ForeColor=System.Drawing.Color.White,BorderStyle=BorderStyle.None,DisplayMember="Name"};var search=new TextBox{Dock=DockStyle.Top};var message=new Label{Text="Finding installed games…",Dock=DockStyle.Top,Height=40};var buttons=new FlowLayoutPanel{Dock=DockStyle.Bottom,Height=60,Padding=new Padding(10)};var found=new List<InstalledGame>();Action filter=delegate{list.Items.Clear();foreach(var item in found.Where(g=>g.Name.IndexOf(search.Text,StringComparison.OrdinalIgnoreCase)>=0))list.Items.Add(item);message.Text=found.Count==0?"No installed games found here. Choose another library folder.":found.Count+" installed games";};
-        var add=Button("Add game",delegate{var selected=list.SelectedItem as InstalledGame;if(selected==null)return;var existing=store.Settings.CustomGames.FirstOrDefault(g=>g.Platform==selected.Platform&&g.PlatformId==selected.Id||g.Executable.Equals(selected.Folder,StringComparison.OrdinalIgnoreCase)||g.Executable.StartsWith(selected.Folder+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase));if(existing!=null){ReloadGames(existing);dialog.DialogResult=DialogResult.OK;return;}var game=new CustomGame{Name=selected.Name,Executable=selected.Folder,Platform=selected.Platform,PlatformId=selected.Id};store.Settings.CustomGames.Add(game);store.Save();ReloadGames(game);RefreshView();dialog.DialogResult=DialogResult.OK;});var browse=Button("Choose library folder…",async delegate{using(var picker=new ExplorerFolderDialog{Description=platform=="steam"?"Choose the Steam library folder containing steamapps":"Choose the itch.io apps folder",SelectedPath=platform=="steam"?SteamArtwork.Roots().FirstOrDefault():store.Settings.ItchAppsRoot})if(picker.ShowDialog(dialog)==DialogResult.OK){message.Text="Finding installed games…";string root=picker.SelectedPath;if(platform=="itch"){store.Settings.ItchAppsRoot=root;store.Save();}found=await Task.Run(()=>platform=="steam"?PlatformLibraries.Steam(new[]{root}):PlatformLibraries.Itch(root));if(!dialog.IsDisposed)filter();}});buttons.Controls.Add(add);buttons.Controls.Add(browse);dialog.Controls.Add(list);dialog.Controls.Add(message);dialog.Controls.Add(search);dialog.Controls.Add(buttons);search.TextChanged+=delegate{filter();};list.DoubleClick+=delegate{add.PerformClick();};dialog.Shown+=async delegate{try{string root=String.IsNullOrWhiteSpace(store.Settings.ItchAppsRoot)?Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),"itch","apps"):store.Settings.ItchAppsRoot;found=await Task.Run(()=>platform=="steam"?PlatformLibraries.Steam(SteamArtwork.Roots()):PlatformLibraries.Itch(root));if(!dialog.IsDisposed)filter();}catch(Exception error){if(!dialog.IsDisposed)message.Text="Could not read this library: "+error.Message;}};dialog.ShowDialog(this);
-    }return Task.FromResult(0);}
-}
+
+namespace Astera
+{
+    sealed class InstalledGame
+    {
+        internal string Platform, Id, Name, Folder;
+        public override string ToString()
+        {
+            return Name;
+        }
+    }
+
+    static class PlatformLibraries
+    {
+        internal static bool Id(string value)
+        {
+            return value != null && Regex.IsMatch(value, "^[0-9]{1,12}$");
+        }
+
+        internal static List<InstalledGame> Steam(IEnumerable<string> initial)
+        {
+            var roots = new HashSet<string>(initial, StringComparer.OrdinalIgnoreCase);
+            foreach (string root in roots.ToArray())
+                try
+                {
+                    string path = Path.Combine(root, "steamapps", "libraryfolders.vdf");
+                    if (File.Exists(path) && new FileInfo(path).Length < 1024 * 1024)
+                        foreach (Match match in Regex.Matches(File.ReadAllText(path), "\"path\"\\s+\"([^\"]+)\""))
+                            roots.Add(Path.GetFullPath(match.Groups[1].Value.Replace("\\\\", "\\")));
+                }
+                catch (IOException)
+                {
+                }
+                catch (UnauthorizedAccessException)
+                {
+                }
+                catch (ArgumentException)
+                {
+                }
+
+            var result = new List<InstalledGame>();
+            foreach (string root in roots)
+                try
+                {
+                    string apps = Path.Combine(root, "steamapps");
+                    if (!Directory.Exists(apps))
+                        continue;
+                    foreach (string path in Directory.EnumerateFiles(apps, "appmanifest_*.acf"))
+                    {
+                        try
+                        {
+                            if (new FileInfo(path).Length > 512 * 1024)
+                                continue;
+                            string text = File.ReadAllText(path), id = SteamArtwork.Field(text, "appid"), name = SteamArtwork.Field(text, "name"), folder = SteamArtwork.Field(text, "installdir");
+                            if (!Id(id) || String.IsNullOrWhiteSpace(name) || String.IsNullOrWhiteSpace(folder) || folder == "." || folder == ".." || folder.IndexOfAny(new[] { '/', '\\', ':' }) >= 0)
+                                continue;
+                            folder = Path.Combine(apps, "common", folder);
+                            if (Directory.Exists(folder))
+                                result.Add(new InstalledGame { Platform = "steam", Id = id, Name = name, Folder = Path.GetFullPath(folder) });
+                        }
+                        catch (IOException)
+                        {
+                        }
+                        catch (UnauthorizedAccessException)
+                        {
+                        }
+                    }
+                }
+                catch (IOException)
+                {
+                }
+                catch (UnauthorizedAccessException)
+                {
+                }
+
+            return result.GroupBy(g => g.Id).Select(g => g.First()).OrderBy(g => g.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        internal static List<InstalledGame> Itch(string root)
+        {
+            var result = new List<InstalledGame>();
+            if (!Directory.Exists(root))
+                return result;
+            foreach (string folder in new[]
+            {
+                root
+            }.Concat(Directory.EnumerateDirectories(root).Take(3000)))
+            {
+                try
+                {
+                    if ((File.GetAttributes(folder) & FileAttributes.ReparsePoint) != 0 || Path.GetFileName(folder).Equals("downloads", StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    var receipt = ItchMetadata.Read(folder);
+                    if (receipt != null)
+                        result.Add(new InstalledGame { Platform = "itch", Id = receipt.id.ToString(), Name = receipt.title, Folder = folder });
+                }
+                catch (IOException)
+                {
+                }
+                catch (UnauthorizedAccessException)
+                {
+                }
+            }
+
+            return result.GroupBy(g => g.Id).Select(g => g.First()).OrderBy(g => g.Name, StringComparer.OrdinalIgnoreCase).ToList();
+        }
+
+        internal static string Folder(CustomGame game)
+        {
+            return game.Platform == "roblox" ? "" : String.IsNullOrEmpty(game.Platform) ? Path.GetDirectoryName(game.Executable) : game.Executable;
+        }
+
+        internal static bool Available(CustomGame game)
+        {
+            if (game.Platform == "roblox")
+            {
+                long place;
+                return RobloxSupport.Positive(game.PlatformId, out place);
+            }
+
+            return String.IsNullOrEmpty(game.Platform) ? File.Exists(game.Executable) : Directory.Exists(game.Executable);
+        }
+
+        internal static SteamGameArt SteamArt(CustomGame game)
+        {
+            if (game.Platform == "itch" || game.Platform == "roblox")
+                return null;
+            var art = SteamArtwork.Find(game.Platform == "steam" ? Path.Combine(game.Executable, ".astera-metadata-probe") : game.Executable, SteamArtwork.Roots());
+            return game.Platform == "steam" && (art == null || art.AppId != game.PlatformId) ? null : art;
+        }
+
+        internal static ProcessStartInfo Start(CustomGame game)
+        {
+            if (!Id(game.PlatformId))
+                throw new IOException("Invalid installed game ID");
+            return game.Platform == "steam" ? SteamArtwork.Launch(game.PlatformId) : new ProcessStartInfo("itch://games/" + game.PlatformId)
+            {
+                UseShellExecute = true
+            };
+        }
+    }
+
+    public sealed class ItchReceipt
+    {
+        public ItchReceiptGame game;
+        public ItchUpload upload;
+        public string[] files;
+    }
+
+    public sealed class ItchReceiptGame
+    {
+        public long id;
+        public string title, coverUrl, cover_url, stillCoverUrl, still_cover_url;
+    }
+
+    sealed partial class LibraryForm
+    {
+        ContextMenuStrip addSourceMenu;
+        void AddCustomGame()
+        {
+            if (busy)
+                return;
+            if (addSourceMenu == null)
+            {
+                addSourceMenu = AsteraMenuRenderer.Create(menuComponents);
+                addSourceMenu.Items.Add("Thunderstore profiles…", null, delegate
+                {
+                    PickThunderstoreGame();
+                });
+                addSourceMenu.Items.Add("Steam library…", null, async delegate
+                {
+                    await PickInstalledGame("steam");
+                });
+                addSourceMenu.Items.Add("itch.io games…", null, async delegate
+                {
+                    await PickInstalledGame("itch");
+                });
+                addSourceMenu.Items.Add("Roblox experience…", null, delegate
+                {
+                    AddRoblox();
+                });
+                addSourceMenu.Items.Add("Scan a games folder…", null, delegate
+                {
+                    AddGamesFolder();
+                });
+                addSourceMenu.Items.Add("Choose an EXE…", null, delegate
+                {
+                    AddCustomExeGame();
+                });
+            }
+
+            addSourceMenu.Show(Cursor.Position);
+        }
+
+        Task PickInstalledGame(string platform)
+        {
+            using (var dialog = new AsteraDialog
+            {
+                Text = platform == "steam" ? "Add a Steam game" : "Add an itch.io game",
+                Size = new System.Drawing.Size(650, 530),
+                StartPosition = FormStartPosition.CenterParent,
+                BackColor = Base,
+                ForeColor = System.Drawing.Color.White,
+                Font = Font
+            }
+
+            )
+            {
+                var list = new ListBox
+                {
+                    Dock = DockStyle.Fill,
+                    BackColor = Base,
+                    ForeColor = System.Drawing.Color.White,
+                    BorderStyle = BorderStyle.None,
+                    DisplayMember = "Name"
+                };
+                var search = new TextBox
+                {
+                    Dock = DockStyle.Top
+                };
+                var message = new Label
+                {
+                    Text = "Finding installed games…",
+                    Dock = DockStyle.Top,
+                    Height = 40
+                };
+                var buttons = new FlowLayoutPanel
+                {
+                    Dock = DockStyle.Bottom,
+                    Height = 60,
+                    Padding = new Padding(10)
+                };
+                var found = new List<InstalledGame>();
+                Action filter = delegate
+                {
+                    list.Items.Clear();
+                    foreach (var item in found.Where(g => g.Name.IndexOf(search.Text, StringComparison.OrdinalIgnoreCase) >= 0))
+                        list.Items.Add(item);
+                    message.Text = found.Count == 0 ? "No installed games found here. Choose another library folder." : found.Count + " installed games";
+                };
+                var add = Button("Add game", delegate
+                {
+                    var selected = list.SelectedItem as InstalledGame;
+                    if (selected == null)
+                        return;
+                    var existing = store.Settings.CustomGames.FirstOrDefault(g => g.Platform == selected.Platform && g.PlatformId == selected.Id || g.Executable.Equals(selected.Folder, StringComparison.OrdinalIgnoreCase) || g.Executable.StartsWith(selected.Folder + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
+                    if (existing != null)
+                    {
+                        ReloadGames(existing);
+                        dialog.DialogResult = DialogResult.OK;
+                        return;
+                    }
+
+                    var game = new CustomGame
+                    {
+                        Name = selected.Name,
+                        Executable = selected.Folder,
+                        Platform = selected.Platform,
+                        PlatformId = selected.Id
+                    };
+                    store.Settings.CustomGames.Add(game);
+                    store.Save();
+                    ReloadGames(game);
+                    RefreshView();
+                    dialog.DialogResult = DialogResult.OK;
+                });
+                var browse = Button("Choose library folder…", async delegate
+                {
+                    using (var picker = new ExplorerFolderDialog
+                    {
+                        Description = platform == "steam" ? "Choose the Steam library folder containing steamapps" : "Choose the itch.io apps folder",
+                        SelectedPath = platform == "steam" ? SteamArtwork.Roots().FirstOrDefault() : store.Settings.ItchAppsRoot
+                    }
+
+                    )
+                        if (picker.ShowDialog(dialog) == DialogResult.OK)
+                        {
+                            message.Text = "Finding installed games…";
+                            string root = picker.SelectedPath;
+                            if (platform == "itch")
+                            {
+                                store.Settings.ItchAppsRoot = root;
+                                store.Save();
+                            }
+
+                            found = await Task.Run(() => platform == "steam" ? PlatformLibraries.Steam(new[] { root }) : PlatformLibraries.Itch(root));
+                            if (!dialog.IsDisposed)
+                                filter();
+                        }
+                });
+                buttons.Controls.Add(add);
+                buttons.Controls.Add(browse);
+                dialog.Controls.Add(list);
+                dialog.Controls.Add(message);
+                dialog.Controls.Add(search);
+                dialog.Controls.Add(buttons);
+                search.TextChanged += delegate
+                {
+                    filter();
+                };
+                list.DoubleClick += delegate
+                {
+                    add.PerformClick();
+                };
+                dialog.Shown += async delegate
+                {
+                    try
+                    {
+                        string root = String.IsNullOrWhiteSpace(store.Settings.ItchAppsRoot) ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "itch", "apps") : store.Settings.ItchAppsRoot;
+                        found = await Task.Run(() => platform == "steam" ? PlatformLibraries.Steam(SteamArtwork.Roots()) : PlatformLibraries.Itch(root));
+                        if (!dialog.IsDisposed)
+                            filter();
+                    }
+                    catch (Exception error)
+                    {
+                        if (!dialog.IsDisposed)
+                            message.Text = "Could not read this library: " + error.Message;
+                    }
+                };
+                dialog.ShowDialog(this);
+            }
+
+            return Task.FromResult(0);
+        }
+    }
 }

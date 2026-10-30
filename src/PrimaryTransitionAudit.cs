@@ -5,20 +5,120 @@ using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 using MC2Pack;
-namespace Astera {
-sealed partial class LibraryForm {
-    static void WaitPrimaryTransition(LibraryForm form){var deadline=Stopwatch.StartNew();while(form.primaryTransition!=null&&deadline.ElapsedMilliseconds<5000)MotionAudit.Pump(20);}
-    internal static int AuditPrimaryTransition(string root){bool effects=UiEffects.Enabled;try{
-        if(Directory.Exists(root))throw new IOException("Use a new transition audit folder");Directory.CreateDirectory(root);Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);var state=new Store(Path.Combine(root,"state"));state.Settings.AnimatedEffects=true;state.Settings.UseMinecraftSkin=false;var checks=new List<string>();
-        using(var form=new LibraryForm(state,new Channel(),true)){
-            form.Location=new Point(-30000,-30000);form.Show();MotionAudit.Pump(30);Rectangle header=form.topNavigation.Parent.Bounds;var selected=LibraryKey(form.activeLibraryEntry);form.SelectPrimaryPage(1);var cover=form.primaryTransition;AuditAssert(cover!=null&&!form.discoverPage.Visible&&cover.Top==header.Bottom,"New page was exposed before cover preparation");MotionAudit.Pump(260);AuditAssert(form.primaryPage==1&&form.discoverPage.Visible&&form.primaryTransition!=null&&form.topNavigation.Parent.Bounds==header,"Header moved or prepared page escaped the cover");WaitPrimaryTransition(form);AuditAssert(form.primaryTransition==null&&form.primaryPage==1,"Prepared Discover page was not revealed; page="+form.primaryPage+", reveal="+cover.RevealStarted+", disposed="+cover.IsDisposed);checks.Add("Top navigation fades the old surface, prepares behind a cover, then reveals without moving the header");
-            form.discoverDetailId="last-light";form.TransitionDiscover();var detailCover=form.discoverTransition;AuditAssert(detailCover!=null,"Discover navigation has no loading cover");MotionAudit.Pump(260);AuditAssert(form.discoverDetailId=="last-light"&&form.discoverTransition==detailCover,"Detail preparation escaped its cover");form.discoverImagePending.Add("audit-pending");MotionAudit.Pump(1000);AuditAssert(!detailCover.RevealStarted,"Discover revealed unfinished artwork");form.discoverImagePending.Remove("audit-pending");form.Size=new Size(1200,820);var detailWait=Stopwatch.StartNew();while(form.discoverTransition!=null&&detailWait.ElapsedMilliseconds<5000)MotionAudit.Pump(20);AuditAssert(form.discoverTransition==null&&detailCover.RevealStarted,"Prepared detail page did not reveal");checks.Add("Discover project pages remain covered until artwork is ready, then reveal the completed layout");
-            form.discoverDetailId="";form.TransitionDiscover();MotionAudit.Pump(50);form.discoverDetailId="gacha-nebula-plus";form.TransitionDiscover();var retargetWait=Stopwatch.StartNew();while(form.discoverTransition!=null&&retargetWait.ElapsedMilliseconds<5000)MotionAudit.Pump(20);AuditAssert(form.discoverTransition==null&&form.discoverDetailId=="gacha-nebula-plus","Rapid Discover navigation left a stale cover");form.TransitionDiscover();UiEffects.Enabled=false;AuditAssert(form.discoverTransition==null,"Reduced motion left Discover covered");UiEffects.Enabled=true;checks.Add("Discover retargeting and reduced motion release covers without stale pages");
-            form.SelectPrimaryPage(2);MotionAudit.Pump(50);form.SelectPrimaryPage(0);WaitPrimaryTransition(form);AuditAssert(form.primaryTransition==null&&form.primaryPage==0&&LibraryKey(form.activeLibraryEntry)==selected,"Rapid retargeting lost Library selection or left an overlay");checks.Add("Rapid switching discards the old animation and preserves the selected Library game");
-            form.SelectPrimaryPage(1);MotionAudit.Pump(300);form.Size=new Size(1100,760);WaitPrimaryTransition(form);AuditAssert(form.primaryTransition==null&&form.discoverPage.Visible,"Resize left the page covered");form.SelectPrimaryPage(1);AuditAssert(form.primaryTransition==null,"Clicking the current top tab replayed its transition");checks.Add("Resize restages the prepared surface and selecting the current tab does not replay it");
-            form.SelectPrimaryPage(2);UiEffects.Enabled=false;MotionAudit.Pump(30);AuditAssert(form.primaryTransition==null&&form.primaryPage==2,"Reduced-motion toggle did not immediately settle navigation");form.Close();checks.Add("Disabling animated effects settles the target page immediately and releases transition timers");
-            File.WriteAllText(Path.Combine(root,"result.json"),Engine.Json.Serialize(new{Passed=true,Checks=checks,GamesLaunched=false,FirstTransitionPaints=cover.PaintCount,AveragePaintMilliseconds=cover.PaintCount==0?0:cover.PaintTicks*1000d/Stopwatch.Frequency/cover.PaintCount,MaximumPaintMilliseconds=cover.MaxPaintTicks*1000d/Stopwatch.Frequency}));
-        }return 0;
-    }catch(Exception error){Directory.CreateDirectory(root);File.WriteAllText(Path.Combine(root,"failure.txt"),error.ToString());return 1;}finally{UiEffects.Enabled=effects;}}
-}
+
+namespace Astera
+{
+    sealed partial class LibraryForm
+    {
+        static void WaitPrimaryTransition(LibraryForm form)
+        {
+            var deadline = Stopwatch.StartNew();
+            while (form.primaryTransition != null && deadline.ElapsedMilliseconds < 5000)
+                MotionAudit.Pump(20);
+        }
+
+        internal static int AuditPrimaryTransition(string root)
+        {
+            bool effects = UiEffects.Enabled;
+            try
+            {
+                if (Directory.Exists(root))
+                    throw new IOException("Use a new transition audit folder");
+                Directory.CreateDirectory(root);
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                var state = new Store(Path.Combine(root, "state"));
+                state.Settings.AnimatedEffects = true;
+                state.Settings.UseMinecraftSkin = false;
+                var checks = new List<string>();
+                using (var form = new LibraryForm(state, new Channel(), true))
+                {
+                    form.Location = new Point(-30000, -30000);
+                    form.Show();
+                    MotionAudit.Pump(30);
+                    Rectangle header = form.topNavigation.Parent.Bounds;
+                    var selected = LibraryKey(form.activeLibraryEntry);
+                    form.SelectPrimaryPage(1);
+                    var cover = form.primaryTransition;
+                    AuditAssert(cover != null && !form.discoverPage.Visible && cover.Top == header.Bottom, "New page was exposed before cover preparation");
+                    MotionAudit.Pump(260);
+                    AuditAssert(form.primaryPage == 1 && form.discoverPage.Visible && form.primaryTransition != null && form.topNavigation.Parent.Bounds == header, "Header moved or prepared page escaped the cover");
+                    WaitPrimaryTransition(form);
+                    AuditAssert(form.primaryTransition == null && form.primaryPage == 1, "Prepared Discover page was not revealed; page=" + form.primaryPage + ", reveal=" + cover.RevealStarted + ", disposed=" + cover.IsDisposed);
+                    checks.Add("Top navigation fades the old surface, prepares behind a cover, then reveals without moving the header");
+                    form.discoverDetailId = "last-light";
+                    form.TransitionDiscover();
+                    var detailCover = form.discoverTransition;
+                    AuditAssert(detailCover != null, "Discover navigation has no loading cover");
+                    MotionAudit.Pump(260);
+                    AuditAssert(form.discoverDetailId == "last-light" && form.discoverTransition == detailCover, "Detail preparation escaped its cover");
+                    form.discoverImagePending.Add("audit-pending");
+                    MotionAudit.Pump(1000);
+                    AuditAssert(!detailCover.RevealStarted, "Discover revealed unfinished artwork");
+                    form.discoverImagePending.Remove("audit-pending");
+                    form.Size = new Size(1200, 820);
+                    var detailWait = Stopwatch.StartNew();
+                    while (form.discoverTransition != null && detailWait.ElapsedMilliseconds < 5000)
+                        MotionAudit.Pump(20);
+                    AuditAssert(form.discoverTransition == null && detailCover.RevealStarted, "Prepared detail page did not reveal");
+                    checks.Add("Discover project pages remain covered until artwork is ready, then reveal the completed layout");
+                    form.discoverDetailId = "";
+                    form.TransitionDiscover();
+                    MotionAudit.Pump(50);
+                    form.discoverDetailId = "gacha-nebula-plus";
+                    form.TransitionDiscover();
+                    var retargetWait = Stopwatch.StartNew();
+                    while (form.discoverTransition != null && retargetWait.ElapsedMilliseconds < 5000)
+                        MotionAudit.Pump(20);
+                    AuditAssert(form.discoverTransition == null && form.discoverDetailId == "gacha-nebula-plus", "Rapid Discover navigation left a stale cover");
+                    form.TransitionDiscover();
+                    UiEffects.Enabled = false;
+                    AuditAssert(form.discoverTransition == null, "Reduced motion left Discover covered");
+                    UiEffects.Enabled = true;
+                    checks.Add("Discover retargeting and reduced motion release covers without stale pages");
+                    form.SelectPrimaryPage(2);
+                    MotionAudit.Pump(50);
+                    form.SelectPrimaryPage(0);
+                    WaitPrimaryTransition(form);
+                    AuditAssert(form.primaryTransition == null && form.primaryPage == 0 && LibraryKey(form.activeLibraryEntry) == selected, "Rapid retargeting lost Library selection or left an overlay");
+                    checks.Add("Rapid switching discards the old animation and preserves the selected Library game");
+                    form.SelectPrimaryPage(1);
+                    MotionAudit.Pump(300);
+                    form.Size = new Size(1100, 760);
+                    WaitPrimaryTransition(form);
+                    AuditAssert(form.primaryTransition == null && form.discoverPage.Visible, "Resize left the page covered");
+                    form.SelectPrimaryPage(1);
+                    AuditAssert(form.primaryTransition == null, "Clicking the current top tab replayed its transition");
+                    checks.Add("Resize restages the prepared surface and selecting the current tab does not replay it");
+                    form.SelectPrimaryPage(2);
+                    UiEffects.Enabled = false;
+                    MotionAudit.Pump(30);
+                    AuditAssert(form.primaryTransition == null && form.primaryPage == 2, "Reduced-motion toggle did not immediately settle navigation");
+                    form.Close();
+                    checks.Add("Disabling animated effects settles the target page immediately and releases transition timers");
+                    File.WriteAllText(Path.Combine(root, "result.json"), Engine.Json.Serialize(new
+                    {
+                        Passed = true,
+                        Checks = checks,
+                        GamesLaunched = false,
+                        FirstTransitionPaints = cover.PaintCount,
+                        AveragePaintMilliseconds = cover.PaintCount == 0 ? 0 : cover.PaintTicks * 1000d / Stopwatch.Frequency / cover.PaintCount,
+                        MaximumPaintMilliseconds = cover.MaxPaintTicks * 1000d / Stopwatch.Frequency
+                    }));
+                }
+
+                return 0;
+            }
+            catch (Exception error)
+            {
+                Directory.CreateDirectory(root);
+                File.WriteAllText(Path.Combine(root, "failure.txt"), error.ToString());
+                return 1;
+            }
+            finally
+            {
+                UiEffects.Enabled = effects;
+            }
+        }
+    }
 }

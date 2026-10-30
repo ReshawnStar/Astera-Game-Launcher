@@ -5,36 +5,246 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 
-namespace MC2Pack {
-static class SelfTest {
-    public static int Audit(string bundle,string directory){
-        try{string root=Path.GetFullPath(directory);if(Directory.Exists(root))throw new Exception("Release audit requires a new isolated directory.");Directory.CreateDirectory(root);var log=new List<string>();var r=Engine.Read(bundle);Put(root,"minecraftinstance.json",Engine.Json.Serialize(new{baseModLoader=new{minecraftVersion=r.Minecraft,name="fabric-"+r.Loader,forgeVersion=r.Loader}}));Put(root,"saves/protected/level.dat","sentinel");Put(root,"options.txt","music:0.35\nkey_key.forward:key.keyboard.up\n");var plan=Engine.Scan(root,bundle,true,false,false,log.Add);string result=Engine.Apply(plan,log.Add,true);var again=Engine.Scan(root,bundle,true,false,false,log.Add);Assert(again.Edits.Count==0,"Full release is not idempotent");Assert(File.ReadAllText(Path.Combine(root,"saves/protected/level.dat"))=="sentinel","World sentinel changed");Assert(File.ReadAllText(Path.Combine(root,"options.txt")).Contains("music:0.35\nkey_key.forward:key.keyboard.up"),"Personal options changed");File.WriteAllText(Path.Combine(root,"audit-result.json"),Engine.Json.Serialize(new{Passed=true,BundleSha256=Engine.Hash(bundle),Release=r.Name,Files=r.Files.Count,Installed=result,SecondScanChanges=again.Edits.Count,ProtectedWorld=true,ProtectedOptions=true}));return 0;}catch(Exception e){if(Directory.Exists(directory))File.WriteAllText(Path.Combine(directory,"failure.txt"),e.ToString());return 1;}
+namespace MC2Pack
+{
+    static class SelfTest
+    {
+        public static int Audit(string bundle, string directory)
+        {
+            try
+            {
+                string root = Path.GetFullPath(directory);
+                if (Directory.Exists(root))
+                    throw new Exception("Release audit requires a new isolated directory.");
+                Directory.CreateDirectory(root);
+                var log = new List<string>();
+                var r = Engine.Read(bundle);
+                Put(root, "minecraftinstance.json", Engine.Json.Serialize(new
+                {
+                    baseModLoader = new
+                    {
+                        minecraftVersion = r.Minecraft,
+                        name = "fabric-" + r.Loader,
+                        forgeVersion = r.Loader
+                    }
+                }));
+                Put(root, "saves/protected/level.dat", "sentinel");
+                Put(root, "options.txt", "music:0.35\nkey_key.forward:key.keyboard.up\n");
+                var plan = Engine.Scan(root, bundle, true, false, false, log.Add);
+                string result = Engine.Apply(plan, log.Add, true);
+                var again = Engine.Scan(root, bundle, true, false, false, log.Add);
+                Assert(again.Edits.Count == 0, "Full release is not idempotent");
+                Assert(File.ReadAllText(Path.Combine(root, "saves/protected/level.dat")) == "sentinel", "World sentinel changed");
+                Assert(File.ReadAllText(Path.Combine(root, "options.txt")).Contains("music:0.35\nkey_key.forward:key.keyboard.up"), "Personal options changed");
+                File.WriteAllText(Path.Combine(root, "audit-result.json"), Engine.Json.Serialize(new
+                {
+                    Passed = true,
+                    BundleSha256 = Engine.Hash(bundle),
+                    Release = r.Name,
+                    Files = r.Files.Count,
+                    Installed = result,
+                    SecondScanChanges = again.Edits.Count,
+                    ProtectedWorld = true,
+                    ProtectedOptions = true
+                }));
+                return 0;
+            }
+            catch (Exception e)
+            {
+                if (Directory.Exists(directory))
+                    File.WriteAllText(Path.Combine(directory, "failure.txt"), e.ToString());
+                return 1;
+            }
+        }
+
+        static void Assert(bool condition, string message)
+        {
+            if (!condition)
+                throw new Exception(message);
+        }
+
+        static void Reject(Action action, string message)
+        {
+            bool rejected = false;
+            try
+            {
+                action();
+            }
+            catch
+            {
+                rejected = true;
+            }
+
+            Assert(rejected, message);
+        }
+
+        static void Put(string root, string rel, string text)
+        {
+            string p = Engine.Inside(root, rel);
+            Directory.CreateDirectory(Path.GetDirectoryName(p));
+            File.WriteAllText(p, text);
+        }
+
+        static void Jar(string root, string rel, string id, string version)
+        {
+            string p = Engine.Inside(root, rel);
+            Directory.CreateDirectory(Path.GetDirectoryName(p));
+            using (var z = ZipFile.Open(p, ZipArchiveMode.Create))
+            using (var w = new StreamWriter(z.CreateEntry("fabric.mod.json").Open()))
+                w.Write("{\"id\":\"" + id + "\",\"version\":\"" + version + "\"}");
+        }
+
+        public static int Run(string directory)
+        {
+            var results = new List<string>();
+            try
+            {
+                string root = Path.GetFullPath(directory);
+                if (Directory.Exists(root))
+                    throw new Exception("Self-test needs a new empty path.");
+                Directory.CreateDirectory(root);
+                string source = Path.Combine(root, "source"), target = Path.Combine(root, "target");
+                Directory.CreateDirectory(source);
+                Directory.CreateDirectory(target);
+                Jar(source, "mods/allies-new.jar", "stars_allies", "0.7.173+mc26.3");
+                Jar(source, "mods/fixes-new.jar", "stars_general_fixes", "1.7.203+mc26.3");
+                Put(source, "config/default.json", "{\"value\":2}");
+                Put(source, "resourcepacks/visual.zip", "asset");
+                var release = new Release
+                {
+                    Schema = 2,
+                    Sequence = 2,
+                    PackId = "astera-minecraft-squared",
+                    Name = "fixture-2",
+                    Minecraft = "26.3",
+                    Loader = "0.19.5",
+                    Files = new List<PackFile>(),
+                    Retired = new List<RetiredFile>(),
+                    Packs = new List<string>
+                    {
+                        "file/visual.zip",
+                        "stars_general_fixes:stars_compat"
+                    }
+                };
+                foreach (var file in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
+                {
+                    string rel = file.Substring(source.Length + 1).Replace('\\', '/');
+                    var m = rel.StartsWith("mods/") ? Engine.Mod(file) : null;
+                    release.Files.Add(new PackFile { Path = rel, Hash = Engine.Hash(file), Size = new FileInfo(file).Length, Kind = m != null ? "mod" : rel.StartsWith("config/") ? "config" : "asset", Policy = rel.StartsWith("config/") ? "seed" : "replace", Id = m == null ? null : (string)m["id"], Version = m == null ? null : (string)m["version"] });
+                }
+
+                string bundle = Path.Combine(root, "release.zip");
+                using (var z = ZipFile.Open(bundle, ZipArchiveMode.Create))
+                {
+                    using (var w = new StreamWriter(z.CreateEntry("mc2-release.json").Open()))
+                        w.Write(Engine.Json.Serialize(release));
+                    foreach (var f in release.Files)
+                        z.CreateEntryFromFile(Engine.Inside(source, f.Path), f.Path);
+                }
+
+                Put(target, "minecraftinstance.json", "{\"baseModLoader\":{\"minecraftVersion\":\"26.3\",\"name\":\"fabric-0.19.5-26.3\",\"forgeVersion\":\"0.19.5\"}}");
+                Jar(target, "mods/old.jar", "stars_allies", "0.7.172+mc26.3");
+                Jar(target, "mods/personal.jar", "personal_extra", "1.0.0");
+                Put(target, "config/default.json", "personal setting");
+                Put(target, "saves/world/level.dat", "world");
+                Put(target, "options.txt", "music:0.4\nkey_key.forward:key.keyboard.up\nresourcePacks:[\"vanilla\"]\n");
+                Action<string> log = delegate (string s)
+                {
+                };
+                var plan = Engine.Scan(target, bundle, true, false, false, log);
+                Assert(plan.Edits.Any(e => e.Path == "mods/old.jar" && e.Desired == null), "Old ID version not retired");
+                Assert(!plan.Edits.Any(e => e.Path == "mods/personal.jar"), "Personal mod touched");
+                Assert(!plan.Edits.Any(e => e.Path == "config/default.json"), "Personal config touched");
+                results.Add("Identity-based replacement; personal mods/config/world preserved");
+                string installed = Engine.Apply(plan, log, true);
+                string backup = Directory.GetDirectories(Path.Combine(target, "Astera-backups")).Single();
+                Assert(File.Exists(Path.Combine(target, "mods/allies-new.jar")) && !File.Exists(Path.Combine(target, "mods/old.jar")), "Install failed");
+                Assert(File.ReadAllText(Path.Combine(target, "saves/world/level.dat")) == "world", "World changed");
+                Assert(File.ReadAllText(Path.Combine(target, "options.txt")).Contains("music:0.4\nkey_key.forward:key.keyboard.up"), "Options lost");
+                results.Add("Fresh missing mod install and resource-pack setup preserve options");
+                var again = Engine.Scan(target, bundle, true, false, false, log);
+                Assert(again.Edits.Count == 0, "Repeated install is not idempotent");
+                results.Add("Repeated update is a no-op");
+                Put(target, "mods/allies-new.jar", "changed after install");
+                Reject(delegate
+                {
+                    Engine.Restore(target, backup, log, true);
+                }, "Rollback overwrote changed file");
+                File.Copy(Path.Combine(source, "mods/allies-new.jar"), Path.Combine(target, "mods/allies-new.jar"), true);
+                Engine.Restore(target, backup, log, true);
+                Assert(File.Exists(Path.Combine(target, "mods/old.jar")), "Rollback lost old mod");
+                results.Add("Rollback restores old mods and refuses later user edits");
+                var interrupted = Engine.Scan(target, bundle, true, true, false, log);
+                Assert(interrupted.Edits.Any(e => e.Path == "mods/personal.jar" && e.Desired == null), "Clean-set did not quarantine extra");
+                Reject(delegate
+                {
+                    Engine.Apply(interrupted, log, true, 2);
+                }, "Synthetic failure ignored");
+                Assert(File.Exists(Path.Combine(target, "mods/old.jar")) && File.Exists(Path.Combine(target, "mods/personal.jar")), "Automatic rollback failed");
+                results.Add("Injected write failure rolls all changes back");
+                var stale = Engine.Scan(target, bundle, true, false, false, log);
+                Put(target, "mods/old.jar", "changed since preview");
+                Reject(delegate
+                {
+                    Engine.Apply(stale, log, true);
+                }, "Stale preview accepted");
+                results.Add("Changed files invalidate preview");
+                File.Delete(Path.Combine(target, "mods/old.jar"));
+                Jar(target, "mods/allies-new.jar", "unrelated", "1.0.0");
+                Reject(delegate
+                {
+                    Engine.Scan(target, bundle, true, false, false, log);
+                }, "Filename collision overwrote unrelated mod");
+                File.Delete(Path.Combine(target, "mods/allies-new.jar"));
+                results.Add("Unrelated JAR filename collision refused");
+                Jar(target, "mods/newer.jar", "stars_allies", "0.8.0+mc26.3");
+                Reject(delegate
+                {
+                    Engine.Scan(target, bundle, true, false, false, log);
+                }, "Newer Stars downgraded");
+                File.Delete(Path.Combine(target, "mods/newer.jar"));
+                results.Add("Core version downgrade refused");
+                foreach (string bad in new[]
+                {
+                    "../saves/world",
+                    "/mods/x.jar",
+                    "mods/CON.jar",
+                    "mods/a:b.jar",
+                    "mods/../x.jar",
+                    "mods/a\\x.jar"
+                }
+
+                )
+                    Reject(delegate
+                    {
+                        Engine.Inside(target, bad);
+                    }, "Unsafe path accepted");
+                results.Add("Traversal, alternate streams and reserved names refused");
+                Put(target, "minecraftinstance.json", "{\"baseModLoader\":{\"minecraftVersion\":\"1.21.1\",\"name\":\"fabric-0.19.5\",\"forgeVersion\":\"0.19.5\"}}");
+                Reject(delegate
+                {
+                    Engine.Scan(target, bundle, true, false, false, log);
+                }, "Wrong runtime accepted");
+                File.Delete(Path.Combine(target, "minecraftinstance.json"));
+                Reject(delegate
+                {
+                    Engine.Scan(target, bundle, true, false, false, log);
+                }, "Unverified runtime accepted implicitly");
+                Assert(Engine.Scan(target, bundle, true, false, true, log).Warnings.Any(w => w.Contains("NOT verified")), "Content mode warning absent");
+                results.Add("Wrong runtime refused; content-folder mode requires explicit choice");
+                File.WriteAllText(Path.Combine(root, "result.json"), Engine.Json.Serialize(new
+                {
+                    Passed = true,
+                    Checks = results
+                }));
+                return 0;
+            }
+            catch (Exception e)
+            {
+                if (Directory.Exists(directory))
+                    File.WriteAllText(Path.Combine(directory, "failure.txt"), e.ToString());
+                return 1;
+            }
+        }
     }
-    static void Assert(bool condition,string message){if(!condition)throw new Exception(message);}
-    static void Reject(Action action,string message){bool rejected=false;try{action();}catch{rejected=true;}Assert(rejected,message);}
-    static void Put(string root,string rel,string text){string p=Engine.Inside(root,rel);Directory.CreateDirectory(Path.GetDirectoryName(p));File.WriteAllText(p,text);}
-    static void Jar(string root,string rel,string id,string version){string p=Engine.Inside(root,rel);Directory.CreateDirectory(Path.GetDirectoryName(p));using(var z=ZipFile.Open(p,ZipArchiveMode.Create))using(var w=new StreamWriter(z.CreateEntry("fabric.mod.json").Open()))w.Write("{\"id\":\""+id+"\",\"version\":\""+version+"\"}");}
-    public static int Run(string directory){
-        var results=new List<string>();try{
-            string root=Path.GetFullPath(directory);if(Directory.Exists(root))throw new Exception("Self-test needs a new empty path.");Directory.CreateDirectory(root);string source=Path.Combine(root,"source"),target=Path.Combine(root,"target");Directory.CreateDirectory(source);Directory.CreateDirectory(target);
-            Jar(source,"mods/allies-new.jar","stars_allies","0.7.173+mc26.3");Jar(source,"mods/fixes-new.jar","stars_general_fixes","1.7.203+mc26.3");Put(source,"config/default.json","{\"value\":2}");Put(source,"resourcepacks/visual.zip","asset");
-            var release=new Release{Schema=2,Sequence=2,PackId="astera-minecraft-squared",Name="fixture-2",Minecraft="26.3",Loader="0.19.5",Files=new List<PackFile>(),Retired=new List<RetiredFile>(),Packs=new List<string>{"file/visual.zip","stars_general_fixes:stars_compat"}};
-            foreach(var file in Directory.GetFiles(source,"*",SearchOption.AllDirectories)){string rel=file.Substring(source.Length+1).Replace('\\','/');var m=rel.StartsWith("mods/")?Engine.Mod(file):null;release.Files.Add(new PackFile{Path=rel,Hash=Engine.Hash(file),Size=new FileInfo(file).Length,Kind=m!=null?"mod":rel.StartsWith("config/")?"config":"asset",Policy=rel.StartsWith("config/")?"seed":"replace",Id=m==null?null:(string)m["id"],Version=m==null?null:(string)m["version"]});}
-            string bundle=Path.Combine(root,"release.zip");using(var z=ZipFile.Open(bundle,ZipArchiveMode.Create)){using(var w=new StreamWriter(z.CreateEntry("mc2-release.json").Open()))w.Write(Engine.Json.Serialize(release));foreach(var f in release.Files)z.CreateEntryFromFile(Engine.Inside(source,f.Path),f.Path);}
-            Put(target,"minecraftinstance.json","{\"baseModLoader\":{\"minecraftVersion\":\"26.3\",\"name\":\"fabric-0.19.5-26.3\",\"forgeVersion\":\"0.19.5\"}}");
-            Jar(target,"mods/old.jar","stars_allies","0.7.172+mc26.3");Jar(target,"mods/personal.jar","personal_extra","1.0.0");Put(target,"config/default.json","personal setting");Put(target,"saves/world/level.dat","world");Put(target,"options.txt","music:0.4\nkey_key.forward:key.keyboard.up\nresourcePacks:[\"vanilla\"]\n");
-            Action<string> log=delegate(string s){};var plan=Engine.Scan(target,bundle,true,false,false,log);Assert(plan.Edits.Any(e=>e.Path=="mods/old.jar"&&e.Desired==null),"Old ID version not retired");Assert(!plan.Edits.Any(e=>e.Path=="mods/personal.jar"),"Personal mod touched");Assert(!plan.Edits.Any(e=>e.Path=="config/default.json"),"Personal config touched");results.Add("Identity-based replacement; personal mods/config/world preserved");
-            string installed=Engine.Apply(plan,log,true);string backup=Directory.GetDirectories(Path.Combine(target,"Astera-backups")).Single();Assert(File.Exists(Path.Combine(target,"mods/allies-new.jar"))&&!File.Exists(Path.Combine(target,"mods/old.jar")),"Install failed");Assert(File.ReadAllText(Path.Combine(target,"saves/world/level.dat"))=="world","World changed");Assert(File.ReadAllText(Path.Combine(target,"options.txt")).Contains("music:0.4\nkey_key.forward:key.keyboard.up"),"Options lost");results.Add("Fresh missing mod install and resource-pack setup preserve options");
-            var again=Engine.Scan(target,bundle,true,false,false,log);Assert(again.Edits.Count==0,"Repeated install is not idempotent");results.Add("Repeated update is a no-op");
-            Put(target,"mods/allies-new.jar","changed after install");Reject(delegate{Engine.Restore(target,backup,log,true);},"Rollback overwrote changed file");File.Copy(Path.Combine(source,"mods/allies-new.jar"),Path.Combine(target,"mods/allies-new.jar"),true);Engine.Restore(target,backup,log,true);Assert(File.Exists(Path.Combine(target,"mods/old.jar")),"Rollback lost old mod");results.Add("Rollback restores old mods and refuses later user edits");
-            var interrupted=Engine.Scan(target,bundle,true,true,false,log);Assert(interrupted.Edits.Any(e=>e.Path=="mods/personal.jar"&&e.Desired==null),"Clean-set did not quarantine extra");Reject(delegate{Engine.Apply(interrupted,log,true,2);},"Synthetic failure ignored");Assert(File.Exists(Path.Combine(target,"mods/old.jar"))&&File.Exists(Path.Combine(target,"mods/personal.jar")),"Automatic rollback failed");results.Add("Injected write failure rolls all changes back");
-            var stale=Engine.Scan(target,bundle,true,false,false,log);Put(target,"mods/old.jar","changed since preview");Reject(delegate{Engine.Apply(stale,log,true);},"Stale preview accepted");results.Add("Changed files invalidate preview");
-            File.Delete(Path.Combine(target,"mods/old.jar"));Jar(target,"mods/allies-new.jar","unrelated","1.0.0");Reject(delegate{Engine.Scan(target,bundle,true,false,false,log);},"Filename collision overwrote unrelated mod");File.Delete(Path.Combine(target,"mods/allies-new.jar"));results.Add("Unrelated JAR filename collision refused");
-            Jar(target,"mods/newer.jar","stars_allies","0.8.0+mc26.3");Reject(delegate{Engine.Scan(target,bundle,true,false,false,log);},"Newer Stars downgraded");File.Delete(Path.Combine(target,"mods/newer.jar"));results.Add("Core version downgrade refused");
-            foreach(string bad in new[]{"../saves/world","/mods/x.jar","mods/CON.jar","mods/a:b.jar","mods/../x.jar","mods/a\\x.jar"})Reject(delegate{Engine.Inside(target,bad);},"Unsafe path accepted");results.Add("Traversal, alternate streams and reserved names refused");
-            Put(target,"minecraftinstance.json","{\"baseModLoader\":{\"minecraftVersion\":\"1.21.1\",\"name\":\"fabric-0.19.5\",\"forgeVersion\":\"0.19.5\"}}");Reject(delegate{Engine.Scan(target,bundle,true,false,false,log);},"Wrong runtime accepted");File.Delete(Path.Combine(target,"minecraftinstance.json"));Reject(delegate{Engine.Scan(target,bundle,true,false,false,log);},"Unverified runtime accepted implicitly");Assert(Engine.Scan(target,bundle,true,false,true,log).Warnings.Any(w=>w.Contains("NOT verified")),"Content mode warning absent");results.Add("Wrong runtime refused; content-folder mode requires explicit choice");
-            File.WriteAllText(Path.Combine(root,"result.json"),Engine.Json.Serialize(new{Passed=true,Checks=results}));return 0;
-        }catch(Exception e){if(Directory.Exists(directory))File.WriteAllText(Path.Combine(directory,"failure.txt"),e.ToString());return 1;}
-    }
-}
 }

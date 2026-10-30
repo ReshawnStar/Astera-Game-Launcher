@@ -8,27 +8,322 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 using MC2Pack;
-namespace Astera {
-sealed partial class LibraryForm {
-    static void ThunderZip(string path,Dictionary<string,string> files){using(var zip=ZipFile.Open(path,ZipArchiveMode.Create))foreach(var pair in files){var entry=zip.CreateEntry(pair.Key);using(var writer=new StreamWriter(entry.Open()))writer.Write(pair.Value);}}
-    internal static int AuditThunderstore(string root,bool live=false){try{
-        if(Directory.Exists(root))throw new IOException("Use a fresh Thunderstore audit");Directory.CreateDirectory(root);AsteraDiagnostics.Initialize(root);var checks=new List<string>();var game=ThunderstoreProfiles.Game("1966720");AuditAssert(game!=null&&game.Folder=="LethalCompany"&&game.Loader=="bepinex","Lethal Company catalog mismatch");checks.Add("Pinned game catalog maps Steam identity to the manager game folder and loader");
-        string manager=Path.Combine(root,"manager"),original=Path.Combine(manager,"LethalCompany","profiles","Mini Budz");Directory.CreateDirectory(original);File.WriteAllText(Path.Combine(original,"mods.yml"),"[]");string before=Engine.Hash(Path.Combine(original,"mods.yml"));var found=ThunderstoreProfiles.Discover(game,new[]{manager,manager});AuditAssert(found.Count==1&&found[0].Name=="Mini Budz","Profile discovery duplicated or missed a profile");var custom=new CustomGame{Name="Lethal Company",Platform="steam",PlatformId="1966720",Executable=Path.Combine(root,"game")};ThunderstoreProfiles.Merge(custom,found);ThunderstoreProfiles.Merge(custom,found);AuditAssert(custom.ModProfiles.Count==1&&String.IsNullOrEmpty(custom.SelectedModProfile),"Scan duplicated links or silently switched from vanilla");checks.Add("Both manager layouts share bounded, deduplicated discovery; rescans preserve the selected profile");
-        string metadata="profileName: Test Pack\nmods:\n  - name: BepInEx-BepInExPack\n    version: {major: 5, minor: 4, patch: 2305}\n    enabled: true\n  - name: Tester-Disabled\n    version: {major: 1, minor: 0, patch: 0}\n    enabled: false\n";var parsed=ThunderYaml.Parse(metadata);AuditAssert(parsed.Mods.Count==2&&!parsed.Mods[1].Enabled,"Profile YAML lost disabled packages");checks.Add("Real YAML parser reads pinned versions and disabled entries without loading arbitrary object types");
-        foreach(string bad in new[]{"profileName: Alias\nmods: &m [*m]",metadata+"\n---\nprofileName: Other\nmods: []",metadata.Replace("BepInEx-BepInExPack","../../bad"),metadata.Replace("major: 5","major: -1")}){bool refused=false;try{ThunderYaml.Parse(bad);}catch{refused=true;}AuditAssert(refused,"Invalid profile metadata accepted");}checks.Add("Alias cycles, multiple documents, unsafe package names and invalid version components are rejected");
-        AuditAssert(ThunderstoreProfiles.Code("019eb41e-401b-a408-b431-2915043cbf7f")=="019eb41e-401b-a408-b431-2915043cbf7f","Valid share code rejected");bool badCode=false;try{ThunderstoreProfiles.Code("https://example.invalid/payload");}catch(IOException){badCode=true;}AuditAssert(badCode,"Arbitrary URL accepted instead of share code");checks.Add("Share codes accept UUIDs and reject arbitrary URLs");
-        string archive=Path.Combine(root,"profile.r2z");ThunderZip(archive,new Dictionary<string,string>{{"export.r2x",metadata},{"config\\sample.cfg","pack-value"}});var plan=ThunderstoreImport.ReadArchive(archive,root,"fixture");ThunderstoreImport.Resolve(plan,CancellationToken.None,delegate{},delegate(string url){if(!url.Contains("5.4.2305"))return Encoding.UTF8.GetBytes("{\"namespace\":\"BepInEx\",\"name\":\"BepInExPack\",\"community_listings\":[{\"community\":\"lethal-company\",\"review_status\":\"approved\"}]}");return Encoding.UTF8.GetBytes("{\"namespace\":\"BepInEx\",\"name\":\"BepInExPack\",\"version_number\":\"5.4.2305\",\"download_url\":\"https://thunderstore.io/package/download/BepInEx/BepInExPack/5.4.2305/\",\"dependencies\":[]}");},game);AuditAssert(plan.Packages.Count==1,"Disabled mod was downloaded");checks.Add("Version API identities are checked and disabled mods do not enter the active download plan");
-        string loader=Path.Combine(root,"loader.zip");ThunderZip(loader,new Dictionary<string,string>{{"manifest.json","{\"name\":\"BepInExPack\",\"version_number\":\"5.4.2305\"}"},{"BepInExPack/BepInEx/core/BepInEx.Preloader.dll","fixture loader, never executed"},{"BepInExPack/winhttp.dll","fixture native loader, never executed"},{"BepInExPack/doorstop_config.ini","fixture"},{"BepInExPack/.doorstop_version","4.3.0"}});string owned=Path.Combine(root,"owned"),id=Guid.NewGuid().ToString("N");Directory.CreateDirectory(Path.Combine(original,"BepInEx","config"));File.WriteAllText(Path.Combine(original,"BepInEx","config","personal.cfg"),"personal");string target=ThunderstoreImport.Install(plan,game,owned,id,original,CancellationToken.None,delegate{},delegate{},null,delegate(ThunderVersion package,string output,CancellationToken stop){File.Copy(loader,output);},Path.Combine(root,"shared-cache"));AuditAssert(File.Exists(Path.Combine(target,"Astera-profile.json"))&&File.ReadAllText(Path.Combine(target,"BepInEx","config","sample.cfg"))=="pack-value"&&File.ReadAllText(Path.Combine(target,"BepInEx","config","personal.cfg"))=="personal"&&Engine.Hash(Path.Combine(original,"mods.yml"))==before,"Managed-copy install lost configs or changed manager files");checks.Add("Managed install commits only its own folder, carries personal config and overlays supplied pack config; original profile remains unchanged");
-        string oldState=Engine.Hash(Path.Combine(target,"Astera-profile.json"));var interrupted=new ThunderImportPlan{Archive=archive,Workspace=Path.Combine(root,"interrupted"),Code="fixture",Export=parsed,Packages=plan.Packages};Directory.CreateDirectory(interrupted.Workspace);bool interruptedStopped=false,downloadedAgain=false;try{ThunderstoreImport.Install(interrupted,game,owned,id,target,CancellationToken.None,delegate{},delegate{},()=>true,delegate(ThunderVersion package,string output,CancellationToken stop){downloadedAgain=true;File.Copy(loader,output);},Path.Combine(root,"shared-cache"));}catch(IOException){interruptedStopped=true;}AuditAssert(!downloadedAgain&&interruptedStopped&&Engine.Hash(Path.Combine(target,"Astera-profile.json"))==oldState,"Running-game guard damaged the current managed copy");checks.Add("A game starting during preparation stops commit and preserves the installed profile");checks.Add("Unchanged package archives are verified and reused across updates without another download");
-        int attempts=0;var value=ThunderstoreImport.Retry(delegate{attempts++;if(attempts==1)throw new System.Net.WebException("temporary fixture",System.Net.WebExceptionStatus.Timeout);return 7;},CancellationToken.None);AuditAssert(value==7&&attempts==2,"Transient request did not retry");using(var cancelled=new CancellationTokenSource()){cancelled.Cancel();bool stopped=false;try{ThunderstoreImport.Retry(()=>1,cancelled.Token);}catch(OperationCanceledException){stopped=true;}AuditAssert(stopped,"Cancelled request was started");}checks.Add("Transient requests retry within a bound and cancellation prevents starting a request");
-        string plugin=Path.Combine(root,"plugin.zip");ThunderZip(plugin,new Dictionary<string,string>{{"manifest.json","\uFEFF{\"name\":\"Plugin\",\"version_number\":\"1.0.0\"}"},{"BepInEx/plugins/feature.dll","fixture"},{"BepInEx/config/default.cfg","default"}});ThunderstoreImport.InstallPackage(plugin,target,"Tester-Plugin","1.0.0");AuditAssert(File.Exists(Path.Combine(target,"BepInEx","plugins","Tester-Plugin","feature.dll")),"Plugin routing mismatch");checks.Add("Loader roots and ordinary BepInEx plugin/config routes use their distinct installation layouts");
-        string longRoot=Path.Combine(root,"long-"+new string('a',90),new string('b',90));Directory.CreateDirectory(longRoot);string longFile=SelfUpdateFiles.Inside(longRoot,"nested/"+new string('c',70)+".cfg");Directory.CreateDirectory(Path.GetDirectoryName(longFile));File.WriteAllText(longFile,"long path fixture");AuditAssert(longFile.Length>260&&File.ReadAllText(longFile)=="long path fixture","Long profile path was not supported");checks.Add("Profile files beyond the legacy 260-character limit can be created and read without an OS settings change");
-        string hostile=Path.Combine(root,"hostile.zip");ThunderZip(hostile,new Dictionary<string,string>{{"../outside.dll","no"}});bool blocked=false;try{using(var zip=ZipFile.OpenRead(hostile))ThunderstoreImport.InspectZip(zip,1000);}catch(IOException){blocked=true;}AuditAssert(blocked&&!File.Exists(Path.Combine(root,"outside.dll")),"Archive traversal accepted");string binary=Path.Combine(root,"extra-binary.r2z");ThunderZip(binary,new Dictionary<string,string>{{"config/extra.dll","no"}});blocked=false;try{ThunderstoreImport.ApplyExportConfig(binary,target);}catch(IOException){blocked=true;}AuditAssert(blocked,"Exported binary was accepted as config");checks.Add("ZIP traversal and executable payloads disguised as exported configuration are refused");
-        string args=ThunderstoreLaunch.Arguments(game,target);AuditAssert(args.Contains("-applaunch 1966720 --doorstop-enabled true --doorstop-target-assembly")&&args.Contains("BepInEx.Preloader.dll")&&ThunderstoreLaunch.Arguments(game,null).Contains("--doorstop-enable false"),"Modded or vanilla launch arguments incorrect");checks.Add("Doorstop4 launch uses selected profile's preloader; Vanilla explicitly disables the loader");
-        string install=Path.Combine(root,"game");Directory.CreateDirectory(install);File.WriteAllText(Path.Combine(install,"winhttp.dll"),"old fixture");ThunderstoreLaunch.Link(install,target,Path.Combine(root,"launch-backups"));AuditAssert(File.ReadAllText(Path.Combine(install,"winhttp.dll"))=="fixture native loader, never executed"&&Directory.GetFiles(Path.Combine(root,"launch-backups"),"winhttp.dll",SearchOption.AllDirectories).Length==1,"Loader linking lost original file backup");checks.Add("Only known Windows loader files are linked; existing differing files are backed up first");
-        Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);var store=new Store(Path.Combine(root,"state"));store.Settings.CheckOnStart=false;store.Settings.CheckAppOnStart=false;store.Settings.KeepInTray=false;store.Settings.UseMinecraftSkin=false;store.Settings.CustomGames.Add(custom);custom.SelectedModProfile=found[0].Id;using(var form=new LibraryForm(store,new Channel(),true)){form.ShowInTaskbar=false;form.StartPosition=FormStartPosition.Manual;form.Location=new Point(-30000,-30000);form.Show();form.ReloadGames(custom);form.RefreshView();MotionAudit.Pump(50);AuditAssert(form.modProfileStrip.Visible&&form.modProfileChoose.ProfileName.Contains("Mini Budz"),"Selected profile strip is missing");foreach(var size in new[]{new Size(1400,900),new Size(1100,760)}){form.Size=size;form.LayoutHeroContent();AuditAssert(form.modProfileStrip.Parent==form.heroActions&&form.heroTextPanel.Bottom<form.heroActions.Top&&form.modProfileStrip.Right<=form.heroActions.Width&&form.playtimeStats.Right<=form.heroActions.Width&&!form.check.Visible,"Profile strip overlaps hero text/actions or clips on compact layout");}form.SelectLaunchProfile(custom,"");AuditAssert(custom.SelectedModProfile==""&&form.modProfileChoose.ProfileName=="Vanilla","Quick Vanilla selection failed");found[0].UseManaged=false;form.SelectLaunchProfile(custom,found[0].Id);AuditAssert(custom.SelectedModProfile==found[0].Id&&!found[0].UseManaged,"Quick selection changed original/copy preference");AuditAssert(!form.status.Visible&&!form.profileLabel.Visible,"Normal banner leaked duplicate status or path");TextBox codeInput;using(var dialog=form.BuildProfileCodeDialog(null,out codeInput)){dialog.Location=new Point(-30000,-30000);dialog.Show(form);Application.DoEvents();var header=dialog.Controls.Cast<Control>().First(c=>c.Dock==DockStyle.Top);AuditAssert(codeInput.Parent.Parent.PointToScreen(Point.Empty).Y>=header.PointToScreen(new Point(0,header.Height)).Y,"Import input overlaps dialog header");using(var image=new Bitmap(dialog.Width,dialog.Height)){dialog.DrawToBitmap(image,new Rectangle(Point.Empty,image.Size));image.Save(Path.Combine(root,"profile-code-dialog.png"));}dialog.Close();}using(var image=new Bitmap(form.Width,form.Height)){form.DrawToBitmap(image,new Rectangle(Point.Empty,image.Size));image.Save(Path.Combine(root,"compact-launch-row.png"));}string priorExecutable=custom.Executable;custom.Executable=Path.Combine(root,"missing-game");form.RefreshView();AuditAssert(form.play.Text=="LOCATE GAME"&&form.play.Enabled&&form.status.Visible&&!form.profileLabel.Visible,"Missing installation did not offer Locate with a small status");custom.Executable=priorExecutable;form.GameKind=0;form.RefreshView();AuditAssert(form.modProfileStrip.Visible&&form.modProfileChoose.AccessibleName.StartsWith("Minecraft profile:",StringComparison.Ordinal)&&form.check.Visible,"Minecraft profile selector retained Thunderstore controls");form.Close();}checks.Add("Profile selector shows only for the matching game and remains clear of text/actions at compact and wide sizes");
-        object liveFound=null;if(live){liveFound=ThunderstoreProfiles.Discover(game,ThunderstoreProfiles.Roots()).Select(p=>new{p.Name,p.Manager,p.Source}).ToArray();checks.Add("Real installed manager profiles were read without changing or launching them");}
-        File.WriteAllText(Path.Combine(root,"result.json"),Engine.Json.Serialize(new{Passed=true,Checks=checks,LiveProfiles=liveFound,LiveGameLaunched=false,LiveProfilesChanged=false}));return 0;
-    }catch(Exception error){Directory.CreateDirectory(root);File.WriteAllText(Path.Combine(root,"failure.txt"),error.ToString());return 1;}}
-}
+
+namespace Astera
+{
+    sealed partial class LibraryForm
+    {
+        static void ThunderZip(string path, Dictionary<string, string> files)
+        {
+            using (var zip = ZipFile.Open(path, ZipArchiveMode.Create))
+                foreach (var pair in files)
+                {
+                    var entry = zip.CreateEntry(pair.Key);
+                    using (var writer = new StreamWriter(entry.Open()))
+                        writer.Write(pair.Value);
+                }
+        }
+
+        internal static int AuditThunderstore(string root, bool live = false)
+        {
+            try
+            {
+                if (Directory.Exists(root))
+                    throw new IOException("Use a fresh Thunderstore audit");
+                Directory.CreateDirectory(root);
+                AsteraDiagnostics.Initialize(root);
+                var checks = new List<string>();
+                var game = ThunderstoreProfiles.Game("1966720");
+                AuditAssert(game != null && game.Folder == "LethalCompany" && game.Loader == "bepinex", "Lethal Company catalog mismatch");
+                checks.Add("Pinned game catalog maps Steam identity to the manager game folder and loader");
+                string manager = Path.Combine(root, "manager"), original = Path.Combine(manager, "LethalCompany", "profiles", "Mini Budz");
+                Directory.CreateDirectory(original);
+                File.WriteAllText(Path.Combine(original, "mods.yml"), "[]");
+                string before = Engine.Hash(Path.Combine(original, "mods.yml"));
+                var found = ThunderstoreProfiles.Discover(game, new[] { manager, manager });
+                AuditAssert(found.Count == 1 && found[0].Name == "Mini Budz", "Profile discovery duplicated or missed a profile");
+                var custom = new CustomGame
+                {
+                    Name = "Lethal Company",
+                    Platform = "steam",
+                    PlatformId = "1966720",
+                    Executable = Path.Combine(root, "game")
+                };
+                ThunderstoreProfiles.Merge(custom, found);
+                ThunderstoreProfiles.Merge(custom, found);
+                AuditAssert(custom.ModProfiles.Count == 1 && String.IsNullOrEmpty(custom.SelectedModProfile), "Scan duplicated links or silently switched from vanilla");
+                checks.Add("Both manager layouts share bounded, deduplicated discovery; rescans preserve the selected profile");
+                string metadata = "profileName: Test Pack\nmods:\n  - name: BepInEx-BepInExPack\n    version: {major: 5, minor: 4, patch: 2305}\n    enabled: true\n  - name: Tester-Disabled\n    version: {major: 1, minor: 0, patch: 0}\n    enabled: false\n";
+                var parsed = ThunderYaml.Parse(metadata);
+                AuditAssert(parsed.Mods.Count == 2 && !parsed.Mods[1].Enabled, "Profile YAML lost disabled packages");
+                checks.Add("Real YAML parser reads pinned versions and disabled entries without loading arbitrary object types");
+                foreach (string bad in new[]
+                {
+                    "profileName: Alias\nmods: &m [*m]",
+                    metadata + "\n---\nprofileName: Other\nmods: []",
+                    metadata.Replace("BepInEx-BepInExPack", "../../bad"),
+                    metadata.Replace("major: 5", "major: -1")
+                }
+
+                )
+                {
+                    bool refused = false;
+                    try
+                    {
+                        ThunderYaml.Parse(bad);
+                    }
+                    catch
+                    {
+                        refused = true;
+                    }
+
+                    AuditAssert(refused, "Invalid profile metadata accepted");
+                }
+
+                checks.Add("Alias cycles, multiple documents, unsafe package names and invalid version components are rejected");
+                AuditAssert(ThunderstoreProfiles.Code("019eb41e-401b-a408-b431-2915043cbf7f") == "019eb41e-401b-a408-b431-2915043cbf7f", "Valid share code rejected");
+                bool badCode = false;
+                try
+                {
+                    ThunderstoreProfiles.Code("https://example.invalid/payload");
+                }
+                catch (IOException)
+                {
+                    badCode = true;
+                }
+
+                AuditAssert(badCode, "Arbitrary URL accepted instead of share code");
+                checks.Add("Share codes accept UUIDs and reject arbitrary URLs");
+                string archive = Path.Combine(root, "profile.r2z");
+                ThunderZip(archive, new Dictionary<string, string> { { "export.r2x", metadata }, { "config\\sample.cfg", "pack-value" } });
+                var plan = ThunderstoreImport.ReadArchive(archive, root, "fixture");
+                ThunderstoreImport.Resolve(plan, CancellationToken.None, delegate
+                {
+                }, delegate (string url)
+                {
+                    if (!url.Contains("5.4.2305"))
+                        return Encoding.UTF8.GetBytes("{\"namespace\":\"BepInEx\",\"name\":\"BepInExPack\",\"community_listings\":[{\"community\":\"lethal-company\",\"review_status\":\"approved\"}]}");
+                    return Encoding.UTF8.GetBytes("{\"namespace\":\"BepInEx\",\"name\":\"BepInExPack\",\"version_number\":\"5.4.2305\",\"download_url\":\"https://thunderstore.io/package/download/BepInEx/BepInExPack/5.4.2305/\",\"dependencies\":[]}");
+                }, game);
+                AuditAssert(plan.Packages.Count == 1, "Disabled mod was downloaded");
+                checks.Add("Version API identities are checked and disabled mods do not enter the active download plan");
+                string loader = Path.Combine(root, "loader.zip");
+                ThunderZip(loader, new Dictionary<string, string> { { "manifest.json", "{\"name\":\"BepInExPack\",\"version_number\":\"5.4.2305\"}" }, { "BepInExPack/BepInEx/core/BepInEx.Preloader.dll", "fixture loader, never executed" }, { "BepInExPack/winhttp.dll", "fixture native loader, never executed" }, { "BepInExPack/doorstop_config.ini", "fixture" }, { "BepInExPack/.doorstop_version", "4.3.0" } });
+                string owned = Path.Combine(root, "owned"), id = Guid.NewGuid().ToString("N");
+                Directory.CreateDirectory(Path.Combine(original, "BepInEx", "config"));
+                File.WriteAllText(Path.Combine(original, "BepInEx", "config", "personal.cfg"), "personal");
+                string target = ThunderstoreImport.Install(plan, game, owned, id, original, CancellationToken.None, delegate
+                {
+                }, delegate
+                {
+                }, null, delegate (ThunderVersion package, string output, CancellationToken stop)
+                {
+                    File.Copy(loader, output);
+                }, Path.Combine(root, "shared-cache"));
+                AuditAssert(File.Exists(Path.Combine(target, "Astera-profile.json")) && File.ReadAllText(Path.Combine(target, "BepInEx", "config", "sample.cfg")) == "pack-value" && File.ReadAllText(Path.Combine(target, "BepInEx", "config", "personal.cfg")) == "personal" && Engine.Hash(Path.Combine(original, "mods.yml")) == before, "Managed-copy install lost configs or changed manager files");
+                checks.Add("Managed install commits only its own folder, carries personal config and overlays supplied pack config; original profile remains unchanged");
+                string oldState = Engine.Hash(Path.Combine(target, "Astera-profile.json"));
+                var interrupted = new ThunderImportPlan
+                {
+                    Archive = archive,
+                    Workspace = Path.Combine(root, "interrupted"),
+                    Code = "fixture",
+                    Export = parsed,
+                    Packages = plan.Packages
+                };
+                Directory.CreateDirectory(interrupted.Workspace);
+                bool interruptedStopped = false, downloadedAgain = false;
+                try
+                {
+                    ThunderstoreImport.Install(interrupted, game, owned, id, target, CancellationToken.None, delegate
+                    {
+                    }, delegate
+                    {
+                    }, () => true, delegate (ThunderVersion package, string output, CancellationToken stop)
+                    {
+                        downloadedAgain = true;
+                        File.Copy(loader, output);
+                    }, Path.Combine(root, "shared-cache"));
+                }
+                catch (IOException)
+                {
+                    interruptedStopped = true;
+                }
+
+                AuditAssert(!downloadedAgain && interruptedStopped && Engine.Hash(Path.Combine(target, "Astera-profile.json")) == oldState, "Running-game guard damaged the current managed copy");
+                checks.Add("A game starting during preparation stops commit and preserves the installed profile");
+                checks.Add("Unchanged package archives are verified and reused across updates without another download");
+                int attempts = 0;
+                var value = ThunderstoreImport.Retry(delegate
+                {
+                    attempts++;
+                    if (attempts == 1)
+                        throw new System.Net.WebException("temporary fixture", System.Net.WebExceptionStatus.Timeout);
+                    return 7;
+                }, CancellationToken.None);
+                AuditAssert(value == 7 && attempts == 2, "Transient request did not retry");
+                using (var cancelled = new CancellationTokenSource())
+                {
+                    cancelled.Cancel();
+                    bool stopped = false;
+                    try
+                    {
+                        ThunderstoreImport.Retry(() => 1, cancelled.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        stopped = true;
+                    }
+
+                    AuditAssert(stopped, "Cancelled request was started");
+                }
+
+                checks.Add("Transient requests retry within a bound and cancellation prevents starting a request");
+                string plugin = Path.Combine(root, "plugin.zip");
+                ThunderZip(plugin, new Dictionary<string, string> { { "manifest.json", "\uFEFF{\"name\":\"Plugin\",\"version_number\":\"1.0.0\"}" }, { "BepInEx/plugins/feature.dll", "fixture" }, { "BepInEx/config/default.cfg", "default" } });
+                ThunderstoreImport.InstallPackage(plugin, target, "Tester-Plugin", "1.0.0");
+                AuditAssert(File.Exists(Path.Combine(target, "BepInEx", "plugins", "Tester-Plugin", "feature.dll")), "Plugin routing mismatch");
+                checks.Add("Loader roots and ordinary BepInEx plugin/config routes use their distinct installation layouts");
+                string longRoot = Path.Combine(root, "long-" + new string('a', 90), new string('b', 90));
+                Directory.CreateDirectory(longRoot);
+                string longFile = SelfUpdateFiles.Inside(longRoot, "nested/" + new string('c', 70) + ".cfg");
+                Directory.CreateDirectory(Path.GetDirectoryName(longFile));
+                File.WriteAllText(longFile, "long path fixture");
+                AuditAssert(longFile.Length > 260 && File.ReadAllText(longFile) == "long path fixture", "Long profile path was not supported");
+                checks.Add("Profile files beyond the legacy 260-character limit can be created and read without an OS settings change");
+                string hostile = Path.Combine(root, "hostile.zip");
+                ThunderZip(hostile, new Dictionary<string, string> { { "../outside.dll", "no" } });
+                bool blocked = false;
+                try
+                {
+                    using (var zip = ZipFile.OpenRead(hostile))
+                        ThunderstoreImport.InspectZip(zip, 1000);
+                }
+                catch (IOException)
+                {
+                    blocked = true;
+                }
+
+                AuditAssert(blocked && !File.Exists(Path.Combine(root, "outside.dll")), "Archive traversal accepted");
+                string binary = Path.Combine(root, "extra-binary.r2z");
+                ThunderZip(binary, new Dictionary<string, string> { { "config/extra.dll", "no" } });
+                blocked = false;
+                try
+                {
+                    ThunderstoreImport.ApplyExportConfig(binary, target);
+                }
+                catch (IOException)
+                {
+                    blocked = true;
+                }
+
+                AuditAssert(blocked, "Exported binary was accepted as config");
+                checks.Add("ZIP traversal and executable payloads disguised as exported configuration are refused");
+                string args = ThunderstoreLaunch.Arguments(game, target);
+                AuditAssert(args.Contains("-applaunch 1966720 --doorstop-enabled true --doorstop-target-assembly") && args.Contains("BepInEx.Preloader.dll") && ThunderstoreLaunch.Arguments(game, null).Contains("--doorstop-enable false"), "Modded or vanilla launch arguments incorrect");
+                checks.Add("Doorstop4 launch uses selected profile's preloader; Vanilla explicitly disables the loader");
+                string install = Path.Combine(root, "game");
+                Directory.CreateDirectory(install);
+                File.WriteAllText(Path.Combine(install, "winhttp.dll"), "old fixture");
+                ThunderstoreLaunch.Link(install, target, Path.Combine(root, "launch-backups"));
+                AuditAssert(File.ReadAllText(Path.Combine(install, "winhttp.dll")) == "fixture native loader, never executed" && Directory.GetFiles(Path.Combine(root, "launch-backups"), "winhttp.dll", SearchOption.AllDirectories).Length == 1, "Loader linking lost original file backup");
+                checks.Add("Only known Windows loader files are linked; existing differing files are backed up first");
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                var store = new Store(Path.Combine(root, "state"));
+                store.Settings.CheckOnStart = false;
+                store.Settings.CheckAppOnStart = false;
+                store.Settings.KeepInTray = false;
+                store.Settings.UseMinecraftSkin = false;
+                store.Settings.CustomGames.Add(custom);
+                custom.SelectedModProfile = found[0].Id;
+                using (var form = new LibraryForm(store, new Channel(), true))
+                {
+                    form.ShowInTaskbar = false;
+                    form.StartPosition = FormStartPosition.Manual;
+                    form.Location = new Point(-30000, -30000);
+                    form.Show();
+                    form.ReloadGames(custom);
+                    form.RefreshView();
+                    MotionAudit.Pump(50);
+                    AuditAssert(form.modProfileStrip.Visible && form.modProfileChoose.ProfileName.Contains("Mini Budz"), "Selected profile strip is missing");
+                    foreach (var size in new[]
+                    {
+                        new Size(1400, 900),
+                        new Size(1100, 760)
+                    }
+
+                    )
+                    {
+                        form.Size = size;
+                        form.LayoutHeroContent();
+                        AuditAssert(form.modProfileStrip.Parent == form.heroActions && form.heroTextPanel.Bottom < form.heroActions.Top && form.modProfileStrip.Right <= form.heroActions.Width && form.playtimeStats.Right <= form.heroActions.Width && !form.check.Visible, "Profile strip overlaps hero text/actions or clips on compact layout");
+                    }
+
+                    form.SelectLaunchProfile(custom, "");
+                    AuditAssert(custom.SelectedModProfile == "" && form.modProfileChoose.ProfileName == "Vanilla", "Quick Vanilla selection failed");
+                    found[0].UseManaged = false;
+                    form.SelectLaunchProfile(custom, found[0].Id);
+                    AuditAssert(custom.SelectedModProfile == found[0].Id && !found[0].UseManaged, "Quick selection changed original/copy preference");
+                    AuditAssert(!form.status.Visible && !form.profileLabel.Visible, "Normal banner leaked duplicate status or path");
+                    TextBox codeInput;
+                    using (var dialog = form.BuildProfileCodeDialog(null, out codeInput))
+                    {
+                        dialog.Location = new Point(-30000, -30000);
+                        dialog.Show(form);
+                        Application.DoEvents();
+                        var header = dialog.Controls.Cast<Control>().First(c => c.Dock == DockStyle.Top);
+                        AuditAssert(codeInput.Parent.Parent.PointToScreen(Point.Empty).Y >= header.PointToScreen(new Point(0, header.Height)).Y, "Import input overlaps dialog header");
+                        using (var image = new Bitmap(dialog.Width, dialog.Height))
+                        {
+                            dialog.DrawToBitmap(image, new Rectangle(Point.Empty, image.Size));
+                            image.Save(Path.Combine(root, "profile-code-dialog.png"));
+                        }
+
+                        dialog.Close();
+                    }
+
+                    using (var image = new Bitmap(form.Width, form.Height))
+                    {
+                        form.DrawToBitmap(image, new Rectangle(Point.Empty, image.Size));
+                        image.Save(Path.Combine(root, "compact-launch-row.png"));
+                    }
+
+                    string priorExecutable = custom.Executable;
+                    custom.Executable = Path.Combine(root, "missing-game");
+                    form.RefreshView();
+                    AuditAssert(form.play.Text == "LOCATE GAME" && form.play.Enabled && form.status.Visible && !form.profileLabel.Visible, "Missing installation did not offer Locate with a small status");
+                    custom.Executable = priorExecutable;
+                    form.GameKind = 0;
+                    form.RefreshView();
+                    AuditAssert(form.modProfileStrip.Visible && form.modProfileChoose.AccessibleName.StartsWith("Minecraft profile:", StringComparison.Ordinal) && form.check.Visible, "Minecraft profile selector retained Thunderstore controls");
+                    form.Close();
+                }
+
+                checks.Add("Profile selector shows only for the matching game and remains clear of text/actions at compact and wide sizes");
+                object liveFound = null;
+                if (live)
+                {
+                    liveFound = ThunderstoreProfiles.Discover(game, ThunderstoreProfiles.Roots()).Select(p => new { p.Name, p.Manager, p.Source }).ToArray();
+                    checks.Add("Real installed manager profiles were read without changing or launching them");
+                }
+
+                File.WriteAllText(Path.Combine(root, "result.json"), Engine.Json.Serialize(new
+                {
+                    Passed = true,
+                    Checks = checks,
+                    LiveProfiles = liveFound,
+                    LiveGameLaunched = false,
+                    LiveProfilesChanged = false
+                }));
+                return 0;
+            }
+            catch (Exception error)
+            {
+                Directory.CreateDirectory(root);
+                File.WriteAllText(Path.Combine(root, "failure.txt"), error.ToString());
+                return 1;
+            }
+        }
+    }
 }

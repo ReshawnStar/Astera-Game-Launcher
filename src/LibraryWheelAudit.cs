@@ -4,24 +4,136 @@ using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 using MC2Pack;
-namespace Astera {
-sealed partial class LibraryForm {
-    static Message WheelMessage(Control source,Point screen,int delta){return Message.Create(source.Handle,0x20A,new IntPtr(unchecked((int)((uint)(ushort)delta<<16))),new IntPtr(((long)(ushort)screen.Y<<16)|(ushort)screen.X));}
-    internal static int AuditLibraryWheel(string root){try{
-        if(Directory.Exists(root))throw new IOException("Use a fresh wheel audit directory");Directory.CreateDirectory(root);Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);var state=new Store(Path.Combine(root,"state"));state.Settings.CheckOnStart=false;state.Settings.KeepInTray=false;state.Settings.UseMinecraftSkin=false;
-        for(int i=0;i<45;i++)state.Settings.CustomGames.Add(new CustomGame{Name=i.ToString("00")+" Wheel fixture",Executable=Path.Combine(root,"not-a-game.exe")});var checks=new List<string>();
-        int carry=0;AuditAssert(LibraryScrollbar.WheelRows(-60,3,8,ref carry)==0&&LibraryScrollbar.WheelRows(-60,3,8,ref carry)==-3,"Small wheel deltas were dropped");AuditAssert(LibraryScrollbar.WheelRows(120,3,8,ref carry)==3,"Wheel direction incorrect");AuditAssert(LibraryScrollbar.WheelRows(-120,-1,8,ref carry)==-8,"Page-scroll preference ignored");AuditAssert(LibraryScrollbar.WheelRows(-120,0,8,ref carry)==0,"Disabled Windows wheel scrolling ignored");checks.Add("Small wheel deltas accumulate and line/page/disabled scrolling settings are respected");
-        using(var form=new LibraryForm(state,new Channel(),true))using(var other=new Form{ShowInTaskbar=false})using(var tick=new Timer{Interval=200}){
-            form.StartPosition=FormStartPosition.Manual;form.Location=Screen.PrimaryScreen.WorkingArea.Location;form.TopMost=true;int code=1;tick.Tick+=delegate{tick.Stop();try{
-                form.libraryScrollbar.MoveTo(0);form.librarySearch.Focus();int selected=form.games.SelectedIndex;var point=form.games.PointToScreen(new Point(35,35));
-                var message=WheelMessage(form.librarySearch,point,-120);AuditAssert(Application.FilterMessage(ref message),"Unfocused hover wheel was not routed by the registered application filter");int lines=SystemInformation.MouseWheelScrollLines,expected=lines<0?form.libraryScrollbar.Page:Math.Max(0,lines);AuditAssert(form.games.TopIndex==Math.Min(expected,form.libraryScrollbar.Maximum),"Hover wheel did not scroll exactly once");AuditAssert(form.librarySearch.Focused&&form.games.SelectedIndex==selected,"Hover scrolling stole focus or changed the selected game");checks.Add("Wheel input aimed at focused search scrolls the hovered library exactly once without changing focus or selection");
-                form.libraryScrollbar.MoveTo(0);message=WheelMessage(form.librarySearch,point,-60);Application.FilterMessage(ref message);AuditAssert(form.games.TopIndex==0,"Half-notch scrolled too early");message=WheelMessage(form.librarySearch,point,-60);Application.FilterMessage(ref message);AuditAssert(form.games.TopIndex==Math.Min(expected,form.libraryScrollbar.Maximum),"Half-notch movements did not accumulate");checks.Add("Hover routing preserves high-resolution wheel input across messages");
-                form.libraryScrollbar.MoveTo(0);var thumb=form.libraryScrollbar.PointToScreen(new Point(8,15));message=WheelMessage(form.librarySearch,thumb,-120);AuditAssert(Application.FilterMessage(ref message)&&form.games.TopIndex==Math.Min(expected,form.libraryScrollbar.Maximum),"Wheel over the themed scrollbar did not scroll");checks.Add("Hover scrolling works over the game rows and the themed scrollbar");
-                form.libraryScrollbar.MoveTo(form.libraryScrollbar.Maximum);message=WheelMessage(form.librarySearch,point,-120);Application.FilterMessage(ref message);AuditAssert(form.games.TopIndex==form.libraryScrollbar.Maximum,"Wheel escaped the lower bound");form.libraryScrollbar.MoveTo(0);message=WheelMessage(form.librarySearch,point,120);Application.FilterMessage(ref message);AuditAssert(form.games.TopIndex==0,"Wheel escaped the upper bound");checks.Add("Wheel scrolling stays clamped at both ends");
-                var elsewhere=form.notes.PointToScreen(new Point(20,20));message=WheelMessage(form.librarySearch,elsewhere,-120);AuditAssert(!Application.FilterMessage(ref message)&&form.games.TopIndex==0,"Library stole wheel input over update notes");message=WheelMessage(other,point,-120);AuditAssert(!Application.FilterMessage(ref message),"Library stole another window's wheel message");form.games.Enabled=false;message=WheelMessage(form.librarySearch,point,-120);AuditAssert(!Application.FilterMessage(ref message),"Disabled library intercepted wheel input");form.games.Enabled=true;checks.Add("Wheel input outside the library, from another window or during disabled state is not hijacked");
-                form.CaptureVisibleUi(root,"hover-wheel-library");File.WriteAllText(Path.Combine(root,"result.json"),Engine.Json.Serialize(new{Passed=true,Checks=checks,GamesExecuted=false,LivePreferencesChanged=false}));code=0;
-            }catch(Exception error){File.WriteAllText(Path.Combine(root,"failure.txt"),error.ToString());}finally{form.Close();}};form.Shown+=delegate{tick.Start();};Application.Run(form);return code;
+
+namespace Astera
+{
+    sealed partial class LibraryForm
+    {
+        static Message WheelMessage(Control source, Point screen, int delta)
+        {
+            return Message.Create(source.Handle, 0x20A, new IntPtr(unchecked((int)((uint)(ushort)delta << 16))), new IntPtr(((long)(ushort)screen.Y << 16) | (ushort)screen.X));
         }
-    }catch(Exception error){Directory.CreateDirectory(root);File.WriteAllText(Path.Combine(root,"failure.txt"),error.ToString());return 1;}}
-}
+
+        internal static int AuditLibraryWheel(string root)
+        {
+            try
+            {
+                if (Directory.Exists(root))
+                    throw new IOException("Use a fresh wheel audit directory");
+                Directory.CreateDirectory(root);
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                var state = new Store(Path.Combine(root, "state"));
+                state.Settings.CheckOnStart = false;
+                state.Settings.KeepInTray = false;
+                state.Settings.UseMinecraftSkin = false;
+                for (int i = 0; i < 45; i++)
+                    state.Settings.CustomGames.Add(new CustomGame { Name = i.ToString("00") + " Wheel fixture", Executable = Path.Combine(root, "not-a-game.exe") });
+                var checks = new List<string>();
+                int carry = 0;
+                AuditAssert(LibraryScrollbar.WheelRows(-60, 3, 8, ref carry) == 0 && LibraryScrollbar.WheelRows(-60, 3, 8, ref carry) == -3, "Small wheel deltas were dropped");
+                AuditAssert(LibraryScrollbar.WheelRows(120, 3, 8, ref carry) == 3, "Wheel direction incorrect");
+                AuditAssert(LibraryScrollbar.WheelRows(-120, -1, 8, ref carry) == -8, "Page-scroll preference ignored");
+                AuditAssert(LibraryScrollbar.WheelRows(-120, 0, 8, ref carry) == 0, "Disabled Windows wheel scrolling ignored");
+                checks.Add("Small wheel deltas accumulate and line/page/disabled scrolling settings are respected");
+                using (var form = new LibraryForm(state, new Channel(), true))
+                using (var other = new Form
+                {
+                    ShowInTaskbar = false
+                }
+
+                )
+                using (var tick = new Timer
+                {
+                    Interval = 200
+                }
+
+                )
+                {
+                    form.StartPosition = FormStartPosition.Manual;
+                    form.Location = Screen.PrimaryScreen.WorkingArea.Location;
+                    form.TopMost = true;
+                    int code = 1;
+                    tick.Tick += delegate
+                    {
+                        tick.Stop();
+                        try
+                        {
+                            form.libraryScrollbar.MoveTo(0);
+                            form.librarySearch.Focus();
+                            int selected = form.games.SelectedIndex;
+                            var point = form.games.PointToScreen(new Point(35, 35));
+                            var message = WheelMessage(form.librarySearch, point, -120);
+                            AuditAssert(Application.FilterMessage(ref message), "Unfocused hover wheel was not routed by the registered application filter");
+                            int lines = SystemInformation.MouseWheelScrollLines, expected = lines < 0 ? form.libraryScrollbar.Page : Math.Max(0, lines);
+                            AuditAssert(form.games.TopIndex == Math.Min(expected, form.libraryScrollbar.Maximum), "Hover wheel did not scroll exactly once");
+                            AuditAssert(form.librarySearch.Focused && form.games.SelectedIndex == selected, "Hover scrolling stole focus or changed the selected game");
+                            checks.Add("Wheel input aimed at focused search scrolls the hovered library exactly once without changing focus or selection");
+                            form.libraryScrollbar.MoveTo(0);
+                            message = WheelMessage(form.librarySearch, point, -60);
+                            Application.FilterMessage(ref message);
+                            AuditAssert(form.games.TopIndex == 0, "Half-notch scrolled too early");
+                            message = WheelMessage(form.librarySearch, point, -60);
+                            Application.FilterMessage(ref message);
+                            AuditAssert(form.games.TopIndex == Math.Min(expected, form.libraryScrollbar.Maximum), "Half-notch movements did not accumulate");
+                            checks.Add("Hover routing preserves high-resolution wheel input across messages");
+                            form.libraryScrollbar.MoveTo(0);
+                            var thumb = form.libraryScrollbar.PointToScreen(new Point(8, 15));
+                            message = WheelMessage(form.librarySearch, thumb, -120);
+                            AuditAssert(Application.FilterMessage(ref message) && form.games.TopIndex == Math.Min(expected, form.libraryScrollbar.Maximum), "Wheel over the themed scrollbar did not scroll");
+                            checks.Add("Hover scrolling works over the game rows and the themed scrollbar");
+                            form.libraryScrollbar.MoveTo(form.libraryScrollbar.Maximum);
+                            message = WheelMessage(form.librarySearch, point, -120);
+                            Application.FilterMessage(ref message);
+                            AuditAssert(form.games.TopIndex == form.libraryScrollbar.Maximum, "Wheel escaped the lower bound");
+                            form.libraryScrollbar.MoveTo(0);
+                            message = WheelMessage(form.librarySearch, point, 120);
+                            Application.FilterMessage(ref message);
+                            AuditAssert(form.games.TopIndex == 0, "Wheel escaped the upper bound");
+                            checks.Add("Wheel scrolling stays clamped at both ends");
+                            var elsewhere = form.notes.PointToScreen(new Point(20, 20));
+                            message = WheelMessage(form.librarySearch, elsewhere, -120);
+                            AuditAssert(!Application.FilterMessage(ref message) && form.games.TopIndex == 0, "Library stole wheel input over update notes");
+                            message = WheelMessage(other, point, -120);
+                            AuditAssert(!Application.FilterMessage(ref message), "Library stole another window's wheel message");
+                            form.games.Enabled = false;
+                            message = WheelMessage(form.librarySearch, point, -120);
+                            AuditAssert(!Application.FilterMessage(ref message), "Disabled library intercepted wheel input");
+                            form.games.Enabled = true;
+                            checks.Add("Wheel input outside the library, from another window or during disabled state is not hijacked");
+                            form.CaptureVisibleUi(root, "hover-wheel-library");
+                            File.WriteAllText(Path.Combine(root, "result.json"), Engine.Json.Serialize(new
+                            {
+                                Passed = true,
+                                Checks = checks,
+                                GamesExecuted = false,
+                                LivePreferencesChanged = false
+                            }));
+                            code = 0;
+                        }
+                        catch (Exception error)
+                        {
+                            File.WriteAllText(Path.Combine(root, "failure.txt"), error.ToString());
+                        }
+                        finally
+                        {
+                            form.Close();
+                        }
+                    };
+                    form.Shown += delegate
+                    {
+                        tick.Start();
+                    };
+                    Application.Run(form);
+                    return code;
+                }
+            }
+            catch (Exception error)
+            {
+                Directory.CreateDirectory(root);
+                File.WriteAllText(Path.Combine(root, "failure.txt"), error.ToString());
+                return 1;
+            }
+        }
+    }
 }

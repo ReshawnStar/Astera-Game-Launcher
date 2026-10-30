@@ -6,43 +6,415 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-namespace Astera {
-sealed class SteamGameArt {internal string AppId,Name,Hero,Icon;internal bool UpdatePending;}
-static class SteamArtwork {
-    internal static IEnumerable<string> Roots(){var roots=new HashSet<string>(StringComparer.OrdinalIgnoreCase);foreach(string key in new[]{@"HKEY_CURRENT_USER\Software\Valve\Steam",@"HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Valve\Steam",@"HKEY_LOCAL_MACHINE\SOFTWARE\Valve\Steam"})try{string path=Convert.ToString(Microsoft.Win32.Registry.GetValue(key,key.Contains("CURRENT_USER")?"SteamPath":"InstallPath",null));if(!String.IsNullOrWhiteSpace(path))roots.Add(Path.GetFullPath(path));}catch(System.Security.SecurityException){}catch(ArgumentException){}roots.Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),"Steam"));return roots;}
-    internal static string Field(string text,string key){var match=Regex.Match(text,"\""+key+"\"\\s+\"((?:\\\\.|[^\"\\\\])*)\"",RegexOptions.IgnoreCase);return match.Success?match.Groups[1].Value.Replace("\\\"","\"").Replace("\\\\","\\"):null;}
-    internal static bool Pending(string text){ulong flags,target,current;return UInt64.TryParse(Field(text,"StateFlags"),out flags)&&(flags&2)!=0||UInt64.TryParse(Field(text,"TargetBuildID"),out target)&&target>0&&UInt64.TryParse(Field(text,"buildid"),out current)&&target!=current;}
-    internal static System.Diagnostics.ProcessStartInfo Launch(string appId){if(appId==null||!Regex.IsMatch(appId,"^[0-9]{1,12}$"))throw new IOException("Invalid Steam app ID");return new System.Diagnostics.ProcessStartInfo("steam://run/"+appId){UseShellExecute=true};}
-    static string Artwork(IEnumerable<string> roots,string appId,string[] names){foreach(string root in roots)foreach(string name in names)foreach(string ext in new[]{".jpg",".png",".jpeg"})foreach(string path in new[]{Path.Combine(root,"appcache","librarycache",appId,name+ext),Path.Combine(root,"appcache","librarycache",appId+"_"+name+ext)})if(File.Exists(path))return path;return null;}
-    static string GameIcon(IEnumerable<string> roots,string appId){string named=Artwork(roots,appId,new[]{"icon"});if(named!=null)return named;foreach(string root in roots){string folder=Path.Combine(root,"appcache","librarycache",appId);if(!Directory.Exists(folder))continue;foreach(string file in Directory.EnumerateFiles(folder).Where(p=>Regex.IsMatch(Path.GetFileName(p),"^[a-fA-F0-9]{40}\\.(jpg|jpeg|png)$",RegexOptions.IgnoreCase)).OrderByDescending(File.GetLastWriteTimeUtc).Take(32))try{if(new FileInfo(file).Length>1024*1024)continue;using(var image=Image.FromFile(file))if(image.Width==image.Height&&image.Width>=16&&image.Width<=256)return file;}catch(IOException){}catch(ArgumentException){}}return null;}
-    // Derive the installed game's manifest from the EXE's actual Steam library,
-    // including nested bin/Win64 EXEs. Artwork lives in Steam's separate cache.
-    internal static SteamGameArt Find(string executable,IEnumerable<string> steamRoots){
-        if(String.IsNullOrWhiteSpace(executable))return null;string full=Path.GetFullPath(executable);DirectoryInfo game=new DirectoryInfo(Path.GetDirectoryName(full));for(int depth=0;game!=null&&game.Parent!=null&&depth<24;depth++,game=game.Parent){
-            if(!game.Parent.Name.Equals("common",StringComparison.OrdinalIgnoreCase)||game.Parent.Parent==null||!game.Parent.Parent.Name.Equals("steamapps",StringComparison.OrdinalIgnoreCase))continue;
-            var steamapps=game.Parent.Parent;string manifestRoot=steamapps.FullName;var roots=new HashSet<string>(steamRoots.Where(r=>!String.IsNullOrWhiteSpace(r)),StringComparer.OrdinalIgnoreCase);roots.Add(steamapps.Parent.FullName);
-            foreach(string manifest in Directory.EnumerateFiles(manifestRoot,"appmanifest_*.acf",SearchOption.TopDirectoryOnly)){
-                var file=new FileInfo(manifest);if(file.Length>512*1024)continue;string text=File.ReadAllText(manifest),id=Field(text,"appid"),install=Field(text,"installdir");if(id==null||!Regex.IsMatch(id,"^[0-9]{1,12}$")||Path.GetFileName(manifest)!="appmanifest_"+id+".acf"||String.IsNullOrEmpty(install)||install=="."||install==".."||install.IndexOfAny(new[]{'/', '\\', ':'})>=0||!install.Equals(game.Name,StringComparison.OrdinalIgnoreCase))continue;
-                return new SteamGameArt{AppId=id,Name=Field(text,"name"),UpdatePending=Pending(text),Hero=Artwork(roots,id,new[]{"library_hero","library_header","header"}),Icon=GameIcon(roots,id)};
-            }return null;
-        }return null;
+
+namespace Astera
+{
+    sealed class SteamGameArt
+    {
+        internal string AppId, Name, Hero, Icon;
+        internal bool UpdatePending;
     }
-}
-sealed partial class LibraryForm {
-    readonly Dictionary<string,SteamGameArt> steamArt=new Dictionary<string,SteamGameArt>(StringComparer.OrdinalIgnoreCase);
-    readonly Dictionary<string,DateTime> steamArtChecked=new Dictionary<string,DateTime>(StringComparer.OrdinalIgnoreCase);
-    readonly Dictionary<string,Image> steamIcons=new Dictionary<string,Image>(StringComparer.OrdinalIgnoreCase);
-    readonly HashSet<string> steamArtPending=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-    readonly System.Windows.Forms.Timer steamStatusClock=new System.Windows.Forms.Timer{Interval=15000};
-    SteamGameArt CustomSteam(CustomGame game){SteamGameArt art;return game!=null&&steamArt.TryGetValue(game.Executable,out art)?art:null;}
-    void OpenCustomSteamLibrary(){var art=CustomSteam(CurrentCustom);if(art==null)return;try{System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("steam://nav/games/details/"+art.AppId){UseShellExecute=true});}catch(Exception error){System.Windows.Forms.MessageBox.Show(this,error.Message,"Open Steam");}}
-    string AutomaticSteamBackground(CustomGame game){SteamGameArt art;return steamArt.TryGetValue(game.Executable,out art)&&art!=null?art.Hero:null;}
-    Image AutomaticSteamIcon(CustomGame game){Image image;return game!=null&&steamIcons.TryGetValue(game.Executable,out image)?image:null;}
-    readonly Dictionary<string,string> steamArtKeys=new Dictionary<string,string>(StringComparer.OrdinalIgnoreCase),steamIconKeys=new Dictionary<string,string>(StringComparer.OrdinalIgnoreCase);
-    static string ArtFileKey(string path){if(String.IsNullOrEmpty(path))return "";try{var file=new FileInfo(path);return path+"|"+file.Length+"|"+file.LastWriteTimeUtc.Ticks;}catch(IOException){return path;}catch(UnauthorizedAccessException){return path;}}
-    void ApplySteamArtwork(string executable,SteamGameArt art){SteamGameArt previous;steamArt.TryGetValue(executable,out previous);if(art==null){if(previous==null)steamArt[executable]=null;return;}if(String.IsNullOrEmpty(art.Hero)&&previous!=null&&previous.AppId==art.AppId&&!String.IsNullOrEmpty(previous.Hero)&&File.Exists(previous.Hero))art.Hero=previous.Hero;if(String.IsNullOrEmpty(art.Icon)&&previous!=null&&previous.AppId==art.AppId&&!String.IsNullOrEmpty(previous.Icon)&&File.Exists(previous.Icon))art.Icon=previous.Icon;string iconKey=ArtFileKey(art.Icon),key=art.AppId+"|"+art.Name+"|"+ArtFileKey(art.Hero)+"|"+iconKey+"|"+art.UpdatePending,oldKey;if(steamArtKeys.TryGetValue(executable,out oldKey)&&oldKey==key)return;steamArtKeys[executable]=key;steamArt[executable]=art;if(!steamIconKeys.TryGetValue(executable,out oldKey)||oldKey!=iconKey){if(!String.IsNullOrEmpty(art.Icon))try{var next=Banner.ReadArtwork(art.Icon);Image old;if(steamIcons.TryGetValue(executable,out old)&&old!=null)old.Dispose();steamIcons[executable]=next;steamIconKeys[executable]=iconKey;}catch(Exception error){AsteraDiagnostics.Write("Steam library icon unavailable",new IOException(error.GetType().Name));}}games.Invalidate();if(IsCustomGame&&String.Equals(CurrentCustom.Executable,executable,StringComparison.OrdinalIgnoreCase))RefreshCustomView();}
-    async void QueueSteamArtwork(CustomGame game,bool force=false){if(previewMode||game==null||String.IsNullOrWhiteSpace(game.Executable))return;string executable=game.Executable;DateTime checkedAt;if(steamArtPending.Contains(executable)||!force&&steamArtChecked.TryGetValue(executable,out checkedAt)&&DateTime.UtcNow-checkedAt<TimeSpan.FromMinutes(1))return;steamArtPending.Add(executable);steamArtChecked[executable]=DateTime.UtcNow;try{var art=await Task.Run(()=>PlatformLibraries.SteamArt(game));if(!IsDisposed){CacheCustomIcon(game);ApplySteamArtwork(executable,art);QueuePublicSteamArtwork(executable,art);}}catch(Exception error){AsteraDiagnostics.Write("Steam artwork lookup unavailable",new IOException(error.GetType().Name));}finally{steamArtPending.Remove(executable);}}
-    internal static int AuditSteamArtwork(string directory,string executable,bool includeNews=false){try{if(Directory.Exists(directory))throw new IOException("Use a new artwork audit folder");Directory.CreateDirectory(directory);var art=SteamArtwork.Find(executable,SteamArtwork.Roots());if(art==null||String.IsNullOrEmpty(art.Hero)||String.IsNullOrEmpty(art.Icon))throw new IOException("Steam did not have this game's banner and library image cached");Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);var state=new Store(Path.Combine(directory,"preferences"));state.Settings.CheckOnStart=false;state.Settings.KeepInTray=false;var game=new CustomGame{Name=art.Name,Executable=executable};state.Settings.CustomGames.Add(game);string newsText=null;if(includeNews){var bytes=new Transport().Metadata("https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid="+art.AppId+"&count=4&maxlength=0&feeds=steam_community_announcements",System.Threading.CancellationToken.None);newsText=SteamNews.Text(art.AppId,bytes);File.WriteAllBytes(Path.Combine(directory,"official-steam-news.json"),bytes);}using(var form=new LibraryForm(state,new Channel(),true)){form.TopMost=true;form.StartPosition=System.Windows.Forms.FormStartPosition.Manual;form.Location=System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Location;if(newsText!=null)form.steamNews[art.AppId]=newsText;form.ApplySteamArtwork(executable,art);form.ReloadGames(game);form.SelectLibraryTab(0);int code=1;var clock=new System.Windows.Forms.Timer{Interval=650};clock.Tick+=delegate{clock.Stop();try{form.CaptureVisibleUi(directory,"steam-artwork");File.WriteAllText(Path.Combine(directory,"result.json"),MC2Pack.Engine.Json.Serialize(new{Passed=true,AppId=art.AppId,Game=art.Name,Hero=art.Hero,Icon=art.Icon,ActualGameLaunched=false,LivePreferencesChanged=false}));code=0;}catch(Exception error){File.WriteAllText(Path.Combine(directory,"failure.txt"),error.ToString());}finally{form.Close();}};form.Shown+=delegate{clock.Start();};System.Windows.Forms.Application.Run(form);clock.Dispose();return code;}}catch(Exception error){Directory.CreateDirectory(directory);File.WriteAllText(Path.Combine(directory,"failure.txt"),error.ToString());return 1;}}
-    void StartSteamArtwork(){StartIconAnimations();StartRobloxSlides();StartLibraryIconLoading();StartRobloxLaunchGuard();steamStatusClock.Tick+=delegate{if(IsCustomGame&&!busy&&Visible&&WindowState!=FormWindowState.Minimized)QueuePlatformArtwork(CurrentCustom,true);};Shown+=delegate{if(IsCustomGame)QueuePlatformArtwork(CurrentCustom);if(!previewMode)steamStatusClock.Start();};Disposed+=delegate{StopItchArtwork();steamStatusClock.Dispose();foreach(var icon in customIcons.Values)icon.Dispose();customIcons.Clear();foreach(var icon in steamIcons.Values)icon.Dispose();steamIcons.Clear();};}
-}
+
+    static class SteamArtwork
+    {
+        internal static IEnumerable<string> Roots()
+        {
+            var roots = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string key in new[]
+            {
+                @"HKEY_CURRENT_USER\Software\Valve\Steam",
+                @"HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Valve\Steam",
+                @"HKEY_LOCAL_MACHINE\SOFTWARE\Valve\Steam"
+            }
+
+            )
+                try
+                {
+                    string path = Convert.ToString(Microsoft.Win32.Registry.GetValue(key, key.Contains("CURRENT_USER") ? "SteamPath" : "InstallPath", null));
+                    if (!String.IsNullOrWhiteSpace(path))
+                        roots.Add(Path.GetFullPath(path));
+                }
+                catch (System.Security.SecurityException)
+                {
+                }
+                catch (ArgumentException)
+                {
+                }
+
+            roots.Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam"));
+            return roots;
+        }
+
+        internal static string Field(string text, string key)
+        {
+            var match = Regex.Match(text, "\"" + key + "\"\\s+\"((?:\\\\.|[^\"\\\\])*)\"", RegexOptions.IgnoreCase);
+            return match.Success ? match.Groups[1].Value.Replace("\\\"", "\"").Replace("\\\\", "\\") : null;
+        }
+
+        internal static bool Pending(string text)
+        {
+            ulong flags, target, current;
+            return UInt64.TryParse(Field(text, "StateFlags"), out flags) && (flags & 2) != 0 || UInt64.TryParse(Field(text, "TargetBuildID"), out target) && target > 0 && UInt64.TryParse(Field(text, "buildid"), out current) && target != current;
+        }
+
+        internal static System.Diagnostics.ProcessStartInfo Launch(string appId)
+        {
+            if (appId == null || !Regex.IsMatch(appId, "^[0-9]{1,12}$"))
+                throw new IOException("Invalid Steam app ID");
+            return new System.Diagnostics.ProcessStartInfo("steam://run/" + appId)
+            {
+                UseShellExecute = true
+            };
+        }
+
+        static string Artwork(IEnumerable<string> roots, string appId, string[] names)
+        {
+            foreach (string root in roots)
+                foreach (string name in names)
+                    foreach (string ext in new[]
+                    {
+                        ".jpg",
+                        ".png",
+                        ".jpeg"
+                    }
+
+                    )
+                        foreach (string path in new[]
+                        {
+                            Path.Combine(root, "appcache", "librarycache", appId, name + ext),
+                            Path.Combine(root, "appcache", "librarycache", appId + "_" + name + ext)
+                        }
+
+                        )
+                            if (File.Exists(path))
+                                return path;
+            return null;
+        }
+
+        static string GameIcon(IEnumerable<string> roots, string appId)
+        {
+            string named = Artwork(roots, appId, new[] { "icon" });
+            if (named != null)
+                return named;
+            foreach (string root in roots)
+            {
+                string folder = Path.Combine(root, "appcache", "librarycache", appId);
+                if (!Directory.Exists(folder))
+                    continue;
+                foreach (string file in Directory.EnumerateFiles(folder).Where(p => Regex.IsMatch(Path.GetFileName(p), "^[a-fA-F0-9]{40}\\.(jpg|jpeg|png)$", RegexOptions.IgnoreCase)).OrderByDescending(File.GetLastWriteTimeUtc).Take(32))
+                    try
+                    {
+                        if (new FileInfo(file).Length > 1024 * 1024)
+                            continue;
+                        using (var image = Image.FromFile(file))
+                            if (image.Width == image.Height && image.Width >= 16 && image.Width <= 256)
+                                return file;
+                    }
+                    catch (IOException)
+                    {
+                    }
+                    catch (ArgumentException)
+                    {
+                    }
+            }
+
+            return null;
+        }
+
+        // Derive the installed game's manifest from the EXE's actual Steam library,
+        // including nested bin/Win64 EXEs. Artwork lives in Steam's separate cache.
+        internal static SteamGameArt Find(string executable, IEnumerable<string> steamRoots)
+        {
+            if (String.IsNullOrWhiteSpace(executable))
+                return null;
+            string full = Path.GetFullPath(executable);
+            DirectoryInfo game = new DirectoryInfo(Path.GetDirectoryName(full));
+            for (int depth = 0; game != null && game.Parent != null && depth < 24; depth++, game = game.Parent)
+            {
+                if (!game.Parent.Name.Equals("common", StringComparison.OrdinalIgnoreCase) || game.Parent.Parent == null || !game.Parent.Parent.Name.Equals("steamapps", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                var steamapps = game.Parent.Parent;
+                string manifestRoot = steamapps.FullName;
+                var roots = new HashSet<string>(steamRoots.Where(r => !String.IsNullOrWhiteSpace(r)), StringComparer.OrdinalIgnoreCase);
+                roots.Add(steamapps.Parent.FullName);
+                foreach (string manifest in Directory.EnumerateFiles(manifestRoot, "appmanifest_*.acf", SearchOption.TopDirectoryOnly))
+                {
+                    var file = new FileInfo(manifest);
+                    if (file.Length > 512 * 1024)
+                        continue;
+                    string text = File.ReadAllText(manifest), id = Field(text, "appid"), install = Field(text, "installdir");
+                    if (id == null || !Regex.IsMatch(id, "^[0-9]{1,12}$") || Path.GetFileName(manifest) != "appmanifest_" + id + ".acf" || String.IsNullOrEmpty(install) || install == "." || install == ".." || install.IndexOfAny(new[] { '/', '\\', ':' }) >= 0 || !install.Equals(game.Name, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    return new SteamGameArt
+                    {
+                        AppId = id,
+                        Name = Field(text, "name"),
+                        UpdatePending = Pending(text),
+                        Hero = Artwork(roots, id, new[] { "library_hero", "library_header", "header" }),
+                        Icon = GameIcon(roots, id)
+                    };
+                }
+
+                return null;
+            }
+
+            return null;
+        }
+    }
+
+    sealed partial class LibraryForm
+    {
+        readonly Dictionary<string, SteamGameArt> steamArt = new Dictionary<string, SteamGameArt>(StringComparer.OrdinalIgnoreCase);
+        readonly Dictionary<string, DateTime> steamArtChecked = new Dictionary<string, DateTime>(StringComparer.OrdinalIgnoreCase);
+        readonly Dictionary<string, Image> steamIcons = new Dictionary<string, Image>(StringComparer.OrdinalIgnoreCase);
+        readonly HashSet<string> steamArtPending = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        readonly System.Windows.Forms.Timer steamStatusClock = new System.Windows.Forms.Timer
+        {
+            Interval = 15000
+        };
+        SteamGameArt CustomSteam(CustomGame game)
+        {
+            SteamGameArt art;
+            return game != null && steamArt.TryGetValue(game.Executable, out art) ? art : null;
+        }
+
+        void OpenCustomSteamLibrary()
+        {
+            var art = CustomSteam(CurrentCustom);
+            if (art == null)
+                return;
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("steam://nav/games/details/" + art.AppId) { UseShellExecute = true });
+            }
+            catch (Exception error)
+            {
+                System.Windows.Forms.MessageBox.Show(this, error.Message, "Open Steam");
+            }
+        }
+
+        string AutomaticSteamBackground(CustomGame game)
+        {
+            SteamGameArt art;
+            return steamArt.TryGetValue(game.Executable, out art) && art != null ? art.Hero : null;
+        }
+
+        Image AutomaticSteamIcon(CustomGame game)
+        {
+            Image image;
+            return game != null && steamIcons.TryGetValue(game.Executable, out image) ? image : null;
+        }
+
+        readonly Dictionary<string, string> steamArtKeys = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase), steamIconKeys = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        static string ArtFileKey(string path)
+        {
+            if (String.IsNullOrEmpty(path))
+                return "";
+            try
+            {
+                var file = new FileInfo(path);
+                return path + "|" + file.Length + "|" + file.LastWriteTimeUtc.Ticks;
+            }
+            catch (IOException)
+            {
+                return path;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return path;
+            }
+        }
+
+        void ApplySteamArtwork(string executable, SteamGameArt art)
+        {
+            SteamGameArt previous;
+            steamArt.TryGetValue(executable, out previous);
+            if (art == null)
+            {
+                if (previous == null)
+                    steamArt[executable] = null;
+                return;
+            }
+
+            if (String.IsNullOrEmpty(art.Hero) && previous != null && previous.AppId == art.AppId && !String.IsNullOrEmpty(previous.Hero) && File.Exists(previous.Hero))
+                art.Hero = previous.Hero;
+            if (String.IsNullOrEmpty(art.Icon) && previous != null && previous.AppId == art.AppId && !String.IsNullOrEmpty(previous.Icon) && File.Exists(previous.Icon))
+                art.Icon = previous.Icon;
+            string iconKey = ArtFileKey(art.Icon), key = art.AppId + "|" + art.Name + "|" + ArtFileKey(art.Hero) + "|" + iconKey + "|" + art.UpdatePending, oldKey;
+            if (steamArtKeys.TryGetValue(executable, out oldKey) && oldKey == key)
+                return;
+            steamArtKeys[executable] = key;
+            steamArt[executable] = art;
+            if (!steamIconKeys.TryGetValue(executable, out oldKey) || oldKey != iconKey)
+            {
+                if (!String.IsNullOrEmpty(art.Icon))
+                    try
+                    {
+                        var next = Banner.ReadArtwork(art.Icon);
+                        Image old;
+                        if (steamIcons.TryGetValue(executable, out old) && old != null)
+                            old.Dispose();
+                        steamIcons[executable] = next;
+                        steamIconKeys[executable] = iconKey;
+                    }
+                    catch (Exception error)
+                    {
+                        AsteraDiagnostics.Write("Steam library icon unavailable", new IOException(error.GetType().Name));
+                    }
+            }
+
+            games.Invalidate();
+            if (IsCustomGame && String.Equals(CurrentCustom.Executable, executable, StringComparison.OrdinalIgnoreCase))
+                RefreshCustomView();
+        }
+
+        async void QueueSteamArtwork(CustomGame game, bool force = false)
+        {
+            if (previewMode || game == null || String.IsNullOrWhiteSpace(game.Executable))
+                return;
+            string executable = game.Executable;
+            DateTime checkedAt;
+            if (steamArtPending.Contains(executable) || !force && steamArtChecked.TryGetValue(executable, out checkedAt) && DateTime.UtcNow - checkedAt < TimeSpan.FromMinutes(1))
+                return;
+            steamArtPending.Add(executable);
+            steamArtChecked[executable] = DateTime.UtcNow;
+            try
+            {
+                var art = await Task.Run(() => PlatformLibraries.SteamArt(game));
+                if (!IsDisposed)
+                {
+                    CacheCustomIcon(game);
+                    ApplySteamArtwork(executable, art);
+                    QueuePublicSteamArtwork(executable, art);
+                }
+            }
+            catch (Exception error)
+            {
+                AsteraDiagnostics.Write("Steam artwork lookup unavailable", new IOException(error.GetType().Name));
+            }
+            finally
+            {
+                steamArtPending.Remove(executable);
+            }
+        }
+
+        internal static int AuditSteamArtwork(string directory, string executable, bool includeNews = false)
+        {
+            try
+            {
+                if (Directory.Exists(directory))
+                    throw new IOException("Use a new artwork audit folder");
+                Directory.CreateDirectory(directory);
+                var art = SteamArtwork.Find(executable, SteamArtwork.Roots());
+                if (art == null || String.IsNullOrEmpty(art.Hero) || String.IsNullOrEmpty(art.Icon))
+                    throw new IOException("Steam did not have this game's banner and library image cached");
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+                var state = new Store(Path.Combine(directory, "preferences"));
+                state.Settings.CheckOnStart = false;
+                state.Settings.KeepInTray = false;
+                var game = new CustomGame
+                {
+                    Name = art.Name,
+                    Executable = executable
+                };
+                state.Settings.CustomGames.Add(game);
+                string newsText = null;
+                if (includeNews)
+                {
+                    var bytes = new Transport().Metadata("https://api.steampowered.com/ISteamNews/GetNewsForApp/v2/?appid=" + art.AppId + "&count=4&maxlength=0&feeds=steam_community_announcements", System.Threading.CancellationToken.None);
+                    newsText = SteamNews.Text(art.AppId, bytes);
+                    File.WriteAllBytes(Path.Combine(directory, "official-steam-news.json"), bytes);
+                }
+
+                using (var form = new LibraryForm(state, new Channel(), true))
+                {
+                    form.TopMost = true;
+                    form.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
+                    form.Location = System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Location;
+                    if (newsText != null)
+                        form.steamNews[art.AppId] = newsText;
+                    form.ApplySteamArtwork(executable, art);
+                    form.ReloadGames(game);
+                    form.SelectLibraryTab(0);
+                    int code = 1;
+                    var clock = new System.Windows.Forms.Timer
+                    {
+                        Interval = 650
+                    };
+                    clock.Tick += delegate
+                    {
+                        clock.Stop();
+                        try
+                        {
+                            form.CaptureVisibleUi(directory, "steam-artwork");
+                            File.WriteAllText(Path.Combine(directory, "result.json"), MC2Pack.Engine.Json.Serialize(new
+                            {
+                                Passed = true,
+                                AppId = art.AppId,
+                                Game = art.Name,
+                                Hero = art.Hero,
+                                Icon = art.Icon,
+                                ActualGameLaunched = false,
+                                LivePreferencesChanged = false
+                            }));
+                            code = 0;
+                        }
+                        catch (Exception error)
+                        {
+                            File.WriteAllText(Path.Combine(directory, "failure.txt"), error.ToString());
+                        }
+                        finally
+                        {
+                            form.Close();
+                        }
+                    };
+                    form.Shown += delegate
+                    {
+                        clock.Start();
+                    };
+                    System.Windows.Forms.Application.Run(form);
+                    clock.Dispose();
+                    return code;
+                }
+            }
+            catch (Exception error)
+            {
+                Directory.CreateDirectory(directory);
+                File.WriteAllText(Path.Combine(directory, "failure.txt"), error.ToString());
+                return 1;
+            }
+        }
+
+        void StartSteamArtwork()
+        {
+            StartIconAnimations();
+            StartRobloxSlides();
+            StartLibraryIconLoading();
+            StartRobloxLaunchGuard();
+            steamStatusClock.Tick += delegate
+            {
+                if (IsCustomGame && !busy && Visible && WindowState != FormWindowState.Minimized)
+                    QueuePlatformArtwork(CurrentCustom, true);
+            };
+            Shown += delegate
+            {
+                if (IsCustomGame)
+                    QueuePlatformArtwork(CurrentCustom);
+                if (!previewMode)
+                    steamStatusClock.Start();
+            };
+            Disposed += delegate
+            {
+                StopItchArtwork();
+                steamStatusClock.Dispose();
+                foreach (var icon in customIcons.Values)
+                    icon.Dispose();
+                customIcons.Clear();
+                foreach (var icon in steamIcons.Values)
+                    icon.Dispose();
+                steamIcons.Clear();
+            };
+        }
+    }
 }
