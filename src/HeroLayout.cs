@@ -7,7 +7,7 @@ sealed partial class LibraryForm {
     void LayoutHeroContent(){
         if(layingOutHero||heroTextPanel==null||heroActions==null||gameViewport==null)return;
         layingOutHero=true;try{
-            bool minecraft=GameKind==0;
+            bool minecraft=GameKind==0;heroTitle.MinecraftLogo=minecraft&&!MinecraftSquaredSelected&&MinecraftSelectedTitle=="Minecraft";
             heroTextPanel.Width=Math.Max(400,(int)(banner.Width*.57));
             int subtitle=minecraft?TextRenderer.MeasureText(heroSubtitle.Text,heroSubtitle.Font,new Size(Math.Max(100,heroTextPanel.Width-8),1000),TextFormatFlags.WordBreak|TextFormatFlags.NoPrefix).Height+6:40;
             int tagline=minecraft&&MinecraftSquaredSelected?26:0;heroTagline.Visible=minecraft&&MinecraftSquaredSelected;

@@ -25,6 +25,7 @@ sealed class StartupFlavorPool {
         if(data==null)using(var stream=Assembly.GetExecutingAssembly().GetManifestResourceStream("Astera.Startup.Lines"))using(var reader=new StreamReader(stream)){data=Parse(reader.ReadToEnd());}
         return new StartupFlavorPool(data,Guid.NewGuid().GetHashCode());
     }
+    internal StartupFlavorPool ForLaunch(bool minecraft){var lines=data.lines.Where(l=>l.category!="boot"&&(minecraft||l.category!="games")).ToArray();if(lines.Length==0)lines=data.lines;return new StartupFlavorPool(new StartupFlavorData{schema_version=1,categories=data.categories,lines=lines},Guid.NewGuid().GetHashCode());}
     internal string Next(){
         if(seen.Count>=Count)seen.Clear();
         var eligible=data.lines.Where(l=>!seen.Contains(l.text)&&(Count==1||l.text!=last)).ToArray();if(eligible.Length==0){seen.Clear();eligible=data.lines.Where(l=>Count==1||l.text!=last).ToArray();}

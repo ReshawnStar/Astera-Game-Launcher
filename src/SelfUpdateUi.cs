@@ -27,7 +27,7 @@ sealed partial class LibraryForm {
                 dialog.Committing=true;dialog.Progress("Restarting");await Task.Delay(300);if(restartOverride!=null)restartOverride(job);else SelfUpdate.StartHelper(job);dialog.Finish();if(!IsDisposed)Enabled=wasEnabled;quitting=true;Close();return true;
             }catch(OperationCanceledException){dialog.Progress("Cancelled");return false;}
             catch(Exception error){AsteraDiagnostics.Write("Astera update flow stopped",error);LogActivity("app","Astera update stopped; the current installation was not replaced.");dialog.Progress("Stopped");dialog.Detail.Text="Astera could not finish updating. Check its logs and Windows Security before retrying.";MessageBox.Show(dialog,dialog.Detail.Text,"Astera update stopped",MessageBoxButtons.OK,MessageBoxIcon.Information);return false;}
-            finally{dialog.Finish();appUpdateFlowActive=false;if(!IsDisposed){Enabled=wasEnabled;if(wasTimerEnabled)timer.Start();}}
+            finally{bool returnFocus=Form.ActiveForm==dialog;appUpdateFlowActive=false;if(!IsDisposed){Enabled=wasEnabled;if(wasTimerEnabled)timer.Start();}dialog.Finish();if(returnFocus&&!IsDisposed&&Visible&&WindowState!=FormWindowState.Minimized)Activate();}
         }
     }
     async Task InstallAsteraUpdate(){await RunAsteraUpdate();}

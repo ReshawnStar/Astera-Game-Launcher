@@ -14,3 +14,8 @@
 
 - Fixed CurseForge profile launch when Prism also handles CurseForge links.
 - Fixed diagnostic screenshots on scaled Windows displays.
+
+- Update checks keep Astera visible and preserve maximized windows.
+- CurseForge launches show progress and keep the manager in the background when possible. Open launcher is available if it needs attention.
+- Long game launches show a waiting notice, optional familiar loading lines and an honest timeout status.
+- Added the supplied Minecraft icon, artwork and logo for non-Minecraft² profiles.

@@ -67,6 +67,8 @@ if(args.Length==2&&args[0]=="--verify-app-feed")return SelfUpdateAudit.Verify(ar
         if(args.Length==2&&args[0]=="--layout-audit")return LibraryForm.AuditLayout(args[1]);
         if(args.Length==2&&args[0]=="--install-lock-audit")return NetworkSelfTest.LockRun(args[1]);
         if(args.Length==2&&args[0]=="--minecraft-profiles-audit")return LibraryForm.AuditMinecraftProfiles(args[1]);
+        if(args.Length==2&&args[0]=="--minecraft-launch-audit")return LibraryForm.AuditMinecraftLaunch(args[1]);
+        if(args.Length==3&&args[0]=="--minecraft-native-launch-audit")return LibraryForm.AuditMinecraftLaunch(args[1],args[2]);
         if(args.Length==2&&args[0]=="--prism-audit")return NetworkSelfTest.PrismRun(args[1]);
         if(args.Length==2&&args[0]=="--full-pack-self-test")return NetworkSelfTest.FullPackRun(args[1]);
         if(args.Length==2&&args[0]=="--self-test")return NetworkSelfTest.Run(args[1]);
