@@ -8,7 +8,12 @@ using MC2Pack;
 namespace Astera {
 sealed partial class LibraryForm {
     [DllImport("user32.dll",EntryPoint="SendMessageW")]static extern IntPtr AuditListMessage(IntPtr window,int message,IntPtr w,IntPtr l);
-    static Bitmap CaptureLibrary(Control control,Rectangle region){var bitmap=new Bitmap(region.Width,region.Height);using(var g=Graphics.FromImage(bitmap))g.CopyFromScreen(control.PointToScreen(region.Location),Point.Empty,region.Size);return bitmap;}
+    [DllImport("user32.dll",SetLastError=true)]static extern bool LogicalToPhysicalPointForPerMonitorDPI(IntPtr window,ref Point point);
+    // PointToScreen is virtualized for this DPI-unaware WinForms process;
+    // CopyFromScreen reads physical pixels. Convert both corners, without
+    // resizing the resulting bitmap or changing the application's DPI mode.
+    static Rectangle PhysicalCaptureBounds(Control control,Rectangle region){Point first=control.PointToScreen(region.Location),last=control.PointToScreen(new Point(region.Right,region.Bottom));IntPtr window=(control.TopLevelControl??control).Handle;if(!LogicalToPhysicalPointForPerMonitorDPI(window,ref first)||!LogicalToPhysicalPointForPerMonitorDPI(window,ref last))throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error(),"Could not map UI snapshot to physical pixels");var bounds=Rectangle.FromLTRB(first.X,first.Y,last.X,last.Y);if(bounds.Width<1||bounds.Height<1)throw new InvalidOperationException("UI snapshot has no visible pixel area");return bounds;}
+    static Bitmap CaptureLibrary(Control control,Rectangle region){var area=PhysicalCaptureBounds(control,region);var bitmap=new Bitmap(area.Width,area.Height);try{using(var g=Graphics.FromImage(bitmap))g.CopyFromScreen(area.Location,Point.Empty,area.Size);return bitmap;}catch{bitmap.Dispose();throw;}}
     static long PixelStamp(Bitmap bitmap){unchecked{long value=17;for(int y=0;y<bitmap.Height;y++)for(int x=0;x<bitmap.Width;x++)value=value*31+bitmap.GetPixel(x,y).ToArgb();return value;}}
     internal static int AuditLibraryPaint(string root){bool effects=UiEffects.Enabled;try{
         if(Directory.Exists(root))throw new IOException("Use a fresh sidebar audit directory");Directory.CreateDirectory(root);var checks=new List<string>();
@@ -25,7 +30,7 @@ sealed partial class LibraryForm {
                 if(count>=10&&count<=90){AuditListMessage(form.games.Handle,0x200,IntPtr.Zero,new IntPtr((30<<16)|30));if(count%8==0){AuditListMessage(form.games.Handle,0x2A1,IntPtr.Zero,IntPtr.Zero);AuditListMessage(form.games.Handle,0x2A3,IntPtr.Zero,IntPtr.Zero);}
                     using(var text=CaptureLibrary(form.games,new Rectangle(64,9,120,50))){long stamp=PixelStamp(text);if(textStamp.HasValue){if(textStamp.Value!=stamp){text.Save(Path.Combine(root,"changed-text.png"));using(var row=CaptureLibrary(form.games,new Rectangle(0,0,Math.Min(220,form.games.Width),150)))row.Save(Path.Combine(root,"changed-rows.png"));File.WriteAllText(Path.Combine(root,"changed-at.txt"),"tick="+count+" selected="+form.games.SelectedIndex+" name="+game.Name+" top="+form.games.TopIndex);}AuditAssert(textStamp.Value==stamp,"Library text flashed or changed during hover/GIF/focus activity");}else{textStamp=stamp;text.Save(Path.Combine(root,"initial-text.png"));}}
                     using(var still=CaptureLibrary(form.games,new Rectangle(8,76+13,46,46))){long stamp=PixelStamp(still);if(stillStamp.HasValue)AuditAssert(stillStamp.Value==stamp,"A static icon changed while another GIF animated");else stillStamp=stamp;}
-                    using(var icon=CaptureLibrary(form.games,new Rectangle(8,13,46,46))){var pixel=icon.GetPixel(23,23);AuditAssert(pixel.R>200||pixel.B>200,"GIF icon exposed an empty/erased frame");if(colors.Add(pixel.R>200?0:1))icon.Save(Path.Combine(root,"icon-frame-"+(pixel.R>200?0:1)+".png"));}
+                    using(var icon=CaptureLibrary(form.games,new Rectangle(8,13,46,46))){var pixel=icon.GetPixel(icon.Width/2,icon.Height/2);AuditAssert(pixel.R>200||pixel.B>200,"GIF icon exposed an empty/erased frame");if(colors.Add(pixel.R>200?0:1))icon.Save(Path.Combine(root,"icon-frame-"+(pixel.R>200?0:1)+".png"));}
                     AuditAssert(!form.busy&&!form.timer.Enabled,"Hover started a scheduled update in the offline preview");
                     if(count==30){other.Location=new Point(form.Right-200,form.Top+90);other.Show(form);other.Activate();}if(count==50){other.Hide();form.Activate();}
                 }

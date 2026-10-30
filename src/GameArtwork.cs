@@ -3,6 +3,8 @@ using System.Drawing;
 using System.Reflection;
 namespace Astera {
 static class GameArtwork {
+    internal static readonly Image VanillaMinecraftIcon=VanillaIcon();
+    static Image VanillaIcon(){var image=new Bitmap(48,48);using(var g=Graphics.FromImage(image)){g.Clear(Color.Transparent);using(var side=new SolidBrush(Color.FromArgb(121,79,45)))g.FillRectangle(side,5,14,38,29);using(var grass=new SolidBrush(Color.FromArgb(92,166,54)))g.FillRectangle(grass,5,5,38,15);using(var light=new SolidBrush(Color.FromArgb(145,195,79)))g.FillRectangle(light,9,7,30,6);using(var dirt=new SolidBrush(Color.FromArgb(165,115,68))){g.FillRectangle(dirt,10,25,8,6);g.FillRectangle(dirt,28,32,9,5);}}return image;}
     internal static readonly Image MinecraftIcon=Load("Astera.Games.MinecraftSquaredIcon");
     internal static readonly Image FtlIcon=Load("Astera.Games.FtlMultiverseIcon");
     internal static readonly Image StarDashIcon=Load("Astera.Games.StarDashIcon");

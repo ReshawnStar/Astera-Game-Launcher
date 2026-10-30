@@ -16,7 +16,7 @@ public sealed class Release { public int Schema; public long Sequence; public st
 public sealed class Ledger { public string PackId,Release; public long Sequence; public Dictionary<string,string> Files=new Dictionary<string,string>(StringComparer.OrdinalIgnoreCase); }
 public sealed class Edit { public string Path,Expected,Desired,Reason; public bool Existed; public byte[] Generated; }
 public sealed class Journal { public string Profile,Release,Status; public List<Edit> Edits; }
-public sealed class Plan { public string Profile,Bundle,BundleHash; public Release Release; public List<Edit> Edits=new List<Edit>(); public List<string> Warnings=new List<string>(); public Dictionary<string,string> Preconditions=new Dictionary<string,string>(); public Ledger State; public bool Unregistered; }
+public sealed class Plan { public string Profile,Bundle,BundleHash; public Release Release; public List<Edit> Edits=new List<Edit>(); public List<string> Warnings=new List<string>(); public Dictionary<string,string> Preconditions=new Dictionary<string,string>(); public Ledger State; public bool Unregistered; public string RuntimeStamp; }
 
 public static partial class Engine {
     public static readonly JavaScriptSerializer Json=new JavaScriptSerializer { MaxJsonLength=16*1024*1024 };
@@ -62,8 +62,9 @@ public static partial class Engine {
     }
     public static Dictionary<string,object> Mod(string file){try{using(var z=ZipFile.OpenRead(file)){var e=z.GetEntry("fabric.mod.json");return e==null?null:Json.Deserialize<Dictionary<string,object>>(EntryText(e));}}catch(InvalidDataException){return null;}}
     public static void Runtime(string profile,Release r,bool allow,List<string> warnings){
+        if(Astera.PrismProfiles.HasGameMetadata(profile)){Astera.PrismProfiles.ValidateRuntime(profile,r);return;}
         string meta=Inside(profile,"minecraftinstance.json");
-        if(!File.Exists(meta)){if(!allow)throw new Exception("No CurseForge profile metadata. Choose a CurseForge-created profile, or explicitly enable content-folder mode after configuring Minecraft "+r.Minecraft+" / Fabric "+r.Loader+" yourself.");warnings.Add("Content-folder mode: launcher version was NOT verified; no CurseForge profile will be registered.");return;}
+        if(!File.Exists(meta)){if(!allow)throw new Exception("No supported launcher metadata. Choose a CurseForge or Prism instance, or explicitly enable content-folder mode after configuring Minecraft "+r.Minecraft+" / Fabric "+r.Loader+" yourself.");warnings.Add("Content-folder mode: launcher version was NOT verified; no CurseForge profile will be registered.");return;}
         var obj=Json.Deserialize<Dictionary<string,object>>(File.ReadAllText(meta));object raw;
         if(!obj.TryGetValue("baseModLoader",out raw)||!(raw is Dictionary<string,object>))throw new Exception("CurseForge loader metadata is incomplete.");
         var loader=(Dictionary<string,object>)raw;
@@ -80,8 +81,8 @@ public static partial class Engine {
     static Edit Change(string root,string path,string hash,string reason,byte[] generated=null){Allowed(path,true);var full=Inside(root,path);return new Edit{Path=path,Expected=File.Exists(full)?Hash(full):null,Desired=hash,Existed=File.Exists(full),Reason=reason,Generated=generated};}
     static void Add(Plan p,Edit edit){if(p.Edits.Any(e=>e.Path.Equals(edit.Path,StringComparison.OrdinalIgnoreCase)))throw new Exception("Conflicting edits: "+edit.Path);p.Edits.Add(edit);}
     public static Plan Scan(string profile,string bundle,bool configure,bool cleanExtras,bool unregistered,Action<string> log){
-        var root=Root(profile);if(!Directory.Exists(root))throw new Exception("Select an existing CurseForge-created profile or content folder.");
-        var r=Read(bundle);var p=new Plan{Profile=root,Bundle=System.IO.Path.GetFullPath(bundle),BundleHash=Hash(bundle),Release=r,Unregistered=unregistered};Runtime(root,r,unregistered,p.Warnings);VerifyPayload(bundle,r,log);
+        var root=Root(profile);if(!Directory.Exists(root))throw new Exception("Select an existing CurseForge or Prism instance.");
+        var r=Read(bundle);var p=new Plan{Profile=root,Bundle=System.IO.Path.GetFullPath(bundle),BundleHash=Hash(bundle),Release=r,Unregistered=unregistered};Runtime(root,r,unregistered,p.Warnings);p.RuntimeStamp=RuntimeFingerprint(root);VerifyPayload(bundle,r,log);
         var old=State(root);if(old.Sequence>r.Sequence)throw new Exception("Release downgrade refused. Use Restore for an intentional rollback.");p.State=new Ledger{PackId=PackId,Release=r.Name,Sequence=r.Sequence};
         var desiredMods=r.Files.Where(f=>f.Kind=="mod").ToDictionary(f=>f.Id);
         string mods=Inside(root,"mods");var existing=new Dictionary<string,List<string>>();var unknown=new List<string>();
@@ -111,7 +112,8 @@ public static partial class Engine {
         return p;
     }
     public static void Closed(){if(Process.GetProcessesByName("java").Length>0||Process.GetProcessesByName("javaw").Length>0)throw new Exception("Close Minecraft and Java launchers/builds before applying. Preview is still safe.");}
-    static void Unchanged(Plan p){if(Hash(p.Bundle)!=p.BundleHash)throw new Exception("Update package changed; scan again.");foreach(var guard in p.Preconditions){var full=Inside(p.Profile,guard.Key);if(!File.Exists(full)||Hash(full)!=guard.Value)throw new Exception("CurseForge dependency changed after preview; check again: "+guard.Key);}foreach(var e in p.Edits){var full=Inside(p.Profile,e.Path);if(File.Exists(full)!=e.Existed||(e.Existed&&Hash(full)!=e.Expected))throw new Exception("Target changed after preview; scan again: "+e.Path);}}
+    public static string RuntimeFingerprint(string profile){if(Astera.PrismProfiles.HasGameMetadata(profile)){var instance=Astera.PrismProfiles.Read(profile);return Hash(Path.Combine(instance.Root,"mmc-pack.json"))+Hash(Path.Combine(instance.Root,"instance.cfg"));}string file=Inside(profile,"minecraftinstance.json");return File.Exists(file)?Hash(file):"";}
+    static void Unchanged(Plan p){if(p.RuntimeStamp!=null&&p.RuntimeStamp!=RuntimeFingerprint(p.Profile))throw new Exception("Minecraft launcher settings changed after preview; check again.");Runtime(p.Profile,p.Release,p.Unregistered,new List<string>());if(Hash(p.Bundle)!=p.BundleHash)throw new Exception("Update package changed; scan again.");foreach(var guard in p.Preconditions){var full=Inside(p.Profile,guard.Key);if(!File.Exists(full)||Hash(full)!=guard.Value)throw new Exception("Minecraft dependency changed after preview; check again: "+guard.Key);}foreach(var e in p.Edits){var full=Inside(p.Profile,e.Path);if(File.Exists(full)!=e.Existed||(e.Existed&&Hash(full)!=e.Expected))throw new Exception("Target changed after preview; scan again: "+e.Path);}}
     static void WriteJournal(string folder,Journal j){string path=Inside(folder,"transaction.json"),temp=Inside(folder,"transaction-next.json");File.WriteAllText(temp,Json.Serialize(j),Utf8);if(File.Exists(path))File.Replace(temp,path,null);else File.Move(temp,path);}
     static FileStream ProfileLock(string profile){var root=Root(profile);return new FileStream(Inside(root,".Astera-update.lock"),FileMode.OpenOrCreate,FileAccess.ReadWrite,FileShare.None);}
     public static string Apply(Plan p,Action<string> log,bool test=false,int failAfter=-1,Action<int,int> progress=null){using(var held=ProfileLock(p.Profile))return ApplyLocked(p,log,test,failAfter,progress);}

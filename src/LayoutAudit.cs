@@ -15,6 +15,7 @@ sealed partial class LibraryForm {
         directory=Path.GetFullPath(directory);if(Directory.Exists(directory))throw new Exception("Use a new isolated layout audit directory.");Directory.CreateDirectory(directory);
         Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);
         var store=new Store(Path.Combine(directory,"preferences"));store.Settings.CheckOnStart=false;store.Settings.KeepInTray=false;store.Settings.AnimatedEffects=false;
+        string minecraftFixture=Path.Combine(directory,"Minecraft Squared");Directory.CreateDirectory(minecraftFixture);File.WriteAllText(Path.Combine(minecraftFixture,"minecraftinstance.json"),"{\"name\":\"Minecraft Squared\",\"baseModLoader\":{\"minecraftVersion\":\"26.3\",\"name\":\"fabric-0.19.5-26.3\",\"forgeVersion\":\"0.19.5\"}}");store.Settings.Profile=minecraftFixture;
         using(var form=new LibraryForm(store,new Channel(),true)){
             form.ShowInTaskbar=false;form.StartPosition=FormStartPosition.Manual;form.Location=new Point(-30000,-30000);form.Show();
             var sorted=form.games.Items.Cast<LibraryEntry>().Select(r=>r.ToString()).ToArray();AuditAssert(sorted.SequenceEqual(sorted.OrderBy(n=>n,StringComparer.OrdinalIgnoreCase)),"Built-in library is not A–Z");AuditAssert(form.GameKind==0&&form.games.SelectedIndex==1,"Sorted index changed startup game identity");

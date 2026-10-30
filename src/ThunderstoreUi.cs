@@ -13,7 +13,7 @@ sealed partial class LibraryForm {
     ModProfileLink SelectedModProfile(CustomGame game){return game==null||game.ModProfiles==null?null:game.ModProfiles.FirstOrDefault(p=>p.Id==game.SelectedModProfile);}
     void BuildModProfileStrip(){
         modProfileStrip=new Panel{Width=158,Height=48,MinimumSize=new Size(158,48),Margin=new Padding(0,0,10,0),BackColor=Color.Transparent,Visible=false};
-        modProfileChoose=new ProfileLaunchButton{Dock=DockStyle.Fill};modProfileChoose.Click+=delegate{ShowModProfileMenu();};modProfileStrip.Controls.Add(modProfileChoose);heroActions.Controls.Add(modProfileStrip);
+        modProfileChoose=new ProfileLaunchButton{Dock=DockStyle.Fill};modProfileChoose.Click+=delegate{if(GameKind==0)ShowMinecraftProfileMenu();else ShowModProfileMenu();};modProfileStrip.Controls.Add(modProfileChoose);heroActions.Controls.Add(modProfileStrip);
         modProfileMenu=AsteraMenuRenderer.Create(menuComponents);
     }
     void RefreshModProfileStrip(){

@@ -5,9 +5,15 @@
 Development releases are available from https://github.com/ReshawnStar/Astera-Game-Launcher/releases/latest.
 The Minecraft² content channel is live; content releases are separate from the app.
 
-Minecraft² stays in CurseForge. Astera finds its profile, checks Star's signed
-update channel, downloads changed managed files and installs a previewed update
-with rollback protection. It does not download Minecraft or replace its launcher.
+Minecraft² uses an existing Minecraft launcher. Astera checks Star's signed
+content channel and installs managed pack files with rollback protection.
+The local 0.1.40 candidate adds Prism support and a shared Minecraft profile
+selector; the published app remains 0.1.39. Prism handles Minecraft downloads
+and account authentication. CurseForge setup uses its standard Import screen.
+Prism launch and native CurseForge dispatch were tested. When Prism owns the
+shared CurseForge URL scheme, Astera can target the installed Overwolf host
+without changing Windows defaults. Vanilla and unrelated packs do not receive
+Minecraft² updates. See [Prism CLI documentation](https://prismlauncher.org/wiki/getting-started/command-line-interface/).
 
 ## Reported Windows Defender detection
 
@@ -20,7 +26,7 @@ Astera version and exact threat name, without private account or folder details.
 
 ## Current build
 
-Current0.1.30 adds a six-dot loading indicator and default-on The Renegade Collection support for FTL: Multiverse. Disable TRC in FTL settings if you prefer the base ship list. Add-on choices are saved for future updates; unknown external modifications are refused. See [TRC details](docs/TRC-provenance.md).
+Earlier 0.1.30 added a six-dot loading indicator and default-on The Renegade Collection support for FTL: Multiverse. Disable TRC in FTL settings if you prefer the base ship list. Add-on choices are saved for future updates; unknown external modifications are refused. See [TRC details](docs/TRC-provenance.md).
 
 Astera supports animated GIF backgrounds/character layers/library icons,
 including animated itch covers. YouTube links in update notes open an in-app

@@ -20,11 +20,11 @@ sealed partial class LibraryForm {
             if(GetAncestor(WindowFromPoint(new Point(origin.X+sample.X,origin.Y+sample.Y)),2)!=Handle)throw new InvalidOperationException("Astera is obscured. Bring its window fully into view before taking a UI snapshot.");
         }
         for(int y=16;y<ClientSize.Height;y+=64)for(int x=16;x<ClientSize.Width;x+=64)if(GetAncestor(WindowFromPoint(new Point(origin.X+x,origin.Y+y)),2)!=Handle)throw new InvalidOperationException("Another window is covering Astera; UI capture was stopped.");
-        using(var image=new Bitmap(ClientSize.Width,ClientSize.Height))using(var graphics=Graphics.FromImage(image)){
-            graphics.CopyFromScreen(origin,Point.Empty,ClientSize,CopyPixelOperation.SourceCopy);image.Save(Path.Combine(directory,name+".png"),ImageFormat.Png);
+        var pixels=PhysicalCaptureBounds(this,ClientRectangle);using(var image=new Bitmap(pixels.Width,pixels.Height))using(var graphics=Graphics.FromImage(image)){
+            graphics.CopyFromScreen(pixels.Location,Point.Empty,pixels.Size,CopyPixelOperation.SourceCopy);image.Save(Path.Combine(directory,name+".png"),ImageFormat.Png);
         }
         var controls=new List<object>();DescribeControls(this,controls);
-        File.WriteAllText(Path.Combine(directory,name+".json"),Engine.Json.Serialize(new{Version=System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(),Capture="Displayed client pixels; not DrawToBitmap",Window=Bounds.ToString(),Client=ClientSize.ToString(),Tab=selectedTab,LiveSkinActive=banner.LiveSkinActive,TransitionActive=gameTransition!=null,Controls=controls}));
+        File.WriteAllText(Path.Combine(directory,name+".json"),Engine.Json.Serialize(new{Version=System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(),Capture="Displayed physical client pixels; not DrawToBitmap",PhysicalPixels=pixels.ToString(),Window=Bounds.ToString(),Client=ClientSize.ToString(),Tab=selectedTab,LiveSkinActive=banner.LiveSkinActive,TransitionActive=gameTransition!=null,Controls=controls}));
     }
     static void DescribeControls(Control parent,List<object> controls){foreach(Control child in parent.Controls){if(child.Visible)controls.Add(new{Type=child.GetType().Name,Text=child.Text.Length>256?child.Text.Substring(0,256):child.Text,Bounds=child.Bounds.ToString(),Parent=parent.GetType().Name,Enabled=child.Enabled});DescribeControls(child,controls);}}
     internal void CaptureUiFromMenu(){
