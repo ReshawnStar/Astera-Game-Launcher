@@ -88,7 +88,7 @@ namespace Astera
                 Flavor = new LaunchFlavor(store.Root, key == "builtin:0")
             };
             gameLaunchWaits[id] = wait;
-            startingGames[id] = DateTime.UtcNow.AddMinutes(2);
+            startingGames[id] = DateTime.UtcNow.Add(LaunchPolicy.Timeout);
             if (!gameWaitReady)
             {
                 gameWaitReady = true;
@@ -120,7 +120,7 @@ namespace Astera
                 LogActivity(wait.Activity, wait.Game.Platform == "roblox" ? "Roblox client detected. Joining the experience is managed by Roblox." : wait.Name + " process detected. Further loading is handled by the game.");
                 return true;
             }
-            else if (!wait.TimedOut && DateTime.UtcNow - wait.Started >= TimeSpan.FromMinutes(2))
+            else if (!wait.TimedOut && DateTime.UtcNow - wait.Started >= LaunchPolicy.Timeout)
             {
                 wait.TimedOut = true;
                 startingGames.Remove(wait.Id);
@@ -146,7 +146,7 @@ namespace Astera
             }
 
             gameWaitPolling = true;
-            nextGameWaitProbe = DateTime.UtcNow.AddSeconds(2.5);
+            nextGameWaitProbe = DateTime.UtcNow.Add(LaunchPolicy.GameProbeInterval);
             try
             {
                 var found = await Task.Run(() => waits.Select(w =>

@@ -55,7 +55,7 @@ namespace Astera
         {
             if (busy)
                 return;
-            if (GameKind == 0)
+            if (GameKind == MinecraftGame)
             {
                 ChooseMinecraftIcon();
                 return;

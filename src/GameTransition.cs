@@ -240,7 +240,7 @@ namespace Astera
         bool PageResourcesPending()
         {
             if (!IsCustomGame)
-                return GameKind == 0 && loadingMinecraftSkin;
+                return GameKind == MinecraftGame && loadingMinecraftSkin;
             var game = CurrentCustom;
             if (game == null)
                 return false;
@@ -298,7 +298,7 @@ namespace Astera
                         using (new PageRedraw(gameBody))
                         {
                             RefreshView();
-                            if (GameKind == 0)
+                            if (GameKind == MinecraftGame)
                                 RefreshMinecraftSkin();
                             gameBody.PerformLayout();
                         }

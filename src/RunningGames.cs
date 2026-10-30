@@ -31,27 +31,31 @@ namespace Astera
             bool managed = game.ManagedProjectId == ManagedGames.Id;
             bool folder = managed || !String.IsNullOrEmpty(game.Platform);
             string target = Path.GetFullPath(managed ? Path.GetDirectoryName(game.Executable) : game.Executable);
-            var processes = folder ? Process.GetProcesses() : Process.GetProcessesByName(Path.GetFileNameWithoutExtension(target));
-            foreach (var process in processes)
+            string folderPrefix = target.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            using (var snapshot = folder ? ProcessSnapshot.All() : ProcessSnapshot.Named(Path.GetFileNameWithoutExtension(target)))
             {
-                try
+                foreach (var process in snapshot.Items)
                 {
-                    string path = Path.GetFullPath(process.MainModule.FileName);
-                    if (folder ? path.StartsWith(target.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) : path.Equals(target, StringComparison.OrdinalIgnoreCase))
-                        return true;
-                }
-                catch (System.ComponentModel.Win32Exception)
-                {
-                }
-                catch (InvalidOperationException)
-                {
-                }
-                catch (NotSupportedException)
-                {
-                }
-                finally
-                {
-                    process.Dispose();
+                    try
+                    {
+                        string processPath = Path.GetFullPath(process.MainModule.FileName);
+                        bool matches = folder ? processPath.StartsWith(folderPrefix, StringComparison.OrdinalIgnoreCase) : processPath.Equals(target, StringComparison.OrdinalIgnoreCase);
+                        if (matches)
+                        {
+                            return true;
+                        }
+                    }
+                    catch (System.ComponentModel.Win32Exception)
+                    {
+                        // Protected processes are unrelated to this game's folder.
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        // The process may have exited during the snapshot.
+                    }
+                    catch (NotSupportedException)
+                    {
+                    }
                 }
             }
 
@@ -72,7 +76,7 @@ namespace Astera
         {
             get
             {
-                if (GameKind == 0 && !String.IsNullOrWhiteSpace(store.Settings.Profile))
+                if (GameKind == MinecraftGame && !String.IsNullOrWhiteSpace(store.Settings.Profile))
                     return new CustomGame
                     {
                         Id = "builtin-minecraft:" + MC2Pack.Engine.Hash(System.Text.Encoding.UTF8.GetBytes(store.Settings.Profile.ToLowerInvariant())).Substring(0, 16),
@@ -83,7 +87,7 @@ namespace Astera
                     return null;
                 if (IsCustomGame)
                     return CurrentCustom;
-                if (GameKind == 1 && !String.IsNullOrWhiteSpace(store.Settings.StarDashExecutable))
+                if (GameKind == StarDashGame && !String.IsNullOrWhiteSpace(store.Settings.StarDashExecutable))
                     return new CustomGame
                     {
                         Id = "builtin-stardash",

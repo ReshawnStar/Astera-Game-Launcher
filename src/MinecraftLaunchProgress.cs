@@ -7,131 +7,6 @@ using System.Windows.Forms;
 
 namespace Astera
 {
-    interface ILaunchDesktop
-    {
-        IntPtr Foreground();
-        string Title(IntPtr window);
-        bool FromHost(IntPtr window, string directory);
-        bool Minimize(IntPtr window);
-        void Restore(Form owner);
-    }
-
-    sealed class WindowsLaunchDesktop : ILaunchDesktop
-    {
-        [DllImport("user32.dll")]
-        static extern IntPtr GetForegroundWindow();
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        static extern int GetWindowText(IntPtr window, StringBuilder title, int length);
-        [DllImport("user32.dll")]
-        static extern uint GetWindowThreadProcessId(IntPtr window, out uint process);
-        [DllImport("user32.dll")]
-        static extern bool ShowWindowAsync(IntPtr window, int command);
-        public IntPtr Foreground()
-        {
-            return GetForegroundWindow();
-        }
-
-        public string Title(IntPtr window)
-        {
-            var text = new StringBuilder(128);
-            GetWindowText(window, text, text.Capacity);
-            return text.ToString();
-        }
-
-        public bool FromHost(IntPtr window, string directory)
-        {
-            uint pid;
-            GetWindowThreadProcessId(window, out pid);
-            try
-            {
-                using (var process = Process.GetProcessById((int)pid))
-                {
-                    string path = Path.GetFullPath(process.MainModule.FileName);
-                    return path.StartsWith(directory.TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
-                }
-            }
-            catch (System.ComponentModel.Win32Exception)
-            {
-                return false;
-            }
-            catch (InvalidOperationException)
-            {
-                return false;
-            }
-            catch (ArgumentException)
-            {
-                return false;
-            }
-        }
-
-        public bool Minimize(IntPtr window)
-        {
-            return ShowWindowAsync(window, 7);
-        }
-
-        public void Restore(Form owner)
-        {
-            owner.Activate();
-        }
-    }
-
-    // A single correction contains the automatic main-manager activation. It never
-    // closes a manager, hides login prompts, or pins Astera above other applications.
-    sealed class CurseForgeBackground
-    {
-        readonly string hostDirectory;
-        readonly ILaunchDesktop desktop;
-        bool allowed, lastWasOwner;
-        internal int BackgroundedWindows;
-        internal readonly bool InitiallyArmed;
-        internal CurseForgeBackground(Form owner, ProcessStartInfo command, ILaunchDesktop desktop = null)
-        {
-            this.desktop = desktop ?? new WindowsLaunchDesktop();
-            hostDirectory = command.UseShellExecute ? "" : Path.GetDirectoryName(command.FileName);
-            InitiallyArmed = allowed = hostDirectory.Length > 0 && this.desktop.Foreground() == owner.Handle;
-            lastWasOwner = InitiallyArmed;
-        }
-
-        internal void Stop()
-        {
-            allowed = false;
-        }
-
-        internal void Pulse(Form owner)
-        {
-            if (!allowed || owner.IsDisposed || !owner.Visible || owner.WindowState == FormWindowState.Minimized)
-                return;
-            IntPtr foreground = desktop.Foreground();
-            if (foreground == owner.Handle)
-            {
-                lastWasOwner = true;
-                return;
-            }
-
-            if (foreground == IntPtr.Zero)
-                return;
-            if (desktop.Title(foreground) != "CurseForge")
-            {
-                lastWasOwner = false;
-                return;
-            }
-
-            if (!desktop.FromHost(foreground, hostDirectory))
-            {
-                allowed = false;
-                return;
-            }
-
-            if (desktop.Minimize(foreground))
-            {
-                BackgroundedWindows++;
-                allowed = false;
-                if (lastWasOwner)
-                    desktop.Restore(owner);
-            }
-        }
-    }
-
     sealed partial class LibraryForm
     {
         sealed class MinecraftLaunchNotice
@@ -157,7 +32,7 @@ namespace Astera
         {
             get
             {
-                return minecraftLaunch != null && GameKind == 0 && String.Equals(store.Settings.Profile, minecraftLaunch.Profile, StringComparison.OrdinalIgnoreCase);
+                return minecraftLaunch != null && GameKind == MinecraftGame && String.Equals(store.Settings.Profile, minecraftLaunch.Profile, StringComparison.OrdinalIgnoreCase);
             }
         }
 
@@ -177,7 +52,7 @@ namespace Astera
             };
             minecraftLaunch.Background = new CurseForgeBackground(this, command);
             if (game != null)
-                startingGames[game.Id] = DateTime.UtcNow.AddMinutes(2);
+                startingGames[game.Id] = DateTime.UtcNow.Add(LaunchPolicy.Timeout);
             if (!minecraftLaunchClockReady)
             {
                 minecraftLaunchClockReady = true;
@@ -227,12 +102,17 @@ namespace Astera
                 Platform = "minecraft"
             };
             minecraftWindowPolling = true;
-            nextMinecraftWindowProbe = DateTime.UtcNow.AddSeconds(1);
+            nextMinecraftWindowProbe = DateTime.UtcNow.Add(LaunchPolicy.WindowProbeInterval);
             try
             {
                 bool ready = await System.Threading.Tasks.Task.Run(() => MinecraftWindows.Ready(game, notice.ExistingWindows));
                 if (!IsDisposed && Object.ReferenceEquals(minecraftLaunch, notice))
                     notice.WindowReady = ready;
+            }
+            catch (Exception error)
+            {
+                nextMinecraftWindowProbe = DateTime.UtcNow.AddSeconds(5);
+                AsteraDiagnostics.Write("Minecraft window check unavailable; launch tracking continues", new IOException(error.GetType().Name));
             }
             finally
             {
@@ -260,7 +140,7 @@ namespace Astera
                 return;
             }
 
-            if (DateTime.UtcNow - minecraftLaunch.Started >= TimeSpan.FromMinutes(2))
+            if (DateTime.UtcNow - minecraftLaunch.Started >= LaunchPolicy.Timeout)
             {
                 minecraftLaunch.TimedOut = true;
                 minecraftLaunch.Background.Stop();

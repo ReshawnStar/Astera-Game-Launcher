@@ -281,7 +281,7 @@ namespace Astera
 
             collectingDiagnostics = true;
             string activityKey = SelectedActivityKey;
-            string game = IsMultiverse ? "ftl" : GameKind == 0 ? "minecraft" : "stardash", profile = IsMultiverse ? store.Settings.FtlDirectory : store.Settings.Profile;
+            string game = IsMultiverse ? "ftl" : GameKind == MinecraftGame ? "minecraft" : "stardash", profile = IsMultiverse ? store.Settings.FtlDirectory : store.Settings.Profile;
             try
             {
                 int count = await Task.Run(() => GameDiagnostics.Collect(DiagnosticsRoot, game, profile, GodotLogRoot, true));

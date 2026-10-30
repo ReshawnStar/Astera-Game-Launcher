@@ -210,7 +210,7 @@ namespace Astera
                         result.Add(minecraftSelection);
                     return result.OrderBy(p => p.Name, StringComparer.OrdinalIgnoreCase).ToList();
                 });
-                if (IsDisposed || GameKind != 0)
+                if (IsDisposed || GameKind != MinecraftGame)
                     return;
                 minecraftChoices = choices;
                 ClearLibraryMenu(modProfileMenu);

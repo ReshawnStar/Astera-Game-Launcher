@@ -489,7 +489,7 @@ namespace MC2Pack
 
         public static void Closed()
         {
-            if (Process.GetProcessesByName("java").Length > 0 || Process.GetProcessesByName("javaw").Length > 0)
+            if (Astera.ProcessSnapshot.Exists("java") || Astera.ProcessSnapshot.Exists("javaw"))
                 throw new Exception("Close Minecraft and Java launchers/builds before applying. Preview is still safe.");
         }
 

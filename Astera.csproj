@@ -1,26 +1,37 @@
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup><OutputType>WinExe</OutputType><TargetFrameworkVersion>v4.8</TargetFrameworkVersion><AssemblyName>Astera</AssemblyName><RootNamespace>Astera</RootNamespace><PlatformTarget>x64</PlatformTarget><AllowUnsafeBlocks>true</AllowUnsafeBlocks><OutputPath>bin\Debug\</OutputPath></PropertyGroup>
-  <ItemGroup><Reference Include="System"/><Reference Include="System.Core"/><Reference Include="System.Drawing"/><Reference Include="System.Windows.Forms"/><Reference Include="System.Web.Extensions"/><Reference Include="System.IO.Compression"/><Reference Include="System.IO.Compression.FileSystem"/></ItemGroup>
-  <ItemGroup><Compile Include="src\*.cs"/></ItemGroup>
-  <ItemGroup><EmbeddedResource Include="channel.local.json"><LogicalName>Astera.Channel</LogicalName></EmbeddedResource></ItemGroup>
-  <ItemGroup><EmbeddedResource Include="assets\buttons\*.png"><LogicalName>Astera.Buttons.%(Filename)</LogicalName></EmbeddedResource></ItemGroup>
-  <ItemGroup><EmbeddedResource Include="assets\button-art\button-atlas.png"><LogicalName>Astera.Art.Buttons</LogicalName></EmbeddedResource><EmbeddedResource Include="assets\button-art\button-mask.png"><LogicalName>Astera.Art.Mask</LogicalName></EmbeddedResource></ItemGroup>
-  <ItemGroup><EmbeddedResource Include="assets\ui-v1\icons\png_128\*.png"><LogicalName>Astera.Icons.%(Filename)</LogicalName></EmbeddedResource></ItemGroup>
-  <ItemGroup><EmbeddedResource Include="assets\backgrounds\minecraft-squared.png"><LogicalName>Astera.Backgrounds.MinecraftSquared</LogicalName></EmbeddedResource></ItemGroup>
-  <ItemGroup><EmbeddedResource Include="assets\backgrounds\stardash.png"><LogicalName>Astera.Backgrounds.StarDash</LogicalName></EmbeddedResource><EmbeddedResource Include="assets\games\stardash-logo.png"><LogicalName>Astera.Games.StarDashLogo</LogicalName></EmbeddedResource><EmbeddedResource Include="assets\games\stardash-icon.png"><LogicalName>Astera.Games.StarDashIcon</LogicalName></EmbeddedResource></ItemGroup>
-  <Target Name="CreateLocalChannel" BeforeTargets="PrepareForBuild"><Error Condition="!Exists('channel.local.json')" Text="Run scripts/Build-Astera.ps1 first and copy its generated channel.json to channel.local.json (public information only)."/></Target>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition="'$(Configuration)' == ''">Debug</Configuration>
+    <OutputType>WinExe</OutputType>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <AssemblyName>Astera</AssemblyName>
+    <RootNamespace>Astera</RootNamespace>
+    <PlatformTarget>x64</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <OutputPath Condition="'$(OutputPath)' == ''">bin\$(Configuration)\</OutputPath>
+    <PowerShellExecutable Condition="'$(PowerShellExecutable)' == ''">pwsh</PowerShellExecutable>
+    <StartAction>Program</StartAction>
+    <StartProgram>$([System.IO.Path]::Combine('$(MSBuildProjectDirectory)', '$(OutputPath)', 'Astera.exe'))</StartProgram>
+  </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="assets\backgrounds\ftl-multiverse.png"><LogicalName>Astera.Backgrounds.FtlMultiverse</LogicalName></EmbeddedResource>
-    <EmbeddedResource Include="assets\games\ftl-multiverse-icon.png"><LogicalName>Astera.Games.FtlMultiverseIcon</LogicalName></EmbeddedResource>
-    <EmbeddedResource Include="content\minecraft-0.7.173-gf205.md"><LogicalName>Astera.Notes.Minecraft205</LogicalName></EmbeddedResource>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="Microsoft.Web.WebView2.Core"><HintPath>assets\vendor\webview2\Microsoft.Web.WebView2.Core.dll</HintPath></Reference>
+    <Reference Include="Microsoft.Web.WebView2.WinForms"><HintPath>assets\vendor\webview2\Microsoft.Web.WebView2.WinForms.dll</HintPath></Reference>
+    <Reference Include="YamlDotNet"><HintPath>assets\vendor\yamldotnet\YamlDotNet.dll</HintPath></Reference>
+    <Compile Include="src\*.cs" />
+    <Compile Include="$(OutputPath)*.g.cs" />
+    <None Include="VERSION;app.manifest;app-release-notes.md;channel.public.xml;channel-settings.json" />
   </ItemGroup>
-  <PropertyGroup><ApplicationIcon>assets\astera.ico</ApplicationIcon></PropertyGroup>
-  <Target Name="AsteraVersion" BeforeTargets="BeforeCompile">
-    <ReadLinesFromFile File="VERSION"><Output TaskParameter="Lines" PropertyName="AsteraReleaseVersion"/></ReadLinesFromFile>
-    <WriteLinesToFile File="$(IntermediateOutputPath)version.g.cs" Lines="[assembly: System.Reflection.AssemblyVersion(&quot;$(AsteraReleaseVersion).0&quot;)];[assembly: System.Reflection.AssemblyFileVersion(&quot;$(AsteraReleaseVersion).0&quot;)]" Overwrite="true"/>
-    <ItemGroup><Compile Include="$(IntermediateOutputPath)version.g.cs"/></ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- Build-Astera is the single resource/dependency/updater build specification.
+       The old independent project resource list had drifted behind the real app. -->
+  <Target Name="Build">
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)"
+      Command="&quot;$(PowerShellExecutable)&quot; -NoProfile -File &quot;$(MSBuildProjectDirectory)\scripts\Build-Astera.ps1&quot; -OutputDirectory &quot;$(OutputPath)&quot;" />
   </Target>
-  <ItemGroup><EmbeddedResource Include="assets\games\minecraft-squared-icon.png"><LogicalName>Astera.Games.MinecraftSquaredIcon</LogicalName></EmbeddedResource></ItemGroup>
-  <ItemGroup><EmbeddedResource Include="app-release-notes.md"><LogicalName>Astera.Notes.App</LogicalName></EmbeddedResource></ItemGroup>
-  <ItemGroup><EmbeddedResource Include="assets\astera-icon-source.png"><LogicalName>Astera.Brand.Mark</LogicalName></EmbeddedResource><EmbeddedResource Include="content\startup\astera_startup_lines.json"><LogicalName>Astera.Startup.Lines</LogicalName></EmbeddedResource></ItemGroup></Project>
+</Project>

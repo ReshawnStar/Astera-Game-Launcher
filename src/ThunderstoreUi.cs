@@ -49,7 +49,7 @@ namespace Astera
             };
             modProfileChoose.Click += delegate
             {
-                if (GameKind == 0)
+                if (GameKind == MinecraftGame)
                     ShowMinecraftProfileMenu();
                 else
                     ShowModProfileMenu();

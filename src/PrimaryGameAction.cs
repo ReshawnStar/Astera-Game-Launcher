@@ -40,7 +40,7 @@ namespace Astera
                 return;
             }
 
-            if (GameKind == 1)
+            if (GameKind == StarDashGame)
             {
                 OpenStarDash();
                 return;

@@ -237,7 +237,7 @@ namespace Astera
                     store.Settings.CustomGames.Remove(entry);
                     store.Save();
                     ReloadGames(null);
-                    GameKind = 0;
+                    GameKind = MinecraftGame;
                     dialog.DialogResult = DialogResult.OK;
                 });
                 remove.SetBounds(20, 171, 220, 38);

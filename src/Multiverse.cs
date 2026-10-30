@@ -224,8 +224,8 @@ namespace Astera
         internal static void Closed(string root)
         {
             string expected = PhysicalExecutable(Path.Combine(Engine.Root(root), "FTLGame.exe"));
-            foreach (var p in Process.GetProcessesByName("FTLGame"))
-                using (p)
+            using (var snapshot = ProcessSnapshot.Named("FTLGame"))
+                foreach (var p in snapshot.Items)
                 {
                     try
                     {

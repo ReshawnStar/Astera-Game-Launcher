@@ -71,9 +71,9 @@ namespace Astera
         {
             if (gameSettingsEdit == null)
                 return;
-            string name = IsCustomGame ? CurrentCustom.Name : IsMultiverse ? "FTL: Multiverse" : GameKind == 1 ? "Star Dash" : MinecraftSelectedTitle;
+            string name = IsCustomGame ? CurrentCustom.Name : IsMultiverse ? "FTL: Multiverse" : GameKind == StarDashGame ? "Star Dash" : MinecraftSelectedTitle;
             gameSettingsTitle.Text = name + " settings";
-            gameSettingsDescription.Text = IsCustomGame ? (CurrentCustom.Platform == "roblox" ? "Roblox manages this experience. Choose its name and artwork here." : CustomSteam(CurrentCustom) != null || CurrentCustom.Platform == "steam" ? "Steam manages this game's installation and updates. Choose its name, location and artwork here." : CurrentCustom.Platform == "itch" ? "itch.io manages this game. Choose its name, install location and artwork here." : "Choose this game's name, application and artwork.") : IsMultiverse ? "Manage the FTL installation, Multiverse setup and backups for this game." : GameKind == 1 ? "Choose your Star Dash application and artwork." : "Choose your Minecraft launcher and profile. Minecraft² profiles also include pack updates and resource-pack setup.";
+            gameSettingsDescription.Text = IsCustomGame ? (CurrentCustom.Platform == "roblox" ? "Roblox manages this experience. Choose its name and artwork here." : CustomSteam(CurrentCustom) != null || CurrentCustom.Platform == "steam" ? "Steam manages this game's installation and updates. Choose its name, location and artwork here." : CurrentCustom.Platform == "itch" ? "itch.io manages this game. Choose its name, install location and artwork here." : "Choose this game's name, application and artwork.") : IsMultiverse ? "Manage the FTL installation, Multiverse setup and backups for this game." : GameKind == StarDashGame ? "Choose your Star Dash application and artwork." : "Choose your Minecraft launcher and profile. Minecraft² profiles also include pack updates and resource-pack setup.";
             if (IsCustomGame && CurrentCustom.ManagedProjectId == ManagedGames.Id)
                 gameSettingsDescription.Text = "Astera manages this game. Saves and Recovery data are kept when uninstalling.";
             if (SelectedThunderGame != null)

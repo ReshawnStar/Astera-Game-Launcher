@@ -376,6 +376,7 @@ namespace Astera
                     }
 
                     banner.PauseTransition(false);
+                    UpdateIconAnimationPlayback();
                     Invalidate(true);
                     if (quitting)
                         Close();

@@ -86,7 +86,7 @@ namespace Astera
         {
             if (iconAnimationsDisposed)
                 return;
-            bool allowed = UiEffects.Enabled && Visible && IsHandleCreated && WindowState != FormWindowState.Minimized && games.Visible;
+            bool allowed = launchScreen == null && startupScreen == null && UiEffects.Enabled && Visible && IsHandleCreated && WindowState != FormWindowState.Minimized && games.Visible;
             var visible = new HashSet<string>(allowed ? VisibleIconSources().Select(p => p.Value) : Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
             bool any = false;
             int delay = 60000;

@@ -19,6 +19,11 @@ namespace Astera
             {
                 Controls.Remove(old);
                 old.Dispose();
+                if (!IsDisposed && !Disposing)
+                {
+                    banner.PauseForLaunch(false);
+                    UpdateIconAnimationPlayback();
+                }
             }
         }
 
@@ -84,6 +89,10 @@ namespace Astera
                 };
                 Controls.Add(launchScreen);
                 launchScreen.BringToFront();
+                // Sibling controls remain Visible under an opaque cover. Stop their
+                // animation work explicitly; do not disable the cover's loading dots.
+                banner.PauseForLaunch(true);
+                UpdateIconAnimationPlayback();
                 if (!launchScreenEvents)
                 {
                     launchScreenEvents = true;

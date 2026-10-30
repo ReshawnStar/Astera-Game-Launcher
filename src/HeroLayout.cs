@@ -16,7 +16,7 @@ namespace Astera
             layingOutHero = true;
             try
             {
-                bool minecraft = GameKind == 0;
+                bool minecraft = GameKind == MinecraftGame;
                 heroTitle.MinecraftLogo = minecraft && !MinecraftSquaredSelected && MinecraftSelectedTitle == "Minecraft";
                 heroTextPanel.Width = Math.Max(400, (int)(banner.Width * .57));
                 int subtitle = minecraft ? TextRenderer.MeasureText(heroSubtitle.Text, heroSubtitle.Font, new Size(Math.Max(100, heroTextPanel.Width - 8), 1000), TextFormatFlags.WordBreak | TextFormatFlags.NoPrefix).Height + 6 : 40;

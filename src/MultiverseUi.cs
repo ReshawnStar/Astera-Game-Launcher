@@ -209,7 +209,7 @@ namespace Astera
         {
             get
             {
-                return GameKind == 2;
+                return GameKind == MultiverseGame;
             }
         }
 
